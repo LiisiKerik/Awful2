@@ -5,17 +5,15 @@ module Standard where
   import Data.Map
   import Tokenise
   import Tree
-  data Brnch_6 = Brnch_6 Name [Name] Name [(Name, Type_8)] deriving Show
   data Class_7 = Class_7 Name (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name [(Name, Kind_0)] [Constraint_0] Type_8 Expression_9 |
     Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
-  data Data_6 = Data_6 Name Data_br_6 deriving Show
-  data Data_br_6 = Branching_data_6 Name [Kind_0] [(Name, Kind_0)] [Brnch_6] | Plain_data_6 [(Name, Kind_0)] Data_branch_6
+  data Data_6 = Data_6 Location_0 String [(Name, Kind_0)] Data_br_6 deriving Show
+  data Data_br_6 = Algebraic_data_6 [Form_6] | Branching_data_6 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
     deriving Show
-  data Data_branch_6 = Algebraic_data_6 [Form_6] | Struct_data_6 [(Name, Type_8)]
-    deriving Show
+  data Data_case_6 = Data_case_6 Name [Name] Data_br_6 deriving Show
   data Eqq' = Eqq' Name [Pat] Expression_9 deriving Show
   data Expression_9 =
     Application_expression_9 Expression_9 Expression_9 |
@@ -133,20 +131,13 @@ module Standard where
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c d) = Class_7 a b c <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
-  std_dat a (Data_0 b c) =
-    (
-      Data_6 b <$>
-      case c of
-        Branching_data_0 d e f g ->
-          (
-            Branching_data_6 d e f <$>
-            traverse (\(Brnch_0 h i j k) -> Brnch_6 h i j <$> traverse (\(l, m) -> (,) l <$> std_type a m) k) g)
-        Plain_data_0 d e ->
-          (
-            Plain_data_6 d <$>
-            case e of
-              Algebraic_data_0 f -> Algebraic_data_6 <$> traverse (\(Form_0 g h) -> Form_6 g <$> traverse (std_type a) h) f
-              Struct_data_0 f -> Struct_data_6 <$> traverse (\(g, h) -> (,) g <$> std_type a h) f))
+  std_dat a (Data_0 b c d e) = Data_6 b c d <$> std_dat_br a e
+  std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
+  std_dat_br a b =
+    case b of
+      Algebraic_data_0 c -> Algebraic_data_6 <$> traverse (\(Form_0 d e) -> Form_6 d <$> traverse (std_type a) e) c
+      Branching_data_0 c d -> Branching_data_6 c <$> traverse (\(Data_case_0 e f g) -> Data_case_6 e f <$> std_dat_br a g) d
+      Struct_data_0 c d -> Struct_data_6 c <$> traverse (\(e, f) -> (,) e <$> std_type a f) d
   std_default ::
     (Location_0 -> Location_1) -> Map' Op -> Maybe (Location_0, Expression_0)  -> Err (Maybe (Location_0, Expression_9))
   std_default a f b =

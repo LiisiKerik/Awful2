@@ -38,6 +38,7 @@ simplify parsing of match expression and remove duplicate code from de-sugaring,
 allow operators in pattern matching?
 What happens with unary minus and binary minus during parsing?
 allow using operators in class method definitions? Instance Ring{Complex T}<Ring T>(..., Complex x y * Complex z w = ...)
+promote field names
 -}
 -----------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
@@ -237,7 +238,7 @@ module Typing where
           Alg [("T", star_kind)] (Data.Map.fromList [("Nothing", []), ("Wrap", [ntype "T"])]) (maybe_type (ntype "T"))),
         ("Nat", Alg [] (Data.Map.fromList [("Next", [ntype "Nat"]), ("Zr", [])]) (ntype "Nat"))]
   arrow_kind :: Kind_1 -> Kind_1 -> Kind_1
-  arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "!Function") a)
+  arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") a)
   chain_constraints :: Maybe String -> Map' Class_5 -> Map' (Map' [String]) -> String -> Map' (Map' [String])
   chain_constraints a b c e =
     case a of
@@ -260,7 +261,7 @@ module Typing where
             e
       Nothing -> c
   char_kind :: Kind_1
-  char_kind = Name_kind_1 "!Char"
+  char_kind = Name_kind_1 "Char"
   char_type :: Type_1
   char_type = ntype "Char"
   check_kind :: String -> String -> Map' (Either Polykind Kind_1) -> Type_1 -> Err Kind_1
@@ -270,7 +271,7 @@ module Typing where
     in
       case b of
         Application_type_1 d e -> check_kind j c a d >>= \f -> case f of
-          Application_kind_1 (Application_kind_1 (Name_kind_1 "!Function") g) h ->
+          Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") g) h ->
             check_kind j c a e >>= \i -> if i == g then Right h else x
           _ -> x
         Char_type_1 _ -> Right char_kind
@@ -320,7 +321,7 @@ module Typing where
   classes_2 :: Map' Kind_1
   classes_2 = (\(Class_4 (_, a) _ _) -> a) <$> classes_0
   comparison_kind :: Kind_1
-  comparison_kind = Name_kind_1 "!Comparison"
+  comparison_kind = Name_kind_1 "Comparison"
   comparison_type :: Type_1
   comparison_type = ntype "Comparison"
   constr_check :: Map' (Maybe String) -> [String] -> [[String]] -> [[String]] -> Maybe String
@@ -415,19 +416,19 @@ module Typing where
         ("GT", Algebraic_expression_2 "GT" []),
         ("LT", Algebraic_expression_2 "LT" []),
         ("Left", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Left" [Name_expression_2 "x"])),
-        ("Mod", Mod_0_expression_2),
-        ("Multiply Int", Multiply_Int_0_expression_2),
-        ("Negate Int", Negate_Int_expression_2),
-        ("Next", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Next" [Name_expression_2 "x"])),
-        ("Nothing", Algebraic_expression_2 "Nothing" []),
         (
-          "Pair",
+          "Mk_Pair",
           Function_expression_2
             (Name_pat_1 "x")
             (Function_expression_2
               (Name_pat_1 "y")
               (Struct_expression_2
                 (Data.Map.fromList [("First", Name_expression_2 "x"), ("Second", Name_expression_2 "y")])))),
+        ("Mod", Mod_0_expression_2),
+        ("Multiply Int", Multiply_Int_0_expression_2),
+        ("Negate Int", Negate_Int_expression_2),
+        ("Next", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Next" [Name_expression_2 "x"])),
+        ("Nothing", Algebraic_expression_2 "Nothing" []),
         ("Right", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Right" [Name_expression_2 "x"])),
         ("Second", Field_expression_2 "Second"),
         ("True", Algebraic_expression_2 "True" []),
@@ -435,7 +436,7 @@ module Typing where
         ("Write_Brackets Int", Write_Brackets_Int_expression_2),
         ("Zr", Algebraic_expression_2 "Zr" [])]
   either_kind :: Kind_1 -> Kind_1 -> Kind_1
-  either_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "!Either") x)
+  either_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "Either") x)
   either_type :: Type_1 -> Type_1 -> Type_1
   either_type x = Application_type_1 (Application_type_1 (Name_type_1 "Either" []) x)
   find_and_delete :: Ord t => Map t u -> t -> Maybe (u, Map t u)
@@ -476,16 +477,16 @@ module Typing where
   hkinds =
     Data.Map.fromList
       [
-        ("!Char", Star_kind),
-        ("!Comparison", Star_kind),
-        ("!Either", Arrow_kind (Arrow_kind Star_kind)),
-        ("!Function", Arrow_kind (Arrow_kind Star_kind)),
-        ("!Int", Star_kind),
-        ("!List", Arrow_kind Star_kind),
-        ("!Logical", Star_kind),
-        ("!Maybe", Arrow_kind Star_kind),
-        ("!Nat", Star_kind),
-        ("!Pair", Arrow_kind (Arrow_kind Star_kind)),
+        ("Char", Star_kind),
+        ("Comparison", Star_kind),
+        ("Either", Arrow_kind (Arrow_kind Star_kind)),
+        ("Function", Arrow_kind (Arrow_kind Star_kind)),
+        ("Int", Star_kind),
+        ("List", Arrow_kind Star_kind),
+        ("Logical", Star_kind),
+        ("Maybe", Arrow_kind Star_kind),
+        ("Nat", Star_kind),
+        ("Pair", Arrow_kind (Arrow_kind Star_kind)),
         ("Star", Star_kind)]
   init_type_context :: (File, Map' Op)
   init_type_context =
@@ -517,11 +518,11 @@ module Typing where
         ("Ring", Data.Map.fromList [("Int", [])]),
         ("Writeable", Data.Map.fromList [("Int", [])])]
   int_kind :: Kind_1
-  int_kind = Name_kind_1 "!Int"
+  int_kind = Name_kind_1 "Int"
   int_to_nat_type :: Integer -> Type_1
   int_to_nat_type x =
     case x of
-      0 -> ntype "!Zr"
+      0 -> ntype "Zr"
       _ -> next_type (int_to_nat_type (x - 1))
   int_type :: Type_1
   int_type = ntype "Int"
@@ -536,40 +537,40 @@ module Typing where
   kinds =
     Data.Map.fromList
       [
+        ("Char", Polykind [] star_kind),
+        ("Comparison", Polykind [] star_kind),
         (
-          "!Construct_List",
+          "Construct_List",
           Polykind
             ["K"]
             (arrow_kind (Name_kind_1 "K") (arrow_kind (list_kind (Name_kind_1 "K")) (list_kind (Name_kind_1 "K"))))),
-        ("!EQ", Polykind [] comparison_kind),
-        ("!Empty_List", Polykind ["K"] (list_kind (Name_kind_1 "K"))),
-        ("!False", Polykind [] logical_kind),
-        ("!GT", Polykind [] comparison_kind),
-        ("!LT", Polykind [] comparison_kind),
-        ("!Left", Polykind ["K", "L"] (arrow_kind (Name_kind_1 "K") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
-        ("!Next", Polykind [] (arrow_kind nat_kind nat_kind)),
-        ("!Nothing", Polykind ["K"] (maybe_kind (Name_kind_1 "K"))),
-        (
-          "!Pair",
-          Polykind
-            ["K", "L"]
-            (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "L") (pair_kind (Name_kind_1 "K") (Name_kind_1 "L"))))),
-        ("!Right", Polykind ["K", "L"] (arrow_kind (Name_kind_1 "L") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
-        ("!True", Polykind [] logical_kind),
-        ("!Wrap", Polykind ["K"] (arrow_kind (Name_kind_1 "K") (maybe_kind (Name_kind_1 "K")))),
-        ("!Zr", Polykind [] nat_kind),
-        ("Char", Polykind [] star_kind),
-        ("Comparison", Polykind [] star_kind),
+        ("EQ", Polykind [] comparison_kind),
         ("Either", Polykind [] (arrow_kind star_kind (arrow_kind star_kind star_kind))),
+        ("Empty_List", Polykind ["K"] (list_kind (Name_kind_1 "K"))),
+        ("False", Polykind [] logical_kind),
         ("Function", Polykind [] (arrow_kind star_kind (arrow_kind star_kind star_kind))),
+        ("GT", Polykind [] comparison_kind),
         ("Int", Polykind [] star_kind),
+        ("LT", Polykind [] comparison_kind),
+        ("Left", Polykind ["K", "L"] (arrow_kind (Name_kind_1 "K") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
         ("List", Polykind [] (arrow_kind star_kind star_kind)),
         ("Logical", Polykind [] star_kind),
         ("Maybe", Polykind [] (arrow_kind star_kind star_kind)),
+        (
+          "Mk_Pair",
+          Polykind
+            ["K", "L"]
+            (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "L") (pair_kind (Name_kind_1 "K") (Name_kind_1 "L"))))),
         ("Nat", Polykind [] star_kind),
-        ("Pair", Polykind [] (arrow_kind star_kind (arrow_kind star_kind star_kind)))]
+        ("Next", Polykind [] (arrow_kind nat_kind nat_kind)),
+        ("Nothing", Polykind ["K"] (maybe_kind (Name_kind_1 "K"))),
+        ("Pair", Polykind [] (arrow_kind star_kind (arrow_kind star_kind star_kind))),
+        ("Right", Polykind ["K", "L"] (arrow_kind (Name_kind_1 "L") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
+        ("True", Polykind [] logical_kind),
+        ("Wrap", Polykind ["K"] (arrow_kind (Name_kind_1 "K") (maybe_kind (Name_kind_1 "K")))),
+        ("Zr", Polykind [] nat_kind)]
   list_kind :: Kind_1 -> Kind_1
-  list_kind = Application_kind_1 (Name_kind_1 "!List")
+  list_kind = Application_kind_1 (Name_kind_1 "List")
   list_type :: Type_1 -> Type_1
   list_type = Application_type_1 (Name_type_1 "List" [])
   location_err' :: String -> Location_1 -> Location_1 -> String
@@ -601,6 +602,7 @@ module Typing where
           "List",
           "Logical",
           "Maybe",
+          "Mk_Pair",
           "Mod",
           "Multiply",
           "Nat",
@@ -618,7 +620,7 @@ module Typing where
           "Writeable",
           "Zr"])
   logical_kind :: Kind_1
-  logical_kind = Name_kind_1 "!Logical"
+  logical_kind = Name_kind_1 "Logical"
   logical_type :: Type_1
   logical_type = ntype "Logical"
   make_eq :: Data_2 -> Map' (Either Bool (Map' Location_0), Status) -> Map' (Either Bool (Map' Location_0), Status)
@@ -644,20 +646,15 @@ module Typing where
       [] -> b
       c : d -> make_eqs d (make_eq c b)
   maybe_kind :: Kind_1 -> Kind_1
-  maybe_kind = Application_kind_1 (Name_kind_1 "!Maybe")
+  maybe_kind = Application_kind_1 (Name_kind_1 "Maybe")
   maybe_type :: Type_1 -> Type_1
   maybe_type = Application_type_1 (Name_type_1 "Maybe" [])
   nat_kind :: Kind_1
-  nat_kind = Name_kind_1 "!Nat"
+  nat_kind = Name_kind_1 "Nat"
   nat_type :: Type_1
   nat_type = ntype "Nat"
   next_type :: Type_1 -> Type_1
-  next_type = Application_type_1 (ntype "!Next")
-  not_promoted :: String -> Bool
-  not_promoted a =
-    case a of
-      '!' : _ -> False
-      _ -> True
+  next_type = Application_type_1 (ntype "Next")
   ntype :: String -> Type_1
   ntype a = Name_type_1 a []
   old' :: Map' (Map' t) -> Map' (Map' (t, Status))
@@ -665,35 +662,32 @@ module Typing where
   pair_type :: Type_1 -> Type_1 -> Type_1
   pair_type x = Application_type_1 (Application_type_1 (ntype "Pair") x)
   pair_kind :: Kind_1 -> Kind_1 -> Kind_1
-  pair_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "!Pair") x)
+  pair_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "Pair") x)
   pkind :: Kind_1 -> Polykind
   pkind = Polykind []
   prom_algs :: Map' Prom_alg
   prom_algs =
     Data.Map.fromList
       [
-        ("!Comparison", Prom_alg [] (Data.Map.fromList [("!EQ", []), ("!GT", []), ("!LT", [])])),
-        ("!Either", Prom_alg ["K", "L"] (Data.Map.fromList [("!Left", [Name_kind_1 "K"]), ("!Right", [Name_kind_1 "L"])])),
+        ("Comparison", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])])),
+        ("Either", Prom_alg ["K", "L"] (Data.Map.fromList [("Left", [Name_kind_1 "K"]), ("Right", [Name_kind_1 "L"])])),
         (
-          "!List",
+          "List",
           Prom_alg
             ["K"]
             (Data.Map.fromList
               [
-                ("!Empty_List", []),
-                ("!Construct_List", [Name_kind_1 "K", Application_kind_1 (Name_kind_1 "!List") (Name_kind_1 "K")])])),
-        ("!Logical", Prom_alg [] (Data.Map.fromList [("!False", []), ("!True", [])])),
-        ("!Maybe", Prom_alg ["K"] (Data.Map.fromList [("!Nothing", []), ("!Wrap", [Name_kind_1 "K"])])),
-        ("!Nat", Prom_alg [] (Data.Map.fromList [("!Next", [nat_kind]), ("!Zr", [])]))]
-  prom_type :: Set String -> Type_1 -> Kind_1
-  prom_type d a =
-    let
-      f = prom_type d
-    in
-      case a of
-        Application_type_1 b c -> Application_kind_1 (f b) (f c)
-        Name_type_1 b _ -> Name_kind_1 (if Data.Set.member b d then b else '!' : b)
-        _ -> undefined
+                ("Empty_List", []),
+                ("Construct_List", [Name_kind_1 "K", Application_kind_1 (Name_kind_1 "List") (Name_kind_1 "K")])])),
+        ("Logical", Prom_alg [] (Data.Map.fromList [("False", []), ("True", [])])),
+        ("Maybe", Prom_alg ["K"] (Data.Map.fromList [("Nothing", []), ("Wrap", [Name_kind_1 "K"])])),
+        ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zr", [])]))]
+  prom_type :: Type_1 -> Kind_1
+  prom_type a =
+    case a of
+      Application_type_1 b c -> Application_kind_1 (prom_type b) (prom_type c)
+      Name_type_1 b _ -> Name_kind_1 b
+      _ -> undefined
   promotable :: [(String, Kind_0)] -> Set String -> Maybe (Set String)
   promotable a b =
     case a of
@@ -809,7 +803,7 @@ module Typing where
               _ -> undefined
           Char_type_1 e ->
             case d of
-              Char_type_1 f -> if e == f then solvesys m g (a', t, u) else m ('!' : show e) ('!' : show f)
+              Char_type_1 f -> if e == f then solvesys m g (a', t, u) else m (show e) (show f)
               Name_type_1 f _ -> solvesys' m f c g (a', t, u)
               _ -> undefined
           Int_type_1 e ->
@@ -1100,7 +1094,7 @@ module Typing where
       [] -> if a == g then Right ([], c, x, c0, c') else e
       h : d ->
         case a of
-          Application_kind_1 (Application_kind_1 (Name_kind_1 "!Function") l) f ->
+          Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") l) f ->
             let
               i j k =
                 (
@@ -2390,7 +2384,7 @@ module Typing where
               Just
                 (
                   (
-                    ins_new ('!' : a) (Prelude.foldr (return Arrow_kind) Star_kind b) o,
+                    ins_new a (Prelude.foldr (return Arrow_kind) Star_kind b) o,
                     ins_new a y i,
                     l,
                     m,
@@ -2409,15 +2403,14 @@ module Typing where
       g = Prelude.foldl (\n -> \y -> Data.Map.insert y (pkind star_kind) n) d b
       x = Prelude.foldl (\n -> \y -> Application_type_1 n (ntype y)) (ntype a) b
       g0 = (\t -> (t, star_kind)) <$> b
-      g1 = prom_type (Data.Set.fromList b)
       promhelp p' q' =
         ins_new
-          ('!' : p')
+          p'
           (Polykind
             b
             (Prelude.foldr
-              (\x' -> arrow_kind (g1 x'))
-              (Prelude.foldl (\t' -> \u' -> Application_kind_1 t' (Name_kind_1 u')) (Name_kind_1 ('!' : a)) b)
+              (\x' -> arrow_kind (prom_type x'))
+              (Prelude.foldl (\t' -> \u' -> Application_kind_1 t' (Name_kind_1 u')) (Name_kind_1 a) b)
               q'))
       b' = Basic_type_1 g0 Nothing []
     in
@@ -2429,7 +2422,7 @@ module Typing where
                 Prelude.foldl (\t -> \(Form_2 u v) -> promhelp u v t) d' q,
                 ins_new a (Alg g0 (Data.Map.fromList ((\(Form_2 r s) -> (r, s)) <$> q)) x) p,
                 Prelude.foldl (flip (\(Form_2 l m) -> ins_new l (b' (Prelude.foldr function_type x m)))) e q,
-                ins_new ('!' : a) (Prom_alg b (Data.Map.fromList ((\(Form_2 r s) -> ('!' : r, g1 <$> s)) <$> q))) a0,
+                ins_new a (Prom_alg b (Data.Map.fromList ((\(Form_2 r s) -> (r, prom_type <$> s)) <$> q))) a0,
                 k7)) <$>
             type_forms f h g y')
         Struct_data_1 h ->
@@ -2496,7 +2489,7 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
             type_type' l a f d y >>=
             \(h, i) ->
               case i of
-                Application_kind_1 (Application_kind_1 (Name_kind_1 "!Function") j) k ->
+                Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") j) k ->
                   if k == e then Application_type_1 h <$> type_type l a g d y j else x
                 _ -> x)
         Char_type_5 b -> if e == char_kind then Right (Char_type_1 b) else x
@@ -2517,7 +2510,7 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
           type_type' l a e d y >>=
           \(g, h) ->
             case h of
-              Application_kind_1 (Application_kind_1 (Name_kind_1 "!Function") i) j ->
+              Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") i) j ->
                 (\k -> (Application_type_1 g k, j)) <$> type_type l a f d y i
               _ -> kind_err (l a))
       Char_type_5 e -> Right (Char_type_1 e, char_kind)
@@ -2592,6 +2585,13 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
             []
             (function_type (ntype "T") (either_type (ntype "T") (ntype "U")))),
         ("LT", Basic_type_1 [] Nothing [] comparison_type),
+        (
+          "Mk_Pair",
+          Basic_type_1
+            [("T", star_kind), ("U", star_kind)]
+            Nothing
+            []
+            (function_type (ntype "T") (function_type (ntype "U") (pair_type (ntype "T") (ntype "U"))))),
         ("Mod", Basic_type_1 [] Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
         (
           "Multiply",
@@ -2609,13 +2609,6 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
             (function_type (ntype "T") (ntype "T"))),
         ("Next", Basic_type_1 [] Nothing [] (function_type nat_type nat_type)),
         ("Nothing", Basic_type_1 [("T", star_kind)] Nothing [] (maybe_type (ntype "T"))),
-        (
-          "Pair",
-          Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
-            Nothing
-            []
-            (function_type (ntype "T") (function_type (ntype "U") (pair_type (ntype "T") (ntype "U"))))),
         (
           "Right",
           Basic_type_1
@@ -2644,7 +2637,7 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
   typestring a d =
     case a of
       Application_type_1 b c -> typestring b (c : d)
-      Char_type_1 b -> ('!' : show b, d)
+      Char_type_1 b -> (show b, d)
       Int_type_1 b -> ('!' : show b, d)
       Name_type_1 b _ -> (b, d)
   typevar :: String -> (Integer, Map' Type_1, Set String) -> (Integer, Map' Type_1, Set String)
