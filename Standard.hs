@@ -24,7 +24,6 @@ module Standard where
     Int_expression_9 Integer |
     Let_expression_9 Eqq' Expression_9 |
     Match_expression_9 Location_0 Expression_9 Matches_9 |
-    Modular_expression_9 Modular |
     Name_expression_9 Name (Maybe Type_8) [Type_8]
       deriving Show
   data Form_6 = Form_6 Name [Type_8] deriving Show
@@ -33,12 +32,10 @@ module Standard where
   data Match_Algebraic_9 = Match_Algebraic_9 Name [Pat] Expression_9 deriving Show
   data Match_char_9 = Match_char_9 Location_0 Char Expression_9 deriving Show
   data Match_Int_9 = Match_Int_9 Location_0 Integer Expression_9 deriving Show
-  data Match_Modular_9 = Match_Modular_9 Location_0 Modular Expression_9 deriving Show
   data Matches_9 =
     Matches_Algebraic_9 [Match_Algebraic_9] (Maybe (Location_0, Expression_9)) |
     Matches_char_9 [Match_char_9] Expression_9 |
-    Matches_Int_9 [Match_Int_9] Expression_9 |
-    Matches_Modular_9 [Match_Modular_9] (Maybe (Location_0, Expression_9))
+    Matches_Int_9 [Match_Int_9] Expression_9
       deriving Show
   data Method_9 = Method_9 Name [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Op = Op Integer Assoc String deriving Show
@@ -167,7 +164,6 @@ module Standard where
       Int_expression_0 c -> Right (Int_expression_9 c)
       Let_expression_0 c d -> Let_expression_9 <$> std_eqq a f c <*> std_expr a f d
       Match_expression_0 c d e -> Match_expression_9 c <$> std_expr a f d <*> std_matches a f e
-      Modular_expression_0 c -> Right (Modular_expression_9 c)
       Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
       Op_expression_0 c d ->
         shunting_yard a (std_expr a f, Application_expression_9, \e -> Name_expression_9 e Nothing []) f [] c d
@@ -179,15 +175,12 @@ module Standard where
   std_match_char a e (Match_char_0 b c d) = Match_char_9 b c <$> std_expr a e d
   std_match_int :: (Location_0 -> Location_1) -> Map' Op -> Match_Int_0 -> Err Match_Int_9
   std_match_int a e (Match_Int_0 b c d) = Match_Int_9 b c <$> std_expr a e d
-  std_match_modular :: (Location_0 -> Location_1) -> Map' Op -> Match_Modular_0 -> Err Match_Modular_9
-  std_match_modular a e (Match_Modular_0 b d c) = Match_Modular_9 b d <$> std_expr a e c
   std_matches :: (Location_0 -> Location_1) -> Map' Op -> Matches_0 -> Err Matches_9
   std_matches a e b =
     case b of
       Matches_Algebraic_0 c d -> Matches_Algebraic_9 <$> traverse (std_match_alg a e) c <*> std_default a e d
       Matches_char_0 c d -> Matches_char_9 <$> traverse (std_match_char a e) c <*> std_expr a e d
       Matches_Int_0 c d -> Matches_Int_9 <$> traverse (std_match_int a e) c <*> std_expr a e d
-      Matches_Modular_0 c d -> Matches_Modular_9 <$> traverse (std_match_modular a e) c <*> std_default a e d
   std_mthd :: (Location_0 -> Location_1) -> Method -> Err Method_9
   std_mthd a (Method b c d e) = Method_9 b c d <$> std_type a e
   std_type :: (Location_0 -> Location_1) -> Type_7 -> Err Type_8

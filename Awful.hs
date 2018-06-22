@@ -145,31 +145,14 @@ init' =
     kinds,
     Data.Map.fromList
       [
-        ("Field", Data.Map.fromList [("Modular", Language)]),
-        ("Nonzero", Data.Map.fromList []),
-        ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language), ("Modular", Language)]),
-        ("Ring", Data.Map.fromList [("Int", Language), ("Modular", Language)]),
-        ("Writeable", Data.Map.fromList [("Int", Language), ("Modular", Language)])],
+        ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language)]),
+        ("Ring", Data.Map.fromList [("Int", Language)]),
+        ("Writeable", Data.Map.fromList [("Int", Language)])],
     Data.Map.fromList
       [
-        ("Field", (["Inverse"], Data.Map.fromList [("Modular", [("Nonzero", Zr)])])),
-        (
-          "Nonzero",
-          (
-            [
-              "Add_Modular",
-              "Convert_Modular",
-              "Div'",
-              "Inverse_Modular",
-              "Multiply_Modular",
-              "Negate_Modular",
-              "Write_Brackets_Modular"],
-            Data.Map.fromList [])),
-        ("Ord", (["Compare"], Data.Map.fromList [("Char", []), ("Int", []), ("Modular", [])])),
-        (
-          "Ring",
-          (["Add", "Convert", "Multiply", "Negate"], Data.Map.fromList [("Int", []), ("Modular", [("Nonzero", Zr)])])),
-        ("Writeable", (["Write_Brackets"], Data.Map.fromList [("Int", []), ("Modular", [("Nonzero", Zr)])]))])
+        ("Ord", (["Compare"], Data.Map.fromList [("Char", []), ("Int", [])])),
+        ("Ring", (["Add", "Convert", "Multiply", "Negate"], Data.Map.fromList [("Int", [])])),
+        ("Writeable", (["Write_Brackets"], Data.Map.fromList [("Int", [])]))])
 main :: IO ()
 main = do
   args <- getArgs

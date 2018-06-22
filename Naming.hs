@@ -33,7 +33,6 @@ module Naming where
     Function_expression_1 Pat Expression_1 |
     Int_expression_1 Integer |
     Match_expression_1 Location_0 Expression_1 Matches_1 |
-    Modular_expression_1 Modular |
     Name_expression_1 Name (Maybe Type_8) [Type_8]
       deriving Show
   data Form_1 = Form_1 String [Type_8] deriving Show
@@ -41,12 +40,10 @@ module Naming where
   data Match_Algebraic_1 = Match_Algebraic_1 Name [Pat] Expression_1 deriving Show
   data Match_char_1 = Match_char_1 Location_0 Char Expression_1 deriving Show
   data Match_Int_1 = Match_Int_1 Location_0 Integer Expression_1 deriving Show
-  data Match_Modular_1 = Match_Modular_1 Location_0 Modular Expression_1 deriving Show
   data Matches_1 =
     Matches_Algebraic_1 [Match_Algebraic_1] (Maybe (Location_0, Expression_1)) |
     Matches_char_1 [Match_char_1] Expression_1 |
-    Matches_Int_1 [Match_Int_1] Expression_1 |
-    Matches_Modular_1 [Match_Modular_1] (Maybe (Location_0, Expression_1))
+    Matches_Int_1 [Match_Int_1] Expression_1
       deriving Show
   data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
@@ -207,7 +204,6 @@ module Naming where
             False -> i (Name_pat c) (Prelude.foldr Function_expression_9 e d)
             True -> i (Application_pat c d) e
       Match_expression_9 h c d -> naming_expression g c (f, b) >>= \e -> Match_expression_1 h e <$> naming_matches g d (f, b)
-      Modular_expression_9 c -> Right (Modular_expression_1 c)
       Name_expression_9 c d e -> Right (Name_expression_1 c d e)
   naming_fields :: String -> [(Name, Type_8)] -> Locations -> Err (Locations, [(String, Type_8)])
   naming_fields = naming_arguments naming_name
@@ -234,8 +230,6 @@ module Naming where
   naming_match_char a (Match_char_9 e b c) d = Match_char_1 e b <$> naming_expression a c d
   naming_match_int :: String -> Match_Int_9 -> (Set String, Locations) -> Err Match_Int_1
   naming_match_int a (Match_Int_9 e b c) d = Match_Int_1 e b <$> naming_expression a c d
-  naming_match_modular :: String -> Match_Modular_9 -> (Set String, Locations) -> Err Match_Modular_1
-  naming_match_modular a (Match_Modular_9 e b c) d = Match_Modular_1 e b <$> naming_expression a c d
   naming_matches :: String -> Matches_9 -> (Set String, Locations) -> Err Matches_1
   naming_matches a b c =
     let
@@ -245,7 +239,6 @@ module Naming where
         Matches_Algebraic_9 d e -> naming_default c naming_matches_algebraic d a Matches_Algebraic_1 e
         Matches_char_9 d e -> naming_matches_char a d c >>= \f -> Matches_char_1 f <$> j e
         Matches_Int_9 d e -> naming_matches_int a d c >>= \f -> Matches_Int_1 f <$> j e
-        Matches_Modular_9 d e -> naming_default c naming_matches_modular d a Matches_Modular_1 e
   naming_matches_algebraic :: String -> [Match_Algebraic_9] -> (Set String, Locations) -> Err [Match_Algebraic_1]
   naming_matches_algebraic a b c =
     case b of
@@ -261,11 +254,6 @@ module Naming where
     case b of
       [] -> Right []
       d : e -> naming_match_int a d c >>= \f -> (:) f <$> naming_matches_int a e c
-  naming_matches_modular :: String -> [Match_Modular_9] -> (Set String, Locations) -> Err [Match_Modular_1]
-  naming_matches_modular a b c =
-    case b of
-      [] -> Right []
-      d : e -> naming_match_modular a d c >>= \f -> (:) f <$> naming_matches_modular a e c
   naming_method_0 :: String -> Method_9 -> Locations -> Err (Locations, Method_1)
   naming_method_0 a (Method_9 b c g d) e = second (\f -> Method_1 f c g d) <$> naming_name a b e
   naming_method_1 :: String -> Method_1 -> Locations -> Err Method_2
