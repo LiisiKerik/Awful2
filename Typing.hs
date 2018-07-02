@@ -60,10 +60,7 @@ module Typing where
   data Class_5 = Class_5 Kind_1 (Maybe String) [String] deriving Show
   data Constraint_1 = Constraint_1 String String deriving Show
   type Constrs = Map' (String, Status)
-  data Data_3 = Data_3 String Data_br_3 deriving Show
-  data Data_br_3 =
-    Branching_data_3 String [Kind_1] [(String, Kind_1)] [Brnch_3] | Plain_data_3 [(String, Kind_1)] Data_branch_1
-      deriving Show
+  data Data_3 = Data_3 String [(String, Kind_1)] Data_br_2 deriving Show
   data Def_4 =
     Basic_def_4 Location_0 String [(String, Kind_1)] [Constraint_1] Type_1 Expression_1 [String] |
     Instance_4
@@ -134,7 +131,8 @@ module Typing where
   data Method_4 = Method_4 String [(String, Kind_1)] [Constraint_1] Type_1 deriving Show
   data Nat = Nxt Nat | Zr deriving (Eq, Ord, Show)
   data Pat_1 = Application_pat_1 [(String, Pat_1)] | Blank_pat_1 | Name_pat_1 String deriving Show
-  data Plain_dat = Plain_dat String [String] Data_branch_1 deriving Show
+  data Plain_dat = Plain_dat String [String] Plain_data_br deriving Show
+  data Plain_data_br = Plain_data_alg [Form_1] | Plain_data_struct String [(String, Type_8)] deriving Show
   data Polykind = Polykind [String] Kind_1 deriving Show
   data Prom_alg = Prom_alg [String] (Map' [Kind_1]) deriving Show
   data Strct = Strct [(String, Kind_1)] [(String, Type_1)] Type_1 deriving Show
@@ -624,6 +622,7 @@ module Typing where
   logical_type :: Type_1
   logical_type = ntype "Logical"
   make_eq :: Data_2 -> Map' (Either Bool (Map' Location_0), Status) -> Map' (Either Bool (Map' Location_0), Status)
+{-
   make_eq (Data_2 (Name _ a) b') =
     case b' of
       Branching_data_2 _ _ _ _ -> ins_new a (Left False)
@@ -640,6 +639,20 @@ module Typing where
                   Just e -> Right e
                   Nothing -> Left False
             Nothing -> Left False)
+-}
+  make_eq (Data_2 a b c) d =
+    ins_new
+      a
+      (case promotable b (Data.Set.fromList [a]) of
+        Just e ->
+          case
+            (case c of
+              Algebraic_data_2 f -> gather_forms e f Data.Map.empty
+              Branching_data_2 _ _ -> Nothing
+              Struct_data_2 _ f -> gather_fields e f Data.Map.empty) of
+                Just f -> Right f
+                Nothing -> Left False
+        Nothing -> Left False)
   make_eqs :: [Data_2] -> Map' (Either Bool (Map' Location_0), Status) -> Map' (Either Bool (Map' Location_0), Status)
   make_eqs a b =
     case a of
@@ -913,6 +926,7 @@ module Typing where
       c = show <$> [0 .. length a - 1]
     in
       Prelude.foldr Function_expression_2 (Algebraic_expression_2 b (Name_expression_2 <$> c)) (Name_pat_1 <$> c)
+{-
   type_branching ::
     (
       (Location_0 -> Location_1) ->
@@ -985,6 +999,7 @@ module Typing where
     case b of
       [] -> Right a
       c : d -> type_branching_1 g f a i h c k0 >>= \e -> type_branchings_1 g f e i h d k0
+-}
   type_case ::
     (
       (Location_0 -> Location_1) ->
@@ -1286,9 +1301,10 @@ module Typing where
     (Location_0 -> Location_1) ->
     (Map' Kind, Map' Prom_alg) ->
     Data_2 ->
-    (Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind) ->
-    Err ((Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind), Data_3)
-  type_data_1 q (o, o') (Data_2 (Name a2 a) b') (i, j, k, x) =
+    (Map' (Polykind, Status), Constrs, Map' Expression_2) ->
+    Err ((Map' (Polykind, Status), Constrs, Map' Expression_2), Data_3)
+{-
+  type_data_1 q (o, o') (Data_2 (Name a2 a) b') (i, j, k) =
     case b' of
       Branching_data_2 (Name b c) d e f ->
         und_err
@@ -1334,8 +1350,7 @@ module Typing where
                                         o1)
                                       w)
                                 k
-                                n,
-                              Data.Map.insert a p x),
+                                n),
                             Data_3 a (Branching_data_3 c l m n))) <$>
                         type_branchings q a a2 c ((\x5 -> Right (repkinds (Data.Map.fromList (zip g l)) <$> x5)) <$> h) f))))
       Plain_data_2 b c ->
@@ -1368,8 +1383,10 @@ module Typing where
               let
                 y = pkind (Prelude.foldr arrow_kind star_kind (snd <$> p))
               in
-                ((ins_new a y i, l, m, Data.Map.insert a y x), Data_3 a (Plain_data_3 p c))) <$>
+                ((ins_new a y i, l, m), Data_3 a (Plain_data_3 p c))) <$>
             type_kinds_5 q o b)
+-}
+  type_data_1 = _
   type_data_2 ::
     (
       (Location_0 -> Location_1) ->
@@ -1378,6 +1395,7 @@ module Typing where
       Map' Kind ->
       (Algebraics, Types, Map' (Strct, Status)) ->
       Err (Algebraics, Types, Map' (Strct, Status)))
+{-
   type_data_2 f (Data_3 a b') d y (p, e, q') =
     case b' of
       Branching_data_3 _ k g h -> (\t -> (p, t, q')) <$> type_branchings_1 f (y, type_kinds g d) e a g h k
@@ -1407,6 +1425,8 @@ module Typing where
                       i,
                     ins_new a (Strct b i x) q')) <$>
                 type_fields f h g y)
+-}
+  type_data_2 = _
   type_datas ::
     (Location_0 -> Location_1) ->
     [Data_2] ->
@@ -1889,7 +1909,7 @@ module Typing where
                         in
                           (k2 x7, n, (e, repl' p j) : h, s, x7 ++ c')) <$>
                       case k of
-                        [] -> Right (typevars d3 (o, e4, f))
+                        [] -> Right (typevars d3 (s', e4, f))
                         _ -> (\f9 -> (s', f9, r')) <$> typevars' r (r7, m8) e5 d5 k e8)
                 in
                   case g of
@@ -2343,30 +2363,26 @@ module Typing where
   type_prom_1 ::
     (Location_0 -> Location_1) ->
     Data_2 ->
-    (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind) ->
+    (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2) ->
     Map' (Either Bool (Map' Location_0), Status) ->
     Err
       (
-        Maybe ((Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind), Plain_dat),
+        Maybe ((Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2), Plain_dat),
         Map' (Either Bool (Map' Location_0), Status))
+{-
   type_prom_1 q (Data_2 (Name _ a) b') (o, i, j, k, x) j' =
     case b' of
-      Branching_data_2 _ _ _ _ -> Right (Nothing, j')
       Plain_data_2 b c ->
         first (\k' -> if k' then
           let
-            (l, m) =
+            m =
               case c of
                 Algebraic_data_1 e ->
-                  (
-                    Prelude.foldl (\d -> \(Form_1 n _) -> ins_new n a d) j e,
-                    Prelude.foldl (\f -> \(Form_1 g h) -> Data.Map.insert g (type_alg h g) f) k e)
+                    Prelude.foldl (\f -> \(Form_1 g h) -> Data.Map.insert g (type_alg h g) f) k e
                 Struct_data_1 e ->
                   let
                     e' = fst <$> e
                   in
-                    (
-                      j,
                       Prelude.foldl
                         (flip (\g -> Data.Map.insert g (Field_expression_2 g)))
                         (Data.Map.insert
@@ -2376,7 +2392,7 @@ module Typing where
                             (Struct_expression_2 (Data.Map.fromList ((\f -> (f, Name_expression_2 ('#' : f))) <$> e')))
                             e')
                           k)
-                        e')
+                        e'
           in
             let
               y = pkind (Prelude.foldr arrow_kind star_kind (return star_kind <$> b))
@@ -2386,10 +2402,33 @@ module Typing where
                   (
                     ins_new a (Prelude.foldr (return Arrow_kind) Star_kind b) o,
                     ins_new a y i,
-                    l,
-                    m,
-                    Data.Map.insert a y x),
+                    m),
                   Plain_dat a (fst <$> b) c) else Nothing) <$> solve_eq q a j'
+-}
+  type_prom_1 a (Data_2 b c d) (e, f, g, h) k =
+    let
+      -- m = pkind (Prelude.foldr arrow_kind star_kind (return star_kind <$> c))
+      n l p j =
+        (
+          first
+            (\i ->
+              if i
+                then
+                  Just
+                    (
+                      (
+                        ins_new b (Prelude.foldr (return Arrow_kind) Star_kind c) e,
+                        _,
+                        Prelude.foldl (\m -> \o -> ins_new _ b _) g l,
+                        Prelude.foldl (\m -> \(o, q) -> ins_new o q m) h p),
+                      Plain_dat b (fst <$> c) j)
+                else Nothing) <$>
+          solve_eq a b k)
+    in
+      case d of
+        Algebraic_data_2 j -> n ((\(Form_1 i _) -> i) <$> j) _ (Plain_data_alg j)
+        Branching_data_2 _ _ -> Right (Nothing, k)
+        Struct_data_2 j l -> n [] ((j, _) : (_ <$> l)) (Plain_data_struct j l)
   type_prom_2 ::
     (
       (Location_0 -> Location_1) ->
@@ -2415,7 +2454,7 @@ module Typing where
       b' = Basic_type_1 g0 Nothing []
     in
       case c of
-        Algebraic_data_1 h ->
+        Plain_data_alg h ->
           (
             (\q ->
               (
@@ -2425,15 +2464,15 @@ module Typing where
                 ins_new a (Prom_alg b (Data.Map.fromList ((\(Form_2 r s) -> (r, prom_type <$> s)) <$> q))) a0,
                 k7)) <$>
             type_forms f h g y')
-        Struct_data_1 h ->
+        Plain_data_struct m3 h ->
           (
             (\i ->
               (
-                promhelp a (snd <$> i) d',
+                promhelp m3 (snd <$> i) d',
                 p,
                 Prelude.foldl
                   (flip (\(k, l) -> ins_new k (b' (function_type x l))))
-                  (ins_new a (b' (Prelude.foldr (function_type <$> snd) x i)) e)
+                  (ins_new m3 (b' (Prelude.foldr (function_type <$> snd) x i)) e)
                   i,
                 a0,
                 ins_new a (Strct g0 i x) k7)) <$>
@@ -2441,11 +2480,11 @@ module Typing where
   type_proms_1 ::
     (Location_0 -> Location_1) ->
     [Data_2] ->
-    (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind) ->
+    (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2) ->
     Map' (Either Bool (Map' Location_0), Status) ->
     Err
       (
-        (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2, Map' Polykind),
+        (Map' (Kind, Status), Map' (Polykind, Status), Constrs, Map' Expression_2),
         [Plain_dat],
         [Data_2],
         Map' (Either Bool (Map' Location_0), Status))
