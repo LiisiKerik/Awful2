@@ -1,8 +1,6 @@
 {-
 protection against duplicate file loading - what happens now? if crashes - fix, give a nice error/warning. if nothing - warn?
 tests
-type synonyms?
-operators
 topelt-esindajate kontroll nimekontrolliga kokku? move duplicate instance control into Naming module?
 internal: do something with old/new status tags. check where exactly they're necessary. get rid of them where they're useless
 change semantics of missing pattern-match variables from blank to lambda? (Left -> e is not Left _ -> e but Left x -> e x)
@@ -13,19 +11,16 @@ allow to hide (prevent exporting) constructors and field accessors which can pot
 switch expression that is less strict and more flexible than match?
 some limited pattern matching in function arguments (and maybe also variables introduced through algebraic matching?)
 syntactic sugar for lists, vectors, matrices... allow writing (tiny, limited to expression parsing) language extensions?
-boolean function library
 implement map and set (AVL trees?)
 different ways of folding lists, vectors, sets, maps etc
 module system related functions into a separate file?
 make command line arguments nicer
 remove promotion of primitives? it seems that without GADT-s they are pointless?
 liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
-võimaldada suvalise arvu konstruktoritega algebralisi andmetüüpe. (LISAKS struktide allesjätmisele?)
 todo: make a function writing operator/function. For printing stuff like "Complex (Fraction 0 1) (Fraction 1 1)"
 checki abil võiks saada tüübikontrollida korraga mitut moodulit, andes ette nimekirja
 ühildada Standard ja parser? või vastupidi, süntaktiline suhkur (listide sün.suhk.) standard moodulisse?
 operaatorid struktuuride ja algebraliste andmetüüpide patternmatchides
-teha midagi et kõrvaldada parserist aegunud keelelaienduse hoiatus
 semantics of "Pair -> f" should be "Pair x y -> f x y"
 make match expression more flexible (like case in Haskell)?
 mis juhtub kui esimeses moodulis on kusagil tüübimuutuja T ja järgmises moodulis sama nimega globaalne tüüp?
@@ -34,8 +29,6 @@ can Data.Set and Data.Map imports be removed if the file uses both and disambigu
 "./Awful eval "List (0)"" without importing Standard.awf - error message about Writeable class looks bad; fix
 let expr de-sugaring (and therefore struct name collection) completely to Standard.hs module
 all de-sugaring: remove from Tree.hs, put into Standard.hs
-simplify parsing of match expression and remove duplicate code from de-sugaring, name checking, typechecking & eval
-allow operators in pattern matching?
 What happens with unary minus and binary minus during parsing?
 allow using operators in class method definitions? Instance Ring{Complex T}<Ring T>(..., Complex x y * Complex z w = ...)
 promote field names
@@ -43,7 +36,7 @@ Jaskelioff "Modular Monad Transformers" - saada need naited toole Awfulis
 Scala
 Lugeda tyybiperede kohta
 Hargnevate andmetyypide eelised? Seosed tyybiperedega?
-Klasside ja liikide vodsus - mis on seos Scala subtypinguga?
+Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 -}
 -----------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}

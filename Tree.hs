@@ -5,6 +5,9 @@ module Tree where
   import Control.Monad
   import Data.Bifunctor
   import Tokenise
+  data Alg_pat =
+    Application_alg_pat String [Alg_pat] | Blank_alg_pat | Char_alg_pat Char | Int_alg_pat Integer | Name_alg_pat Name
+      deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
   data Class_0 = Class_0 Name (Name, Kind_0) (Maybe Name) [Method] deriving Show
@@ -24,21 +27,13 @@ module Tree where
     Function_expression_0 Pat Expression_0 |
     Int_expression_0 Integer |
     Let_expression_0 Eqq Expression_0 |
-    Match_expression_0 Location_0 Expression_0 Matches_0 |
+    Match_expression_0 Location_0 Expression_0 [(Alg_pat, Expression_0)] |
     Name_expression_0 Name (Maybe Type_7) [Type_7] |
     Op_expression_0 Expression_0 [(Name, Expression_0)]
       deriving Show
   data Form_0 = Form_0 Name [Type_7] deriving Show
   data Kind_0 = Kind_0 Location_0 Kind_branch_0 deriving (Eq, Show)
   data Kind_branch_0 = Application_kind_0 Kind_0 Kind_0 | Name_kind_0 String deriving (Eq, Show)
-  data Match_Algebraic_0 = Match_Algebraic_0 Name [Pat] Expression_0 deriving Show
-  data Match_char_0 = Match_char_0 Location_0 Char Expression_0 deriving Show
-  data Match_Int_0 = Match_Int_0 Location_0 Integer Expression_0 deriving Show
-  data Matches_0 =
-    Matches_Algebraic_0 [Match_Algebraic_0] (Maybe (Location_0, Expression_0)) |
-    Matches_char_0 [Match_char_0] Expression_0 |
-    Matches_Int_0 [Match_Int_0] Expression_0
-      deriving Show
   data Method = Method Name [(Name, Kind_0)] [Constraint_0] Type_7 deriving Show
   data Name = Name Location_0 String deriving Show
   data Opdecl_0 = Opdecl_0 Location_0 String Name Integer Assoc deriving Show
@@ -117,18 +112,27 @@ module Tree where
               case h of
                 [] -> Right f
                 _ -> d g)
+  parse_alg_pattern :: Parser' Alg_pat
+  parse_alg_pattern = parse_application_alg_pattern <+> parse_elementary_alg_pattern
   parse_algebraic :: Parser' Data_br_0
   parse_algebraic =
     (
       Algebraic_data_0 <$
       parse_token Algebraic_token <*
       parse_token Left_curly_token <*>
-      parse_list 2 parse_form <*
+      parse_list 0 parse_form <*
       parse_token Right_curly_token)
   parse_ap_expr :: Parser' Expression_0
   parse_ap_expr = Application_expression_0 <$> parse_br_expr <*> parse_some parse_br_expr
   parse_ap_type :: Parser' Type_0
   parse_ap_type = Application_type_0 <$> parse_br_type <*> parse_some parse_br_type
+  parse_application_alg_pattern :: Parser' Alg_pat
+  parse_application_alg_pattern =
+    (
+      (\x -> \y -> \z -> Application_alg_pat x (y : z)) <$>
+      parse_name <*>
+      parse_brack_alg_pattern <*>
+      parse_many parse_brack_alg_pattern)
   parse_application_kind :: Parser' Kind_branch_0
   parse_application_kind =
     (
@@ -177,12 +181,16 @@ module Tree where
       parse_expression')
   parse_blank :: Parser' Pattern_0
   parse_blank = Blank_pattern <$ parse_token Blank_token
+  parse_blank_alg_pattern :: Parser' Alg_pat
+  parse_blank_alg_pattern = Blank_alg_pat <$ parse_token Blank_token
   parse_blank_pat :: Parser' Pat
   parse_blank_pat = (\x -> Pat x Blank_pat) <& parse_token Blank_token
   parse_br_expr :: Parser' Expression_0
   parse_br_expr = parse_round (parse_comp_expr <+> parse_ap_expr) <+> parse_elementary_expression
   parse_br_expr' :: Parser' Expression_0
   parse_br_expr' = parse_round parse_comp_expr <+> parse_ap_expr <+> parse_elementary_expression
+  parse_brack_alg_pattern :: Parser' Alg_pat
+  parse_brack_alg_pattern = parse_round parse_application_alg_pattern <+> parse_elementary_alg_pattern
   parse_brack_pat :: Parser' Pat
   parse_brack_pat = parse_round parse_application_pat <+> parse_elementary_pat
   parse_bracketed_kind :: Parser' Kind_0
@@ -200,7 +208,7 @@ module Tree where
       parse_token Branch_token <*>
       parse_name' <*
       parse_token Left_curly_token <*>
-      parse_list 1 parse_data_case <*
+      parse_list 0 parse_data_case <*
       parse_token Right_curly_token)
   parse_char :: Parser' Char
   parse_char =
@@ -209,6 +217,8 @@ module Tree where
         case a of
           Char_token b -> Just b
           _ -> Nothing)
+  parse_char_alg_pattern :: Parser' Alg_pat
+  parse_char_alg_pattern = Char_alg_pat <$> parse_char
   parse_char_expression :: Parser' Expression_0
   parse_char_expression = Char_expression_0 <$> parse_char
   parse_char_type :: Parser' Type_0
@@ -259,6 +269,9 @@ module Tree where
               case a f of
                 Just i -> Right (i, (State (Tokens g c) h))
                 Nothing -> Left h)
+  parse_elementary_alg_pattern :: Parser' Alg_pat
+  parse_elementary_alg_pattern =
+    parse_blank_alg_pattern <+> parse_char_alg_pattern <+> parse_int_alg_pattern <+> parse_name_alg_pattern
   parse_elementary_expression :: Parser' Expression_0
   parse_elementary_expression =
     (
@@ -309,6 +322,8 @@ module Tree where
         case a of
           Int_token b -> Just b
           _ -> Nothing)
+  parse_int_alg_pattern :: Parser' Alg_pat
+  parse_int_alg_pattern = Int_alg_pat <$> parse_int
   parse_int_expression :: Parser' Expression_0
   parse_int_expression = Int_expression_0 <$> parse_int
   parse_int_type :: Parser' Type_0
@@ -330,6 +345,7 @@ module Tree where
   parse_list :: Integer -> Parser' t -> Parser' [t]
   parse_list i p =
     case i of
+      0 -> parse_list 1 p <+> return []
       1 -> (:) <$> p <*> parse_many (parse_comma *> p)
       _ -> (:) <$> p <* parse_comma <*> parse_list (i - 1) p
   parse_list_expr :: Parser' Expression_0
@@ -340,10 +356,6 @@ module Tree where
   parse_location = Parser (\a -> Right (state_location a, a))
   parse_many :: Parser' t -> Parser' [t]
   parse_many a = parse_some a <+> return []
-  parse_match_algebraic :: Parser' Match_Algebraic_0
-  parse_match_algebraic = parse_arrow' (Match_Algebraic_0 <$> parse_name' <*> parse_many parse_brack_pat)
-  parse_match_char :: Parser' Match_char_0
-  parse_match_char = parse_arrow' (Match_char_0 <&> parse_char)
   parse_match_expression :: Parser' Expression_0
   parse_match_expression =
     (
@@ -351,18 +363,8 @@ module Tree where
       parse_token Match_token <*>
       parse_expression' <*
       parse_token Left_curly_token <*>
-      parse_matches <*
+      parse_list 0 (parse_arrow' ((,) <$> parse_alg_pattern)) <*
       parse_token Right_curly_token)
-  parse_match_int :: Parser' Match_Int_0
-  parse_match_int = parse_arrow' (Match_Int_0 <&> parse_int)
-  parse_matches :: Parser' Matches_0
-  parse_matches = parse_matches_algebraic <+> parse_matches_char <+> parse_matches_int
-  parse_matches_algebraic :: Parser' Matches_0
-  parse_matches_algebraic = Matches_Algebraic_0 <$> parse_list 1 parse_match_algebraic <*> parse_default'
-  parse_matches_char :: Parser' Matches_0
-  parse_matches_char = Matches_char_0 <$> parse_list 1 parse_match_char <*> parse_default
-  parse_matches_int :: Parser' Matches_0
-  parse_matches_int = Matches_Int_0 <$> parse_list 1 parse_match_int <*> parse_default
   parse_method :: Parser' Method
   parse_method = Method <$> parse_name' <*> parse_kinds <*> parse_constraints <* parse_colon <*> parse_type
   parse_name :: Parser' String
@@ -380,6 +382,8 @@ module Tree where
   parse_name_3 a b = Name <& parse_token a <*> b
   parse_name_4 :: String -> Parser' ()
   parse_name_4 = parse_token <$> Name_token
+  parse_name_alg_pattern :: Parser' Alg_pat
+  parse_name_alg_pattern = Name_alg_pat <$> parse_name'
   parse_name_expression :: Parser' Expression_0
   parse_name_expression =
     (
