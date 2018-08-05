@@ -8,7 +8,7 @@ module Naming where
   import Tokenise
   import Tree
   data Alg_pat_1 =
-    Application_alg_pat_1 String [Alg_pat_1] |
+    Application_alg_pat_1 Location_0 String [Alg_pat_1] |
     Blank_alg_pat_1 |
     Char_alg_pat_1 Char |
     Int_alg_pat_1 Integer |
@@ -103,14 +103,14 @@ module Naming where
   naming_alg_pattern :: String -> (Set String, Locations) -> Alg_pat -> Err (Locations, Alg_pat_1)
   naming_alg_pattern a (b, c) d =
     case d of
-      Application_alg_pat e f -> second (Application_alg_pat_1 e) <$> naming_alg_pats a (b, c) f
+      Application_alg_pat g e f -> second (Application_alg_pat_1 g e) <$> naming_alg_pats a (b, c) f
       Blank_alg_pat -> Right (c, Blank_alg_pat_1)
       Char_alg_pat e -> Right (c, Char_alg_pat_1 e)
       Int_alg_pat e -> Right (c, Int_alg_pat_1 e)
       Name_alg_pat (Name e f) ->
         case Data.Set.member f b of
           False -> (\(g, _) -> (g, Name_alg_pat_1 f)) <$> naming_name a (Name e f) c
-          True -> Right (c, Application_alg_pat_1 f [])
+          True -> Right (c, Application_alg_pat_1 e f [])
   naming_application :: String -> ((Set String, Set String), Locations) -> Err Expression_1 -> Expression_9 -> Err Expression_1
   naming_application a b c d = c >>= \e -> Application_expression_1 e <$> naming_expression a d b
   naming_args :: String -> [(Name, t)] -> Locations -> Err [(String, t)]

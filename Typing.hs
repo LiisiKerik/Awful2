@@ -38,7 +38,7 @@ Lugeda tyybiperede kohta
 Hargnevate andmetyypide eelised? Seosed tyybiperedega?
 Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 -}
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Typing where
   import Control.Monad
@@ -50,7 +50,14 @@ module Typing where
   import Standard
   import Tokenise
   import Tree
-  data Alg = Alg [(String, Kind_1)] (Map' [Type_1]) Type_1 deriving Show -- TODO: REM STRINGS FROM FST MAP
+  data Alg = Alg [(String, Kind_1)] (Map' [Type_1]) Type_1 deriving Show
+  data Alg_pat_2 =
+    Application_alg_pat_2 String [Alg_pat_2] |
+    Blank_alg_pat_2 |
+    Char_alg_pat_2 Char |
+    Int_alg_pat_2 Integer |
+    Name_alg_pat_2 String
+      deriving Show
   type Algebraics = Map' (Alg, Status)
   data Brnch_3 = Brnch_3 String [(String, Kind_1)] String [(String, Type_8)] deriving Show
   data Class_3 = Class_3 String (String, Kind_1) (Maybe Name) [Method_3] deriving Show
@@ -75,6 +82,7 @@ module Typing where
       [String]
       [[String]]
         deriving Show
+  data Eqtns = Eqtns (Set String) [(Type_1, Type_1)] [(String, (Name, Type_1))] deriving Show
   data Expression_2 =
     Add_Int_0_expression_2 |
     Add_Int_1_expression_2 Integer |
@@ -91,7 +99,7 @@ module Typing where
     Field_expression_2 String |
     Function_expression_2 Pat_1 Expression_2 |
     Int_expression_2 Integer |
-    Match_expression_2 Expression_2 Matches_2 |
+    Match_expression_2 Expression_2 [(Alg_pat_2, Expression_2)] |
     Mod_0_expression_2 |
     Mod_1_expression_2 Integer |
     Multiply_Int_0_expression_2 |
@@ -119,12 +127,6 @@ module Typing where
   data Form_2 = Form_2 String [Type_1] deriving Show
   data Kind = Arrow_kind Kind | Star_kind deriving (Eq, Show)
   data Kind_1 = Application_kind_1 Kind_1 Kind_1 | Name_kind_1 String deriving (Eq, Show)
-  data Match_Algebraic_2 = Match_Algebraic_2 [Pat_1] Expression_2 deriving Show
-  data Matches_2 =
-    Matches_Algebraic_2 (Map' Match_Algebraic_2) (Maybe Expression_2) |
-    Matches_char_2 (Map Char Expression_2) Expression_2 |
-    Matches_Int_2 (Map Integer Expression_2) Expression_2
-      deriving Show
   data Method_3 = Method_3 String [(String, Kind_1)] [Constraint_0] Type_1 deriving Show
   data Method_4 = Method_4 String [(String, Kind_1)] [Constraint_1] Type_1 deriving Show
   data Nat = Nxt Nat | Zr deriving (Eq, Ord, Show)
@@ -137,20 +139,14 @@ module Typing where
   data Type_1 = Application_type_1 Type_1 Type_1 | Char_type_1 Char | Int_type_1 Integer | Name_type_1 String [Kind_1]
     deriving (Eq, Show)
   data Type_2 = Basic_type_1 [(String, Kind_1)] (Maybe Constraint_1) [Constraint_1] Type_1 deriving Show
-  data Tmatch' = Tmatch' [Pat_1] Typedexpr deriving Show
   data Typedexpr =
     Application_texpr Typedexpr Typedexpr |
     Char_texpr Char |
     Function_texpr Pat_1 Typedexpr |
     Int_texpr Integer |
-    Match_texpr Typedexpr Typedmatches |
+    Match_texpr Typedexpr [(Alg_pat_2, Typedexpr)] |
     Name_texpr_0 String String Type_1 |
     Name_texpr_1 String [(String, Type_1)]
-      deriving Show
-  data Typedmatches =
-    Tmatch_algebraic (Map' Tmatch') (Maybe Typedexpr) |
-    Tmatch_char (Map Char Typedexpr) Typedexpr |
-    Tmatch_int (Map Integer Typedexpr) Typedexpr
       deriving Show
   type Types = Map' (Type_2, Status)
   addargs :: Map' ([String], Map' [(String, Nat)]) -> Typedexpr -> Expression_2
@@ -163,13 +159,7 @@ module Typing where
         Char_texpr d -> Char_expression_2 d
         Function_texpr d e -> Function_expression_2 d (h e)
         Int_texpr d -> Int_expression_2 d
-        Match_texpr d e ->
-          Match_expression_2
-            (h d)
-            (case e of
-              Tmatch_algebraic f g -> Matches_Algebraic_2 ((\(Tmatch' i j) -> Match_Algebraic_2 i (h j)) <$> f) (h <$> g)
-              Tmatch_char f g -> Matches_char_2 (h <$> f) (h g)
-              Tmatch_int f g -> Matches_Int_2 (h <$> f) (h g))
+        Match_texpr d e -> Match_expression_2 (h d) (second h <$> e)
         Name_texpr_0 d e f ->
           let
             (g, i) = typestring f []
@@ -272,7 +262,6 @@ module Typing where
           _ -> x
         Char_type_1 _ -> Right char_kind
         Int_type_1 _ -> Right int_kind
--- TODO: are more checks necessary? is it possible that there are problems and potential crash in Name_type_1 case?
         Name_type_1 d e ->
           if d == c
             then x
@@ -461,6 +450,51 @@ module Typing where
       _ -> Nothing
   gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Maybe (Map' Location_0)
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
+  get_pattern_type ::
+    (
+      (Location_0 -> Location_1) ->
+      Map' Alg ->
+      Map' String ->
+      (Integer, Set String, [(Type_1, Type_1)], Map' Type_2) ->
+      Alg_pat_1 ->
+      Type_1 ->
+      Err ((Integer, Set String, [(Type_1, Type_1)], Map' Type_2), Alg_pat_2))
+  get_pattern_type a b c (d, e, f, n) g h =
+    case g of
+      Application_alg_pat_1 o i j ->
+        und_err
+          i
+          c
+          "constructor"
+          (a o)
+          (\p ->
+            let
+              Alg k l m = unsafe_lookup p b
+              (q, r, s) = typevars k (d, Data.Map.empty, e)
+            in
+              (
+                second (Application_alg_pat_2 i) <$>
+                get_pattern_types a b c (q, s, (h, repl' r m) : f, n) j (repl' r <$> unsafe_lookup i l) (Name o i)))
+      Blank_alg_pat_1 -> Right ((d, e, f, n), Blank_alg_pat_2)
+      Char_alg_pat_1 i -> Right ((d, e, (h, char_type) : f, n), Char_alg_pat_2 i)
+      Int_alg_pat_1 i -> Right ((d, e, (h, int_type) : f, n), Int_alg_pat_2 i)
+      Name_alg_pat_1 i -> Right ((d, e, f, Data.Map.insert i (Basic_type_1 [] Nothing [] h) n), Name_alg_pat_2 i)
+  get_pattern_types ::
+    (
+      (Location_0 -> Location_1) ->
+      Map' Alg ->
+      Map' String ->
+      (Integer, Set String, [(Type_1, Type_1)], Map' Type_2) ->
+      [Alg_pat_1] ->
+      [Type_1] ->
+      Name ->
+      Err ((Integer, Set String, [(Type_1, Type_1)], Map' Type_2), [Alg_pat_2]))
+  get_pattern_types a b c d e f (Name m n) =
+    case (e, f) of
+      ([], []) -> Right (d, [])
+      ([], _) -> Left ("Constructor " ++ n ++ location (a m) ++ " has been given too few arguments.")
+      (_, []) -> Left ("Constructor " ++ n ++ location (a m) ++ " has been given too many arguments.")
+      (g : h, i : j) -> get_pattern_type a b c d g i >>= \(k, l) -> second ((:) l) <$> get_pattern_types a b c k h j (Name m n)
   getarg :: [t] -> Nat -> t
   getarg a b =
     case a of
@@ -888,13 +922,7 @@ module Typing where
       case c of
         Application_texpr d e -> Application_texpr (f d) (f e)
         Function_texpr d e -> Function_texpr d (f e)
-        Match_texpr d e ->
-          Match_texpr
-            (f d)
-            (case e of
-              Tmatch_algebraic g h -> Tmatch_algebraic ((\(Tmatch' i j) -> Tmatch' i (f j)) <$> g) (f <$> h)
-              Tmatch_char g h -> Tmatch_char (f <$> g) (f h)
-              Tmatch_int g h -> Tmatch_int (f <$> g) (f h))
+        Match_texpr d e -> Match_texpr (f d) (second f <$> e)
         Name_texpr_0 d g e -> Name_texpr_0 d g (sysrep' a b e)
         Name_texpr_1 d e -> Name_texpr_1 d (second (sysrep' a b) <$> e)
         _ -> c
@@ -980,27 +1008,43 @@ module Typing where
 -}
   type_case ::
     (
+      Map' Alg ->
+      Map' String ->
       (Location_0 -> Location_1) ->
-      Name ->
-      Map' Type_1 ->
-      [Pat] ->
-      [Type_1] ->
-      Map' Type_2 ->
-      Map' Strct ->
       Integer ->
-      Set String ->
-      [(Type_1, Type_1)] ->
-      Err ([Pat_1], Map' Type_2, Integer, Set String, [(Type_1, Type_1)]))
-  type_case j (m @ (Name k l)) a b c d o p u x =
-    case b of
-      [] -> Right ([], d, p, u, x)
-      e : f ->
-        case c of
-          [] -> Left ("Constructor " ++ l ++ location (j k) ++ " has been given too many arguments.")
-          g : h ->
-            (
-              type_pat j o e (repl' a g) d p u x >>=
-              \(i, n, q, v, y) -> (\(r, s, t, w, z) -> (i : r, s, t, w, z)) <$> type_case j m a f h n o q v y)
+      Eqtns ->
+      Map' Type_2 ->
+      (Alg_pat_1, Expression_1) ->
+      Integer ->
+      Type_1 ->
+      (Map' Polykind, Map' Kind) ->
+      Map' Strct ->
+      Err ((Alg_pat_2, Typedexpr), Eqtns, Integer, [(Location_0, [Alg_pat_2])]))
+  type_case a b c d (Eqtns e p q) f (g, h) i j k l =
+    (
+      get_pattern_type c a b (d, e, p, f) g (ntype (show i)) >>=
+      \((m, n, s, t), o) -> (\(u, v, w, r0) -> ((o, u), v, w, r0)) <$> type_expression a b c m (Eqtns n s q) t h j k l)
+  type_cases ::
+    (
+      Map' Alg ->
+      Map' String ->
+      (Location_0 -> Location_1) ->
+      Integer ->
+      Eqtns ->
+      Map' Type_2 ->
+      [(Alg_pat_1, Expression_1)] ->
+      Integer ->
+      Type_1 ->
+      (Map' Polykind, Map' Kind) ->
+      Map' Strct ->
+      Err ([(Alg_pat_2, Typedexpr)], Eqtns, Integer, [(Location_0, [Alg_pat_2])]))
+  type_cases a b c d e f g n h i j =
+    case g of
+      [] -> Right ([], e, d, [])
+      l : m ->
+        (
+          type_case a b c d e f l n h i j >>=
+          \(o, p, q, r0) -> (\(r, s, t, r1) -> (o : r, s, t, r0 ++ r1)) <$> type_cases a b c q p f m n h i j)
   type_class_0 ::
     (Location_0 -> Location_1) ->
     Map' Kind ->
@@ -1182,7 +1226,6 @@ module Typing where
           [] -> Right []
           (Method_4 e _ _ _) : _ -> Left ("Missing definition " ++ e ++ " in " ++ m ++ " " ++ a ++ location' (l n))
       (p' @ (Name h i), j) : k ->
--- todo: distinguish between these two error messages
         let
           o p = Left ("Definition " ++ i ++ location (l h) ++ " is not a component of class " ++ m ++ p)
         in
@@ -1708,8 +1751,8 @@ module Typing where
       n = " in " ++ k
     in
       (
-        type_expression c d a w Data.Set.empty [] e f h [] b t3 >>=
-        \(g, i, j, _, x) ->
+        type_expression c d a w (Eqtns Data.Set.empty [] []) e f h b t3 >>=
+        \(g, (Eqtns i j x), _, x3) ->
           (
             solvesys (\y -> \p -> Left ("Type mismatch between " ++ min y p ++ " and " ++ max y p ++ n)) j (x, g, i) >>=
             \(y, p, k') ->
@@ -1756,16 +1799,14 @@ module Typing where
     Map' String ->
     (Location_0 -> Location_1) ->
     Integer ->
-    Set String ->
-    [(Type_1, Type_1)] ->
+    Eqtns ->
     Map' Type_2 ->
     Expression_1 ->
     Type_1 ->
-    [(String, (Name, Type_1))] ->
     (Map' Polykind, Map' Kind) ->
     Map' Strct ->
-    Err (Typedexpr, Set String, [(Type_1, Type_1)], Integer, [(String, (Name, Type_1))])
-  type_expression v w r o f h d b e c' (r7, m8) z8 =
+    Err (Typedexpr, Eqtns, Integer, [(Location_0, [Alg_pat_2])])
+  type_expression v w r o (Eqtns f h c') d b e (r7, m8) z8 =
     let
       x' a = location' (r a)
     in
@@ -1777,111 +1818,40 @@ module Typing where
               w
               r
               (o + 1)
-              (Data.Set.insert (show o) f)
-              h
+              (Eqtns (Data.Set.insert (show o) f) h c')
               d
               c
               (function_type (ntype (show o)) e)
-              c'
               (r7, m8)
               z8 >>=
-            \(i, j, k, p, d') ->
+            \(i, j, p, d7) ->
               (
-                (\(l, m, n, q, e') -> (Application_texpr i l, m, n, q, e')) <$>
-                type_expression v w r p j k d g (ntype (show o)) d' (r7, m8) z8))
-        Char_expression_1 c -> Right (Char_texpr c, f, (e, char_type) : h, o, c')
+                (\(l, m, q, e') -> (Application_texpr i l, m, q, d7 ++ e')) <$>
+                type_expression v w r p j d g (ntype (show o)) (r7, m8) z8))
+        Char_expression_1 c -> Right (Char_texpr c, Eqtns f ((e, char_type) : h) c', o, [])
         Function_expression_1 c g ->
           (
             type_pat r z8 c (ntype (show o)) d (o + 1) (Data.Set.insert (show o) f) h >>=
             \(a6, b6, c6, d6, f6) ->
               (
-                (\(a', b', c3, d', f') -> (Function_texpr a6 a', b', c3, d', f')) <$>
+                (\(a', b', d', f4) -> (Function_texpr a6 a', b', d', f4)) <$>
                 type_expression
                   v
                   w
                   r
                   (c6 + 1)
-                  (Data.Set.insert (show c6) d6)
-                  ((e, function_type (ntype (show o)) (ntype (show c6))) : f6)
+                  (Eqtns (Data.Set.insert (show c6) d6) ((e, function_type (ntype (show o)) (ntype (show c6))) : f6) c')
                   b6
                   g
                   (ntype (show c6))
-                  c'
                   (r7, m8)
                   z8))
-        Int_expression_1 c -> Right (Int_texpr c, f, (e, int_type) : h, o, c')
-        Match_expression_1 a7 c g -> _
-{-
-          case g of
-            Matches_Algebraic_1 i j ->
-              case i of
-                [] -> undefined
-                Match_Algebraic_1 (Name l2 l) _ _ : _ ->
-                  case Data.Map.lookup l w of
-                    Just m ->
-                      let
-                        Alg n p q = unsafe_lookup m v
-                        (o', t, u) = typevars n (o, Data.Map.empty, f)
-                      in
-                        (
-                          type_expression v w r o' u h d c (repl' t q) c' (r7, m8) z8 >>=
-                          \(x, y, a0, b0, a2) ->
-                            (
-                              type_matches_algebraic
-                                v
-                                w
-                                r
-                                b0
-                                y
-                                a0
-                                d
-                                Data.Map.empty
-                                i
-                                e
-                                (Right <$> p)
-                                (l2, l)
-                                t
-                                a2
-                                (r7, m8)
-                                z8 >>=
-                              \(d0, e0, f0, g0, i0, a3) ->
-                                let
-                                  k0 k1 = Match_texpr x (Tmatch_algebraic d0 k1)
-                                in
-                                  if all isLeft i0
-                                    then
-                                      case j of
-                                        Just (l3, _) -> Left ("Unnecessary default case" ++ location' (r l3))
-                                        Nothing -> Right (k0 Nothing, e0, f0, g0, a3)
-                                    else
-                                      case j of
-                                        Just (_, j0) ->
-                                          (
-                                            (\(a', b', c2, d', a4) -> (k0 (Just a'), b', c2, d', a4)) <$>
-                                            type_expression v w r g0 e0 f0 d j0 e a3 (r7, m8) z8)
-                                        Nothing -> Left ("Incomplete match" ++ x' a7)))
-                    Nothing -> Left ("Undefined algebraic constructor " ++ l ++ x' l2)
-            Matches_char_1 i j ->
-              (
-                type_expression v w r o f h d c char_type c' (r7, m8) z8 >>=
-                \(k, l, m, n, d') ->
-                  (
-                    type_matches_char v w r n l m d Data.Map.empty i e Data.Map.empty d' (r7, m8) z8 >>=
-                    \(q, t, u, x, e') ->
-                      (
-                        (\(a0, b0, c0, d0, a2) -> (Match_texpr k (Tmatch_char q a0), b0, c0, d0, a2)) <$>
-                        type_expression v w r x t u d j e e' (r7, m8) z8)))
-            Matches_Int_1 i j ->
-              (
-                type_expression v w r o f h d c int_type c' (r7, m8) z8 >>=
-                \(k, l, m, n, d') ->
-                  (
-                    type_matches_int v w r n l m d Data.Map.empty i e Data.Map.empty d' (r7, m8) z8 >>=
-                    \(q, t, u, x, e') ->
-                      (
-                        (\(a0, b0, c0, d0, a2) -> (Match_texpr k (Tmatch_int q a0), b0, c0, d0, a2)) <$>
-                        type_expression v w r x t u d j e e' (r7, m8) z8)))
--}
+        Int_expression_1 c -> Right (Int_texpr c, Eqtns f ((e, int_type) : h) c', o, [])
+        Match_expression_1 a7 c g ->
+          (
+            type_expression v w r (o + 1) (Eqtns (Data.Set.insert (show o) f) h c') d c (ntype (show o)) (r7, m8) z8 >>=
+            \(k, m, n, n2) ->
+              (\(q, u, x, n3) -> (Match_texpr k q, u, x, n2 ++ n3)) <$> type_cases v w r n m d g o e (r7, m8) z8)
         Name_expression_1 (Name a7 c) g k ->
           let
             e5 a' = Left ("Too " ++ a' ++ " type arguments for variable " ++ c ++ x' a7)
@@ -1899,7 +1869,7 @@ module Typing where
                         let
                           x7 = (\(Constraint_1 a0 b0) -> (a0, (Name a7 c, unsafe_lookup b0 p))) <$> a'
                         in
-                          (k2 x7, n, (e, repl' p j) : h, s, x7 ++ c')) <$>
+                          (k2 x7, Eqtns n ((e, repl' p j) : h) (x7 ++ c'), s, [])) <$>
                       case k of
                         [] -> Right (typevars d3 (s', e4, f))
                         _ -> (\f9 -> (s', f9, r')) <$> typevars' r (r7, m8) e5 d5 k e8)
@@ -2596,4 +2566,4 @@ Make error messages similar to those for type errors ("Kind mismatch between x a
           case c of
             [] -> e
             i : j -> type_kind_7 l k Star_kind i >>= \m -> first ((:) m) <$> ziphelp l k f a (Data.Map.insert g m d) h j
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------

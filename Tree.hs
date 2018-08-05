@@ -6,7 +6,11 @@ module Tree where
   import Data.Bifunctor
   import Tokenise
   data Alg_pat =
-    Application_alg_pat String [Alg_pat] | Blank_alg_pat | Char_alg_pat Char | Int_alg_pat Integer | Name_alg_pat Name
+    Application_alg_pat Location_0 String [Alg_pat] |
+    Blank_alg_pat |
+    Char_alg_pat Char |
+    Int_alg_pat Integer |
+    Name_alg_pat Name
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
@@ -129,7 +133,7 @@ module Tree where
   parse_application_alg_pattern :: Parser' Alg_pat
   parse_application_alg_pattern =
     (
-      (\x -> \y -> \z -> Application_alg_pat x (y : z)) <$>
+      (\t -> \x -> \y -> \z -> Application_alg_pat t x (y : z)) <&>
       parse_name <*>
       parse_brack_alg_pattern <*>
       parse_many parse_brack_alg_pattern)
