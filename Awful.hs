@@ -19,7 +19,7 @@ check ::
     [String] ->
     (
       Files,
-      (Set String, Locations, Locations),
+      ((Set String, Set String), Locations, Locations),
       Map' Expression_2,
       Map' (Map' Location'),
       Map' ([String], Map' [(String, Nat)])) ->
@@ -30,7 +30,7 @@ check ::
         (
           (
             Files,
-            (Set String, Locations, Locations),
+            ((Set String, Set String), Locations, Locations),
             Map' Expression_2,
             Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
@@ -57,10 +57,10 @@ check b m' @ (f, _, _, _, _) j name_qc =
                   return
                     (
                       g >>=
-                      \((h, i, l, p, p', r'), m) ->
+                      \((h, i, l, p', r'), m) ->
                         (
-                          (\(k, n, o, q, s, t') -> ((Data.Map.insert name_qc n h, k, o, q, s, t'), n)) <$>
-                          standard_naming_typing name_qc d (i, m, l, p, p', r')))
+                          (\(k, n, o, s, t') -> ((Data.Map.insert name_qc n h, k, o, s, t'), n)) <$>
+                          standard_naming_typing name_qc d (i, m, l, p', r')))
             Nothing ->
               err
                 (
@@ -91,7 +91,7 @@ check_imports ::
     (
       (
         Files,
-        (Set String, Locations, Locations),
+        ((Set String, Set String), Locations, Locations),
         Map' Expression_2,
         Map' (Map' Location'),
         Map' ([String], Map' [(String, Nat)])),
@@ -102,7 +102,7 @@ check_imports ::
         (
           (
             Files,
-            (Set String, Locations, Locations),
+            ((Set String, Set String), Locations, Locations),
             Map' Expression_2,
             Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
@@ -123,19 +123,25 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (e, t, _), f, j, _, y), (File _ g h i w _ _ _ m _ _, u)) ->
-        tokenise_parse_naming_typing_eval (e, t) j (g, h, i) f b m y w u)
+      \((_, (e, t, _), f, _, y), (File j g i w _ _ _ m _ _, u)) ->
+        tokenise_parse_naming_typing_eval (e, t) j (g, i) f b m y w u)
 init' ::
   (
     Files,
-    (Set String, Locations, Locations),
+    ((Set String, Set String), Locations, Locations),
     Map' Expression_2,
     Map' (Map' Location'),
     Map' ([String], Map' [(String, Nat)]))
 init' =
   (
     Data.Map.empty,
-    (Data.Set.singleton "Pair", locations, Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="])),
+    (
+      (
+        Data.Set.singleton "Pair",
+        Data.Set.fromList
+          ["Construct_List", "EQ", "Empty_List", "False", "GT", "Left", "LT", "Nothing", "Pair", "Right", "True", "Wrap"]),
+      locations,
+      Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="])),
     defs,
     Data.Map.fromList
       [
