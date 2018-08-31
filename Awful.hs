@@ -137,9 +137,9 @@ init' =
     Data.Map.empty,
     (
       (
-        Data.Set.singleton "Pair",
+        Data.Set.singleton "Mk_Pair",
         Data.Set.fromList
-          ["Construct_List", "EQ", "Empty_List", "False", "GT", "Left", "LT", "Nothing", "Pair", "Right", "True", "Wrap"]),
+          ["Construct_List", "EQ", "Empty_List", "False", "GT", "Left", "LT", "Mk_Pair", "Nothing", "Right", "True", "Wrap"]),
       locations,
       Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="])),
     defs,

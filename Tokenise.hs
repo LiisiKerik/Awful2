@@ -31,13 +31,11 @@ module Tokenise where
     Algebraic_token |
     Blank_token |
     Branch_token |
-    Case_token |
     Char_token Char |
     Class_token |
     Comma_token |
     Data_token |
     Def_token |
-    Default_token |
     In_token |
     Instance_token |
     Int_token Integer |
@@ -265,11 +263,9 @@ module Tokenise where
       "_" -> Blank_token
       "Algebraic" -> Algebraic_token
       "Branch" -> Branch_token
-      "Case" -> Case_token
       "Class" -> Class_token
       "Data" -> Data_token
       "Def" -> Def_token
-      "Default" -> Default_token
       "In" -> In_token
       "Instance" -> Instance_token
       "Let" -> Let_token

@@ -28,11 +28,11 @@ Instance Braided{Either}(
   Bimap f g x = Match x {Left y -> Left (f y), Right y -> Right (g y)},
   Commute x = Match x {Left y -> Right y, Right y -> Left y})
 Instance Braided{Pair}(
-  Associate (Pair (Pair x y) z) = Pair x (Pair y z),
-  Bimap f g (Pair x y) = Pair (f x) (g y),
-  Commute (Pair x y) = Pair y x)
+  Associate (Mk_Pair (Mk_Pair x y) z) = Mk_Pair x (Mk_Pair y z),
+  Bimap f g (Mk_Pair x y) = Mk_Pair (f x) (g y),
+  Commute (Mk_Pair x y) = Mk_Pair y x)
 Def Brackets[T : Star]<Writeable T>(x : T) : List Char =
-  Let Pair y z = Write_Brackets x In Match z {False -> y, True -> Cat (Lift "(") (Cat y (Lift ")"))}
+  Let Mk_Pair y z = Write_Brackets x In Match z {False -> y, True -> Cat (Lift "(") (Cat y (Lift ")"))}
 Def Cat[T : Star](x : List T, y : List T) : List T =
   Match x {Empty_List -> y, Construct_List z a -> Construct_List z (Cat a y)}
 Instance Container{List}(
@@ -43,15 +43,15 @@ Instance Container{List}(
       Construct_List y z -> Let a = Filter f z In Match f y {False -> a, True -> Construct_List y a}})
 Instance Container{Maybe}(Empty = Nothing, Filter f x = Bind x (y -> Match f y {False -> Nothing, True -> x}))
 Def Convert'[F : Star -> Star, T : Star]<Applicative F, Ring T>(x : Int) : F T = Lift (Convert x)
-Def Equal[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {EQ -> True, Default -> False}
+Def Equal[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {EQ -> True, _ -> False}
 Instance Field{Int}(Inverse x = Match x {-1 -> Wrap -1, 1 -> Wrap 1, Default -> Nothing})
 Instance Field{Logical}(Inverse x = Match x {False -> Nothing, True -> Wrap True})
-Instance Field{Pair T U}<Field T, Field U>(Inverse (Pair x y) = Zip Pair (Inverse x) (Inverse y))
+Instance Field{Pair T U}<Field T, Field U>(Inverse (Mk_Pair x y) = Zip Mk_Pair (Inverse x) (Inverse y))
 Instance Finite{Comparison}(All = List (LT,  EQ,  GT))
 Instance Finite{Either T U}<Finite T, Finite U>(All = Cat (Left . All) (Right .  All))
 Instance Finite{Logical}(All = List (False, True))
 Instance Finite{Maybe T}<Finite T>(All = Construct_List Nothing (Wrap . All))
-Instance Finite{Pair T U}<Finite T, Finite U>(All = Zip Pair All All)
+Instance Finite{Pair T U}<Finite T, Finite U>(All = Zip Mk_Pair All All)
 Def Flatten[F : Star -> Star, T : Star]<Monad F>(x : F (F T)) : F T = Bind x Id
 Instance Functor{Either _}(Compose = Map_right)
 Instance Functor{Function _}(Compose f g x = f (g x))
@@ -64,7 +64,7 @@ Def Id[T : Star](x : T) : T = x
 Def Identity[T : Star]<Ring T> : T = Convert 1
 Def Interleave[T : Star](x : List T, y : List (List T)) : List T =
   Match y {Empty_List -> List, Construct_List z a -> Cat z (Flatten (Cat x . a))}
-Def Is_Zero[T : Star]<Ord T, Ring T> : T -> Logical = Equal Zero
+Def Is_Zero[T : Star]<Ord T, Ring T> : T -> Logical = Equal Zr
 Def Less[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {LT -> True, Default -> False}
 Def Less_or_equal[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {GT -> False, Default -> True}
 Def Map_left[T : Star, U : Star, F : Star -> Star -> Star, V : Star]<Braided F>(f : T -> U) : F T V -> F U V = f .. Id
@@ -89,36 +89,37 @@ Instance Ord{Comparison}(
 Instance Ord{Either T U}<Ord T, Ord U>(
   Compare x y =
     Match x {
-      Left z -> Match y {Left w -> Compare z w, Right -> LT},
-      Right z -> Match y {Left -> GT, Right w -> Compare z w}})
+      Left z -> Match y {Left w -> Compare z w, Right _ -> LT},
+      Right z -> Match y {Left _ -> GT, Right w -> Compare z w}})
 Instance Ord{List T}<Ord T>(
   Compare x y =
     Match x {
       Empty_List -> Match y {Empty_List -> EQ, Construct_List _ _ -> LT},
-      Construct_List z a -> Match y {Empty_List -> GT, Construct_List b c -> Compare (Pair z a) (Pair b c)}})
+      Construct_List z a -> Match y {Empty_List -> GT, Construct_List b c -> Compare (Mk_Pair z a) (Mk_Pair b c)}})
 Instance Ord{Logical}(
   Compare x y = Match x {False -> Match y {False -> EQ, True -> LT}, True -> Match y {False -> GT, True -> EQ}})
 Instance Ord{Maybe T}<Ord T>(
   Compare x y =
-    Match x {Nothing -> Match y {Nothing -> EQ, Wrap -> LT}, Wrap z -> Match y {Nothing -> GT, Wrap w -> Compare z w}})
+    Match x {Nothing -> Match y {Nothing -> EQ, Wrap _ -> LT}, Wrap z -> Match y {Nothing -> GT, Wrap w -> Compare z w}})
 Instance Ord{Pair T U}<Ord T, Ord U>(
-  Compare (Pair x y) (Pair z a) = Match Compare x z {LT -> LT, EQ -> Compare y a, GT -> GT})
-Instance Ring{Logical}(Add = Not_equal, Convert x = Equal (Convert x) (1 # 2), Multiply = Min, Negate = Id)
+  Compare (Mk_Pair x y) (Mk_Pair z a) = Match Compare x z {LT -> LT, EQ -> Compare y a, GT -> GT})
+Instance Ring{Logical}(Add = Not_equal, Convert x = Equal (Unwrap (Div x 2)) 1, Multiply = Min, Negate = Id)
 Instance Ring{Pair T U}<Ring T, Ring U>(
-  Add (Pair x y) (Pair z a) = Pair (x + z) (y + a),
-  Convert x = Pair (Convert x) (Convert x),
-  Multiply (Pair x y) (Pair z a) = Pair (x * z) (y * a),
-  Negate (Pair x y) = Pair (Negate x) (Negate y))
+  Add (Mk_Pair x y) (Mk_Pair z a) = Mk_Pair (x + z) (y + a),
+  Convert x = Mk_Pair (Convert x) (Convert x),
+  Multiply (Mk_Pair x y) (Mk_Pair z a) = Mk_Pair (x * z) (y * a),
+  Negate (Mk_Pair x y) = Mk_Pair (Negate x) (Negate y))
+Def Unwrap[T : Star](x : Maybe T) : T = Match x {Nothing -> Crash, Wrap y -> y}
 Def Write[T : Star]<Writeable T>(x : T) : List Char = First (Write_Brackets x)
 Def Write'(x : List Char, y : List (List Char)) : List Char = Interleave (Lift " ") (Construct_List x y)
 Instance Writeable{Char}(
   Write_Brackets c =
-    Pair (Match c {Newline -> List ("N", "e", "w", "l", "i", "n", "e"), Default -> List (""", c, """)}) False)
+    Mk_Pair (Match c {Newline -> List ("N", "e", "w", "l", "i", "n", "e"), Default -> List (""", c, """)}) False)
 Instance Writeable{Comparison}(
-  Write_Brackets x = Pair (Match x {LT -> List ("L", "T"), EQ -> List ("E", "Q"), GT -> List ("G", "T")}) False)
+  Write_Brackets x = Mk_Pair (Match x {LT -> List ("L", "T"), EQ -> List ("E", "Q"), GT -> List ("G", "T")}) False)
 Instance Writeable{Either T U}<Writeable T, Writeable U>(
   Write_Brackets x =
-    Pair
+    Mk_Pair
       (Match x {
         Left y -> Cat (List ("L", "e", "f", "t")) (Brackets y),
         Right y -> Cat (List ("R", "i", "g", "h", "t")) (Brackets y)})
@@ -126,20 +127,20 @@ Instance Writeable{Either T U}<Writeable T, Writeable U>(
 Instance Writeable{List T}<Writeable T>(
   Write_Brackets x =
     Match x {
-      Empty_List -> Pair (List ("L", "i", "s", "t")) False,
+      Empty_List -> Mk_Pair (List ("L", "i", "s", "t")) False,
       Construct_List y z ->
-        Pair
+        Mk_Pair
           (Cat (List ("L", "i", "s", "t", " ", "(")) (Cat (Interleave (List (",", " ")) (Write . x)) (Lift ")")))
           True})
 Instance Writeable{Logical}(
-  Write_Brackets x = Pair (Match x {False -> List ("F", "a", "l", "s", "e"), True -> List ("T", "r", "u", "e")}) False)
+  Write_Brackets x = Mk_Pair (Match x {False -> List ("F", "a", "l", "s", "e"), True -> List ("T", "r", "u", "e")}) False)
 Instance Writeable{Maybe T}<Writeable T>(
   Write_Brackets x =
     Match x {
-      Nothing -> Pair (List ("N", "o", "t", "h", "i", "n", "g")) False,
-      Wrap y -> Pair (Cat (List ("W", "r", "a", "p", " ")) (Brackets y)) True})
+      Nothing -> Mk_Pair (List ("N", "o", "t", "h", "i", "n", "g")) False,
+      Wrap y -> Mk_Pair (Cat (List ("W", "r", "a", "p", " ")) (Brackets y)) True})
 Instance Writeable{Pair T U}<Writeable T, Writeable U>(
-  Write_Brackets (Pair x y) = Pair (Write' (List ("P", "a", "i", "r")) (List (Brackets x, Brackets y))) True)
-Def Zero[T : Star]<Ring T> : T = Convert 0
+  Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' (List ("P", "a", "i", "r")) (List (Brackets x, Brackets y))) True)
+Def Zr[T : Star]<Ring T> : T = Convert 0
 Def Zip[F : Star -> Star, T : Star, U : Star, V : Star]<Applicative F>(f : T -> U -> V, x : F T) : F U -> F V = Apply (f . x)
 `````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````

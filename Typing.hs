@@ -1,19 +1,4 @@
 {-
-protection against duplicate file loading - what happens now? if crashes - fix, give a nice error/warning. if nothing - warn?
-tests
-topelt-esindajate kontroll nimekontrolliga kokku? move duplicate instance control into Naming module?
-internal: do something with old/new status tags. check where exactly they're necessary. get rid of them where they're useless
-change semantics of missing pattern-match variables from blank to lambda? (Left -> e is not Left _ -> e but Left x -> e x)
-internal: make the system of specifying built-in algebraic data types and things better and safer
-Allow hiding things to functions outside module - so that helper functions are not exported from the module?
-normalising constructors for some data types (polynomial, fraction) which assume a certain normal form of fields?
-allow to hide (prevent exporting) constructors and field accessors which can potentially have bad behavior
-some limited pattern matching in function arguments (and maybe also variables introduced through algebraic matching?)
-syntactic sugar for lists, vectors, matrices... allow writing (tiny, limited to expression parsing) language extensions?
-implement map and set (AVL trees?)
-different ways of folding lists, vectors, sets, maps etc
-module system related functions into a separate file?
-liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
 todo: make a function writing operator/function. For printing stuff like "Complex (Fraction 0 1) (Fraction 1 1)"
 checki abil võiks saada tüübikontrollida korraga mitut moodulit, andes ette nimekirja
 ühildada Standard ja parser? või vastupidi, süntaktiline suhkur (listide sün.suhk.) standard moodulisse?
@@ -34,6 +19,7 @@ pattern matching in types
 make names and types similar to Haskell
 field name promotion
 generalise branching types to branch not only over promoted algebraics but over Star, Int and Char
+liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
