@@ -11,8 +11,9 @@ module Standard where
     Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
   data Data_6 = Data_6 Location_0 String [(Name, Kind_0)] Data_br_6 deriving Show
-  data Data_br_6 = Algebraic_data_6 [Form_6] | Branching_data_6 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
-    deriving Show
+  data Data_br_6 =
+    Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
+      deriving Show
   data Data_case_6 = Data_case_6 Name [Name] Data_br_6 deriving Show
   data Eqq' = Eqq' Name [Pat] Expression_9 deriving Show
   data Expression_9 =
@@ -128,7 +129,7 @@ module Standard where
   std_dat_br a b =
     case b of
       Algebraic_data_0 c -> Algebraic_data_6 <$> traverse (\(Form_0 d e) -> Form_6 d <$> traverse (std_type a) e) c
-      Branching_data_0 c d -> Branching_data_6 c <$> traverse (\(Data_case_0 e f g) -> Data_case_6 e f <$> std_dat_br a g) d
+      Branching_data_0 h c d -> Branching_data_6 h c <$> traverse (\(Data_case_0 e f g) -> Data_case_6 e f <$> std_dat_br a g) d
       Struct_data_0 c d -> Struct_data_6 c <$> traverse (\(e, f) -> (,) e <$> std_type a f) d
   std_eqq :: (Location_0 -> Location_1) -> Map' Op -> Eqq -> Err Eqq'
   std_eqq a e (Eqq b c d) = Eqq' b c <$> std_expr a e d

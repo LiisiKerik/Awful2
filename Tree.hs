@@ -17,8 +17,9 @@ module Tree where
   data Class_0 = Class_0 Name (Name, Kind_0) (Maybe Name) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name Name deriving Show
   data Data_0 = Data_0 Location_0 String [(Name, Kind_0)] Data_br_0 deriving Show
-  data Data_br_0 = Algebraic_data_0 [Form_0] | Branching_data_0 Name [Data_case_0] | Struct_data_0 Name [(Name, Type_7)]
-    deriving Show
+  data Data_br_0 =
+    Algebraic_data_0 [Form_0] | Branching_data_0 Location_0 Name [Data_case_0] | Struct_data_0 Name [(Name, Type_7)]
+      deriving Show
   data Data_case_0 = Data_case_0 Name [Name] Data_br_0 deriving Show
   data Def_0 =
     Basic_def_0 Name [(Name, Kind_0)] [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
@@ -89,8 +90,8 @@ module Tree where
   int_to_nat_type_0 :: Location_0 -> Integer -> Type_0
   int_to_nat_type_0 l x =
     case x of
-      0 -> Name_type_0 (Name l "!Zr") []
-      _ -> Application_type_0 (Name_type_0 (Name l "!Next") []) [int_to_nat_type_0 l (x - 1)]
+      0 -> Name_type_0 (Name l "Zero") []
+      _ -> Application_type_0 (Name_type_0 (Name l "Next") []) [int_to_nat_type_0 l (x - 1)]
   left_bind :: (t -> Either u v) -> Either t v -> Either u v
   left_bind a b =
     case b of
@@ -165,7 +166,7 @@ module Tree where
   parse_arrow_kind :: Parser' Kind_branch_0
   parse_arrow_kind =
     (
-      (\x -> \y -> Application_kind_0 (Kind_0 y (Application_kind_0 (Kind_0 y (Name_kind_0 "!Function")) x))) <$>
+      (\x -> \y -> Application_kind_0 (Kind_0 y (Application_kind_0 (Kind_0 y (Name_kind_0 "Function")) x))) <$>
       (Kind_0 <&> (parse_round parse_arrow_kind <+> parse_application_kind <+> parse_name_kind)) <*>
       parse_arrow_loc <*>
       parse_kind)
@@ -208,7 +209,7 @@ module Tree where
   parse_branch :: Parser' Data_br_0
   parse_branch =
     (
-      Branching_data_0 <$
+      Branching_data_0 <&
       parse_token Branch_token <*>
       parse_name' <*
       parse_token Left_curly_token <*>

@@ -63,7 +63,7 @@ module Eval where
                       _ -> undefined
                   Field_expression_2 k ->
                     case j of
-                      Struct_expression_2 l -> Just (unsafe_lookup k l)
+                      Algebraic_expression_2 _ l -> Just (l !! fromIntegral k)
                       _ -> undefined
                   Function_expression_2 k l -> eval' a (subst_pat' k j l)
                   Mod_0_expression_2 ->
@@ -96,50 +96,40 @@ module Eval where
                         Just (pair_expression (list_expression (show k)) (Algebraic_expression_2 "False" []))
                       _ -> undefined
                   _ -> undefined))
-      Match_expression_2 d e ->
-        (
-          eval' a d >>=
-          \h ->
-            eval'
-              a
-              (case e of
-                Matches_Algebraic_2 i j ->
-                  case h of
-                    Algebraic_expression_2 k l ->
-                      case Data.Map.lookup k i of
-                        Just (Match_Algebraic_2 o p) -> eval_match o l p
-                        Nothing ->
-                          case j of
-                            Just o -> o
-                            Nothing -> undefined
-                    _ -> undefined
-                Matches_char_2 i j ->
-                  case h of
-                    Char_expression_2 k ->
-                      case Data.Map.lookup k i of
-                        Just o -> o
-                        Nothing -> j
-                    _ -> undefined
-                Matches_Int_2 i j ->
-                  case h of
-                    Int_expression_2 k ->
-                      case Data.Map.lookup k i of
-                        Just o -> o
-                        Nothing -> j
-                    _ -> undefined))
+      Match_expression_2 b d -> eval' a b >>= \e -> eval' a (eval_match e d)
       Name_expression_2 d -> Data.Map.lookup d a >>= eval' a
       _ -> Just c
-  eval_match :: [Pat_1] -> [Expression_2] -> Expression_2 -> Expression_2
-  eval_match a b c =
+  eval_match :: Expression_2 -> [(Alg_pat_2, Expression_2)] -> Expression_2
+  eval_match a b =
+    case b of
+      [] -> undefined
+      (c, d) : e ->
+        case eval_pat a c d of
+          Nothing -> eval_match a e
+          Just g -> g
+  eval_pat :: Expression_2 -> Alg_pat_2 -> Expression_2 -> Maybe Expression_2
+  eval_pat a b c =
+    case (a, b) of
+      (Algebraic_expression_2 d e, Application_alg_pat_2 f g) ->
+        case d == f of
+          False -> Nothing
+          True -> eval_pats (zip e g) c
+      (Char_expression_2 d, Char_alg_pat_2 e) ->
+        case d == e of
+          False -> Nothing
+          True -> Just c
+      (Int_expression_2 d, Int_alg_pat_2 e) ->
+        case d == e of
+          False -> Nothing
+          True -> Just c
+      (_, Blank_alg_pat_2) -> Just c
+      (_, Name_alg_pat_2 d) -> Just (subst_expr d c a)
+      _ -> Nothing
+  eval_pats :: [(Expression_2, Alg_pat_2)] -> Expression_2 -> Maybe Expression_2
+  eval_pats a b =
     case a of
-      [] ->
-        case b of
-          [] -> c
-          _ -> undefined
-      d : e ->
-        case b of
-          [] -> undefined
-          f : g -> eval_match e g (subst_pat' d f c)
+      [] -> Just b
+      (c, d) : e -> eval_pat c d b >>= eval_pats e
   list_expression :: String -> Expression_2
   list_expression =
     Prelude.foldr
@@ -148,9 +138,7 @@ module Eval where
   nothing_algebraic :: Expression_2
   nothing_algebraic = Algebraic_expression_2 "Nothing" []
   pair_expression :: Expression_2 -> Expression_2 -> Expression_2
-  pair_expression x y = Struct_expression_2 (Data.Map.fromList [("First", x), ("Second", y)])
-  subst_algebraic :: String -> Expression_2 -> Match_Algebraic_2 -> Match_Algebraic_2
-  subst_algebraic a b (Match_Algebraic_2 c d) = Match_Algebraic_2 c (if subst_help a c then d else subst_expr a d b)
+  pair_expression x y = Algebraic_expression_2 "Pair" [x, y]
   subst_expr :: String -> Expression_2 -> Expression_2 -> Expression_2
   subst_expr a b c =
     let
@@ -161,21 +149,19 @@ module Eval where
         Application_expression_2 d e -> Application_expression_2 (f d) (f e)
         Function_expression_2 d e -> Function_expression_2 d (if subst_pat a d then e else f e)
         Match_expression_2 d e ->
-          Match_expression_2
-            (f d)
-            (case e of
-              Matches_Algebraic_2 g h -> Matches_Algebraic_2 (subst_algebraic a c <$> g) (f <$> h)
-              Matches_char_2 g h -> Matches_char_2 (f <$> g) (f h)
-              Matches_Int_2 g h -> Matches_Int_2 (f <$> g) (f h))
+          Match_expression_2 (f d) ((\(g, h) -> (g, if subst_help a g then h else f h)) <$> e)
         Name_expression_2 d -> if d == a then c else b
-        Struct_expression_2 d -> Struct_expression_2 (f <$> d)
         _ -> b
-  subst_help :: String -> [Pat_1] -> Bool
-  subst_help a b = or (subst_pat a <$> b)
+  subst_help :: String -> Alg_pat_2 -> Bool
+  subst_help a b =
+    case b of
+      Application_alg_pat_2 _ c -> or (subst_help a <$> c)
+      Name_alg_pat_2 c -> c == a
+      _ -> False
   subst_pat :: String -> Pat_1 -> Bool
   subst_pat a b =
     case b of
-      Application_pat_1 c -> subst_help a (snd <$> c)
+      Application_pat_1 c -> or (subst_pat a <$> c)
       Blank_pat_1 -> False
       Name_pat_1 c -> c == a
   subst_pat' :: Pat_1 -> Expression_2 -> Expression_2 -> Expression_2
@@ -183,34 +169,33 @@ module Eval where
     case a of
       Application_pat_1 d ->
         case b of
-          Struct_expression_2 e -> subst_pats d e c
+          Algebraic_expression_2 _ e -> subst_pats (zip d e) c
           _ -> undefined
       Blank_pat_1 -> c
       Name_pat_1 d -> subst_expr d c b
-  subst_pats :: [(String, Pat_1)] -> Map' Expression_2 -> Expression_2 -> Expression_2
-  subst_pats a b c =
+  subst_pats :: [(Pat_1, Expression_2)] -> Expression_2 -> Expression_2
+  subst_pats a b =
     case a of
-      [] -> c
-      (d, e) : f -> subst_pats f b (subst_pat' e (unsafe_lookup d b) c)
+      [] -> b
+      (c, d) : e -> subst_pats e (subst_pat' c d b)
   tokenise_parse_naming_typing_eval ::
-    (Set String, Locations) ->
+    ((Set String, Set String), Locations) ->
     Map' Polykind ->
-    (Map' Alg, Map' String, Map' Type_2) ->
+    (Map' Constructor, Map' Type_2) ->
     Map' Expression_2 ->
     String ->
     Map' (Map' [[String]]) ->
     Map' ([String], Map' [(String, Nat)]) ->
     Map' Kind ->
-    Map' Strct ->
     Map' Op ->
     Err String
-  tokenise_parse_naming_typing_eval c f (g, h, i) l b u v w a q =
+  tokenise_parse_naming_typing_eval c f (a, i) l b u v w q =
     (
       parse_expression b >>=
       \e ->
         (
           std_expr (Location_1 "input") q e >>=
-          \e' -> naming_expression "input" e' c >>= \j -> eval l <$> type_expr' (f, g, h, i, w) j u v a))
+          \e' -> naming_expression "input" e' c >>= \j -> eval l <$> type_expr' (f, a, i, w) j u v))
   tostr :: Expression_2 -> String
   tostr x =
     case x of

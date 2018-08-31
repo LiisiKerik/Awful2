@@ -21,7 +21,6 @@ check ::
       Files,
       (Set String, Locations, Locations),
       Map' Expression_2,
-      Map' Polykind,
       Map' (Map' Location'),
       Map' ([String], Map' [(String, Nat)])) ->
     Location' ->
@@ -33,11 +32,10 @@ check ::
             Files,
             (Set String, Locations, Locations),
             Map' Expression_2,
-            Map' Polykind,
             Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
-check b m' @ (f, _, _, _, _, _) j name_qc =
+check b m' @ (f, _, _, _, _) j name_qc =
   case Data.Map.lookup name_qc f of
     Just a -> return (Right (m', a))
     Nothing ->
@@ -95,7 +93,6 @@ check_imports ::
         Files,
         (Set String, Locations, Locations),
         Map' Expression_2,
-        Map' Polykind,
         Map' (Map' Location'),
         Map' ([String], Map' [(String, Nat)])),
       (File, Map' Op)) ->
@@ -107,7 +104,6 @@ check_imports ::
             Files,
             (Set String, Locations, Locations),
             Map' Expression_2,
-            Map' Polykind,
             Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
@@ -127,14 +123,13 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (e, t, _), f, j, _, y), (File _ g h i w _ _ _ m _ _ z, u)) ->
-        tokenise_parse_naming_typing_eval (e, t) j (g, h, i) f b m y w z u)
+      \((_, (e, t, _), f, j, _, y), (File _ g h i w _ _ _ m _ _, u)) ->
+        tokenise_parse_naming_typing_eval (e, t) j (g, h, i) f b m y w u)
 init' ::
   (
     Files,
     (Set String, Locations, Locations),
     Map' Expression_2,
-    Map' Polykind,
     Map' (Map' Location'),
     Map' ([String], Map' [(String, Nat)]))
 init' =
@@ -142,7 +137,6 @@ init' =
     Data.Map.empty,
     (Data.Set.singleton "Pair", locations, Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="])),
     defs,
-    kinds,
     Data.Map.fromList
       [
         ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language)]),

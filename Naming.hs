@@ -18,10 +18,12 @@ module Naming where
   data Class_2 = Class_2 String (String, Kind_0) (Maybe Name) [Method_2] deriving Show
   data Data_1 = Data_1 String [(Name, Kind_0)] Data_br_1 deriving Show
   data Data_2 = Data_2 String [(String, Kind_0)] Data_br_2 deriving Show
-  data Data_br_1 = Algebraic_data_1 [Form_1] | Branching_data_1 Name [Data_case_1] | Struct_data_1 String [(String, Type_8)]
-    deriving Show
-  data Data_br_2 = Algebraic_data_2 [Form_1] | Branching_data_2 Name [Data_case_2] | Struct_data_2 String [(String, Type_8)]
-    deriving Show
+  data Data_br_1 =
+    Algebraic_data_1 [Form_1] | Branching_data_1 Location_0 Name [Data_case_1] | Struct_data_1 String [(String, Type_8)]
+      deriving Show
+  data Data_br_2 =
+    Algebraic_data_2 [Form_1] | Branching_data_2 Location_0 Name [Data_case_2] | Struct_data_2 String [(String, Type_8)]
+      deriving Show
   data Data_case_1 = Data_case_1 Name [Name] Data_br_1 deriving Show
   data Data_case_2 = Data_case_2 Name [String] Data_br_2 deriving Show
   data Def_2 =
@@ -166,7 +168,7 @@ module Naming where
                 c),
               Algebraic_data_1 f)) <$>
           naming_forms a e d)
-      Branching_data_6 e f -> second (Branching_data_1 e) <$> naming_data_cases_1 a f ((c0, c1), d)
+      Branching_data_6 c e f -> second (Branching_data_1 c e) <$> naming_data_cases_1 a f ((c0, c1), d)
       Struct_data_6 e f ->
         (
           naming_name a e d >>=
@@ -175,7 +177,7 @@ module Naming where
   naming_data_br_2 a b c =
     case b of
       Algebraic_data_1 d -> Right (Algebraic_data_2 d)
-      Branching_data_1 d e -> Branching_data_2 d <$> naming_data_cases_2 a e c
+      Branching_data_1 f d e -> Branching_data_2 f d <$> naming_data_cases_2 a e c
       Struct_data_1 d e -> Right (Struct_data_2 d e)
   naming_data_case_1 ::
     String -> Data_case_6 -> ((Set String, Set String), Locations) -> Err (((Set String, Set String), Locations), Data_case_1)
