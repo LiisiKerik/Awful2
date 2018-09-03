@@ -1600,7 +1600,7 @@ module Typing where
       type_proms_1 (Location_1 h) a (o, b, c) (make_eqs a (first Left <$> x)) >>=
       \((e, p, r), f, g, k) ->
         (
-          type_proms_2 (Location_1 h) f (fst <$> p) (fst <$> o) (p, d, a0, i) >>=
+          type_proms_2 (Location_1 h) f (fst <$> o) (p, d, a0, i) >>=
           \(t, n, b0, l) ->
             (
               type_datas_1 h (fst <$> e, fst <$> b0) g (t, r) >>=
@@ -2349,13 +2349,12 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       Plain_dat ->
-      Map' Polykind ->
       Map' Kind ->
       (Map' (Polykind, Status), Types, Map' (Prom_alg, Status), Map' (Constructor, Status)) ->
       Err (Map' (Polykind, Status), Types, Map' (Prom_alg, Status), Map' (Constructor, Status)))
-  type_prom_2 f (Plain_dat a b c) d y' (d', e, a0, k7) =
+  type_prom_2 f (Plain_dat a b c) y' (d, e, a0, k7) =
     let
-      g = Prelude.foldl (\n -> \y -> Data.Map.insert y (pkind star_kind) n) d b
+      g = Prelude.foldl (\n -> \y -> Data.Map.insert y (pkind star_kind) n) (fst <$> d) b
       x = Prelude.foldl (\n -> \y -> Application_type_1 n (ntype y)) (ntype a) b
       g0 = (\t -> (t, star_kind)) <$> b
       promhelp p' q' =
@@ -2374,7 +2373,7 @@ module Typing where
           (
             (\q ->
               (
-                Prelude.foldl (\t -> \(Form_2 u v) -> promhelp u v t) d' q,
+                Prelude.foldl (\t -> \(Form_2 u v) -> promhelp u v t) d q,
                 Prelude.foldl (flip (\(Form_2 l m) -> ins_new l (b' (Prelude.foldr function_type x m)))) e q,
                 ins_new a (Prom_alg b (Data.Map.fromList ((\(Form_2 r s) -> (r, prom_type <$> s)) <$> q))) a0,
                 Prelude.foldl
@@ -2387,7 +2386,7 @@ module Typing where
           (
             (\i ->
               (
-                promhelp m3 (snd <$> i) d',
+                promhelp m3 (snd <$> i) d,
                 Prelude.foldl
                   (flip (\(k, l) -> ins_new k (b' (function_type x l))))
                   (ins_new m3 (b' (Prelude.foldr (function_type <$> snd) x i)) e)
@@ -2420,14 +2419,13 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       [Plain_dat] ->
-      Map' Polykind ->
       Map' Kind ->
       (Map' (Polykind, Status), Types, Map' (Prom_alg, Status), Map' (Constructor, Status)) ->
       Err (Map' (Polykind, Status), Types, Map' (Prom_alg, Status), Map' (Constructor, Status)))
-  type_proms_2 a b c y d =
+  type_proms_2 a b y d =
     case b of
       [] -> Right d
-      e : f -> type_prom_2 a e c y d >>= type_proms_2 a f c y
+      e : f -> type_prom_2 a e y d >>= type_proms_2 a f y
   type_reps :: Location_1 -> Set String -> String -> Kind_1 -> [(Kind_1, Kind_1)] -> Err ()
   type_reps e a b c d =
     let
