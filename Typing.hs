@@ -1098,7 +1098,7 @@ module Typing where
       a
       (sysrep' c (Prelude.foldl (\o -> \(p, _) -> Application_type_1 o (ntype p)) (Name_type_1 d n) e) b)
       f
-      g
+      (Prelude.foldl (\o -> \(p, q) -> Data.Map.insert p (pkind q) o) g e)
       h
       i
       (repl_kind_vars c e k)
@@ -1566,7 +1566,7 @@ module Typing where
                   j,
                 m ((\(Form_2 k n) -> (k, Prelude.foldr function_type b n)) <$> j))) <$>
             type_forms a i d e)
-        Branching_data_3 j h k -> type_branchings_1 a b j k d e (f, g) l o (Data.Map.delete j w1) h
+        Branching_data_3 j h k -> type_branchings_1 a b j k (Data.Map.delete j d) e (f, g) l o (Data.Map.delete j w1) h
         Struct_data_3 i j ->
           (
             (\k ->
@@ -2393,7 +2393,7 @@ module Typing where
                   (ins_new m3 (b' (Prelude.foldr (function_type <$> snd) x i)) e)
                   i,
                 a0,
-                ins_new a (Constructor g0 (snd <$> i) x [(m3, fromIntegral (length i))]) k7)) <$>
+                ins_new m3 (Constructor g0 (snd <$> i) x [(m3, fromIntegral (length i))]) k7)) <$>
             type_fields f h g y')
   type_proms_1 ::
     (Location_0 -> Location_1) ->
