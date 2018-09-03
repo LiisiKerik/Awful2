@@ -10,7 +10,7 @@ module Standard where
     Basic_def_1 Name [(Name, Kind_0)] [Constraint_0] Type_8 Expression_9 |
     Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
-  data Data_6 = Data_6 Location_0 String [(Name, Kind_0)] Data_br_6 deriving Show
+  data Data_6 = Data_6 Location_0 String KT0 Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show

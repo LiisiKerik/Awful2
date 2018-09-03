@@ -16,8 +16,8 @@ module Naming where
       deriving Show
   data Class_1 = Class_1 String (Name, Kind_0) (Maybe Name) [Method_1] deriving Show
   data Class_2 = Class_2 String (String, Kind_0) (Maybe Name) [Method_2] deriving Show
-  data Data_1 = Data_1 String [(Name, Kind_0)] Data_br_1 deriving Show
-  data Data_2 = Data_2 String [(String, Kind_0)] Data_br_2 deriving Show
+  data Data_1 = Data_1 String KT0 Data_br_1 deriving Show
+  data Data_2 = Data_2 String KT1 Data_br_2 deriving Show
   data Data_br_1 =
     Algebraic_data_1 [Form_1] | Branching_data_1 Location_0 Name [Data_case_1] | Struct_data_1 String [(String, Type_8)]
       deriving Show
@@ -43,6 +43,7 @@ module Naming where
     Name_expression_1 Name (Maybe Type_8) [Type_8]
       deriving Show
   data Form_1 = Form_1 String [Type_8] deriving Show
+  data KT1 = KT1 [String] [(String, Kind_0)] deriving Show
   type Locations = Map' Location'
   data Match_Algebraic_1 = Match_Algebraic_1 Name [Pat] Expression_1 deriving Show
   data Match_char_1 = Match_char_1 Location_0 Char Expression_1 deriving Show
@@ -150,7 +151,7 @@ module Naming where
   naming_data_1 a (Data_6 b c d e) (f, g) =
     naming_name a (Name b c) g >>= \(h, _) -> second (Data_1 c d) <$> naming_data_br_1 a e (f, h)
   naming_data_2 :: String -> Data_1 -> Locations -> Err Data_2
-  naming_data_2 a (Data_1 b c d) e = naming_arguments naming_name a c e >>= \(f, g) -> Data_2 b g <$> naming_data_br_2 a d f
+  naming_data_2 a (Data_1 b c d) e = naming_kt a c e >>= \(f, g) -> Data_2 b g <$> naming_data_br_2 a d f
   naming_data_br_1 ::
     String -> Data_br_6 -> ((Set String, Set String), Locations) -> Err (((Set String, Set String), Locations), Data_br_1)
   naming_data_br_1 a b ((c0, c1), d) =
@@ -251,6 +252,8 @@ module Naming where
   naming_fun :: String -> ((Set String, Set String), Locations) -> Pat -> Expression_9 -> Err Expression_1
   naming_fun x ((y0, y1), b) z w =
     naming_pat x z (y0, b) >>= \(a, c) -> Function_expression_1 c <$> naming_expression x w ((y0, y1), a)
+  naming_kt :: String -> KT0 -> Locations -> Err (Locations, KT1)
+  naming_kt a (KT0 b c) d = naming_names'' a b d >>= \(e, f) -> second (KT1 e) <$> naming_arguments naming_name a c f
   naming_list :: (String -> t -> u -> Err (u, v)) -> String -> [t] -> u -> Err (u, [v])
   naming_list a h b c =
     case b of
