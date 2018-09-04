@@ -2,13 +2,13 @@
 Load Promotion.awf
 Load Standard.awf
 Load Testing.awf
-Def Inverse_Tuple_Empty_List_test :
-  List ((Tuple !Empty_List[Star] * Maybe (Tuple !Empty_List[Star])) * Maybe (Tuple !Empty_List[Star])) =
-    Test_1 Inverse (Lift (Pair Empty_Tuple (Wrap Empty_Tuple)))
-Def Inverse_Tuple_Construct_List_test :
+Def Inverse_Conj_Empty_List_test :
+  List ((Conj Empty_List[Star] * Maybe (Conj Empty_List[Star])) * Maybe (Conj Empty_List[Star])) =
+    Test_1 Inverse (Lift (Mk_Pair Empty_Conj (Wrap Empty_Conj)))
+Def Inverse_Conj_Construct_List_test :
   List
     (
-      (Tuple (!Construct_List[Star] Int !Empty_List[Star]) * Maybe (Tuple (!Construct_List[Star] Int !Empty_List[Star]))) *
-      Maybe (Tuple (!Construct_List[Star] Int !Empty_List[Star]))) =
-        Test_1 Inverse (Lift (Pair (Construct_Tuple 1 Empty_Tuple) (Wrap (Construct_Tuple 1 Empty_Tuple))))
+      (Conj (Construct_List[Star] Int Empty_List[Star]) * Maybe (Conj (Construct_List[Star] Int Empty_List[Star]))) *
+      Maybe (Conj (Construct_List[Star] Int Empty_List[Star]))) =
+        Test_1 Inverse (Lift (Mk_Pair (Construct_Conj 1 Empty_Conj) (Wrap (Construct_Conj 1 Empty_Conj))))
 `````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
