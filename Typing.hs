@@ -57,7 +57,7 @@ module Typing where
       deriving Show
   data Data_case_3 = Data_case_3 String [(String, Kind_1)] Data_br_3 deriving Show
   data Def_4 =
-    Basic_def_4 Location_0 String [(String, Kind_1)] [Constraint_1] Type_1 Expression_1 [String] |
+    Basic_def_4 Location_0 String KT2 [Constraint_1] Type_1 Expression_1 [String] |
     Instance_4
       Location_0
       String
@@ -1659,16 +1659,17 @@ module Typing where
         Map' ([String], Map' [(String, Nat)]))
   type_def_1 l x a b c k k2 t t' u3 =
     case a of
-      Basic_def_3 f d e e' g i ->
+      Basic_def_3 f d (KT1 e0 e) e' g i ->
         (
-          type_kinds_1 (Location_1 l) x e b Data.Map.empty >>=
-          \(y, j, j') ->
+          type_kt_1 (Location_1 l) x (KT1 e0 e) b Data.Map.empty >>=
+          \(y, j, j', x2) ->
             (
               type_constraints_0 Data.Map.empty e' (k2, j', (\_ -> Zr) <$> j') l >>=
                 \(o1, o2, _) ->
                 (
-                  (\h -> (Basic_def_4 f d y o1 h i o2, ins_new d (Basic_type_1 (KT2 [] y) Nothing o1 h) c, t, t', u3)) <$>
-                  type_typ (Location_1 l) g j x star_kind)))
+                  (\h ->
+                    (Basic_def_4 f d (KT2 e0 y) o1 h i o2, ins_new d (Basic_type_1 (KT2 e0 y) Nothing o1 h) c, t, t', u3)) <$>
+                  type_typ (Location_1 l) g j x2 star_kind)))
       Instance_3 d (Name e m) (Name f n) w2 k' o' g ->
         und_err
           m
@@ -1737,7 +1738,7 @@ module Typing where
     Err (Map' Expression_2)
   type_def_2 j a d c m n t' u0 v2 =
     case a of
-      Basic_def_4 r e b x h i y' ->
+      Basic_def_4 r e (KT2 b0 b) x h i y' ->
         (
           (\t -> Data.Map.insert e (Prelude.foldr (\x' -> Function_expression_2 (Name_pat_1 x')) t y') c) <$>
           type_expr
@@ -1749,7 +1750,9 @@ module Typing where
             (type_constraints_1 x m u0)
             0
             t'
-            (Prelude.foldl (\y -> \(z, w) -> Data.Map.insert z (pkind w) y) n b, v2))
+            (
+              Prelude.foldl (\y -> \(z, w) -> Data.Map.insert z (pkind w) y) n b,
+              Prelude.foldl (\m0 -> \m1 -> Data.Map.insert m1 Star_kind m0) v2 b0))
       Instance_4 l' e' w0 w e e0 e1 f f' g' c2 r' ->
         let
           f4 = Prelude.foldl (\x -> \(y, g) -> Data.Map.insert y (pkind g) x) n e0
@@ -2197,6 +2200,19 @@ module Typing where
           f : g -> type_kind_7 a b Star_kind f >>= \h -> (:) h <$> type_kinds_9 a b e g i
   type_kt_0 :: (Location_0 -> Location_1) -> (KT1, Map' Kind) -> Err ([(String, Kind_1)], Map' Kind_1)
   type_kt_0 a (KT1 b c, d) = type_kinds_5 a (Prelude.foldl (\e -> \f -> Data.Map.insert f Star_kind e) d b) (c, Data.Map.empty)
+  type_kt_1 ::
+    (
+      (Location_0 -> Location_1) ->
+      Map' Kind ->
+      KT1 ->
+      Map' Polykind ->
+      Map' Kind_1 ->
+      Err ([(String, Kind_1)], Map' Polykind, Map' Kind_1, Map' Kind))
+  type_kt_1 a b (KT1 c d) e f =
+    let
+      g = Prelude.foldl (\h -> \i -> Data.Map.insert i Star_kind h) b c
+    in
+      (\(j, k, l) -> (j, k, l, g)) <$> type_kinds_1 a g d e f
   type_method :: (Location_0 -> Location_1) -> Method_2 -> Map' Polykind -> Map' Kind -> Err Method_3
   type_method a (Method_2 b c i d) e f = type_kinds_0 a f c e >>= \(g, h) -> Method_3 b g i <$> type_typ a d h f star_kind
   type_method_1 :: String -> Map' Class_5 -> Method_3 -> Err Method_4

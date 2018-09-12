@@ -22,7 +22,7 @@ module Tree where
       deriving Show
   data Data_case_0 = Data_case_0 Name [Name] Data_br_0 deriving Show
   data Def_0 =
-    Basic_def_0 Name [(Name, Kind_0)] [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
+    Basic_def_0 Name KT0 [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
     Instance_def_0 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, ([Pat], Expression_0))]
       deriving Show
   data Eqq = Eqq Name [Pat] Expression_0 deriving Show
@@ -178,7 +178,7 @@ module Tree where
     (
       Basic_def_0 <$>
       parse_name'' Def_token <*>
-      parse_kinds <*>
+      parse_kt <*>
       parse_constraints <*>
       parse_arguments' parse_pat <*
       parse_colon <*>

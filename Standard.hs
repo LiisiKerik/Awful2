@@ -7,7 +7,7 @@ module Standard where
   import Tree
   data Class_7 = Class_7 Name (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
-    Basic_def_1 Name [(Name, Kind_0)] [Constraint_0] Type_8 Expression_9 |
+    Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
     Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
   data Data_6 = Data_6 Location_0 String KT0 Data_br_6 deriving Show
