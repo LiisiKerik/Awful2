@@ -20,6 +20,8 @@ make names and types similar to Haskell
 field name promotion
 generalise branching types to branch not only over promoted algebraics but over Star, Int and Char
 liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
+stringide syntaktiline suhkur
+piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair T U) L ->
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
@@ -48,8 +50,8 @@ module Typing where
   data Class_4 = Class_4 (String, Kind_1) (Maybe String) [Method_4] deriving Show
   data Class_5 = Class_5 Kind_1 (Maybe String) [String] deriving Show
   data Constraint_1 = Constraint_1 String String deriving Show
-  data Constructor = Constructor [(String, Kind_1)] [Type_1] Type_1 [(String, Integer)] deriving Show
-  data Data_3 = Data_3 String [(String, Kind_1)] Data_br_3 deriving Show
+  data Constructor = Constructor KT2 [Type_1] Type_1 [(String, Integer)] deriving Show
+  data Data_3 = Data_3 String KT2 Data_br_3 deriving Show
   data Data_br_3 =
     Algebraic_data_3 [Form_1] | Branching_data_3 String [Kind_1] [Data_case_3] | Struct_data_3 String [(String, Type_8)]
       deriving Show
@@ -70,7 +72,7 @@ module Typing where
       [String]
       [[String]]
         deriving Show
-  data Eqtns = Eqtns (Set String) [(Type_1, Type_1)] [(String, (Name, Type_1))] deriving Show
+  data Eqtns = Eqtns (Set String, Set String) [(Type_1, Type_1)] [(String, (Name, Type_1))] deriving Show
   data Expression_2 =
     Add_Int_0_expression_2 |
     Add_Int_1_expression_2 Integer |
@@ -131,7 +133,7 @@ module Typing where
   data Prom_alg = Prom_alg [String] (Map' [Kind_1]) deriving Show
   data Type_1 = Application_type_1 Type_1 Type_1 | Char_type_1 Char | Int_type_1 Integer | Name_type_1 String [Kind_1]
     deriving (Eq, Show)
-  data Type_2 = Basic_type_1 [(String, Kind_1)] (Maybe Constraint_1) [Constraint_1] Type_1 deriving Show
+  data Type_2 = Basic_type_1 KT2 (Maybe Constraint_1) [Constraint_1] Type_1 deriving Show
   data Typedexpr =
     Application_texpr Typedexpr Typedexpr |
     Char_texpr Char |
@@ -324,41 +326,41 @@ module Typing where
         (
           "Construct_List",
           Constructor
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             [ntype "T", list_type (ntype "T")]
             (list_type (ntype "T"))
             [("Construct_List", 2), ("Empty_List", 0)]),
-        ("EQ", Constructor [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
-        ("Empty_List", Constructor [("T", star_kind)] [] (list_type (ntype "T")) [("Construct_List", 2), ("Empty_List", 0)]),
-        ("False", Constructor [] [] logical_type [("False", 0), ("True", 0)]),
-        ("GT", Constructor [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
-        ("LT", Constructor [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("EQ", Constructor (KT2 [] []) [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("Empty_List", Constructor (KT2 [] [("T", star_kind)]) [] (list_type (ntype "T")) [("Construct_List", 2), ("Empty_List", 0)]),
+        ("False", Constructor (KT2 [] []) [] logical_type [("False", 0), ("True", 0)]),
+        ("GT", Constructor (KT2 [] []) [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("LT", Constructor (KT2 [] []) [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
         (
           "Left",
           Constructor
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             [ntype "T"]
             (either_type (ntype "T") (ntype "U"))
             [("Left", 1), ("Right", 1)]),
         (
           "Mk_Pair",
           Constructor
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             [ntype "T", ntype "U"]
             (pair_type (ntype "T") (ntype "U"))
             [("Mk_Pair", 2)]),
-        ("Next", Constructor [] [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
-        ("Nothing", Constructor [("T", star_kind)] [] (maybe_type (ntype "T")) [("Nothing", 0), ("Wrap", 1)]),
+        ("Next", Constructor (KT2 [] []) [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
+        ("Nothing", Constructor (KT2 [] [("T", star_kind)]) [] (maybe_type (ntype "T")) [("Nothing", 0), ("Wrap", 1)]),
         (
           "Right",
           Constructor
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             [ntype "U"]
             (either_type (ntype "T") (ntype "U"))
             [("Left", 1), ("Right", 1)]),
-        ("True", Constructor [] [] logical_type [("False", 0), ("True", 0)]),
-        ("Wrap", Constructor [("T", star_kind)] [ntype "T"] (maybe_type (ntype "T")) [("Nothing", 0), ("Wrap", 1)]),
-        ("Zero", Constructor [] [] (ntype "Nat") [("Next", 1), ("Zero", 0)])]
+        ("True", Constructor (KT2 [] []) [] logical_type [("False", 0), ("True", 0)]),
+        ("Wrap", Constructor (KT2 [] [("T", star_kind)]) [ntype "T"] (maybe_type (ntype "T")) [("Nothing", 0), ("Wrap", 1)]),
+        ("Zero", Constructor (KT2 [] []) [] (ntype "Nat") [("Next", 1), ("Zero", 0)])]
   context_union :: (File, Map' Op) -> (File, Map' Op) -> (File, Map' Op)
   context_union (File i j d a x e q t g o, t0) (File k l h c y m r u n p, t2) =
     (
@@ -449,10 +451,10 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       Map' Constructor ->
-      (Integer, Set String, [(Type_1, Type_1)], Map' Type_2) ->
+      ((Integer, Integer), (Set String, Set String), [(Type_1, Type_1)], Map' Type_2) ->
       Alg_pat_1 ->
       Type_1 ->
-      Err ((Integer, Set String, [(Type_1, Type_1)], Map' Type_2), (Alg_pat_2, Alg_pat_3)))
+      Err (((Integer, Integer), (Set String, Set String), [(Type_1, Type_1)], Map' Type_2), (Alg_pat_2, Alg_pat_3)))
   get_pattern_type a b (d, e, f, n) g h =
     case g of
       Application_alg_pat_1 o i j ->
@@ -472,16 +474,16 @@ module Typing where
       Char_alg_pat_1 i -> Right ((d, e, (h, char_type) : f, n), (Char_alg_pat_2 i, Char_alg_pat_3 i))
       Int_alg_pat_1 i -> Right ((d, e, (h, int_type) : f, n), (Int_alg_pat_2 i, Int_alg_pat_3 i))
       Name_alg_pat_1 i ->
-        Right ((d, e, f, Data.Map.insert i (Basic_type_1 [] Nothing [] h) n), (Name_alg_pat_2 i, Blank_alg_pat_3))
+        Right ((d, e, f, Data.Map.insert i (Basic_type_1 (KT2 [] []) Nothing [] h) n), (Name_alg_pat_2 i, Blank_alg_pat_3))
   get_pattern_types ::
     (
       (Location_0 -> Location_1) ->
       Map' Constructor ->
-      (Integer, Set String, [(Type_1, Type_1)], Map' Type_2) ->
+      ((Integer, Integer), (Set String, Set String), [(Type_1, Type_1)], Map' Type_2) ->
       [Alg_pat_1] ->
       [Type_1] ->
       Name ->
-      Err ((Integer, Set String, [(Type_1, Type_1)], Map' Type_2), ([Alg_pat_2], [Alg_pat_3])))
+      Err (((Integer, Integer), (Set String, Set String), [(Type_1, Type_1)], Map' Type_2), ([Alg_pat_2], [Alg_pat_3])))
   get_pattern_types a b d e f (Name m n) =
     case (e, f) of
       ([], []) -> Right (d, ([], []))
@@ -601,6 +603,13 @@ module Typing where
         ("True", Polykind [] logical_kind),
         ("Wrap", Polykind ["K"] (arrow_kind (Name_kind_1 "K") (maybe_kind (Name_kind_1 "K")))),
         ("Zero", Polykind [] nat_kind)]
+  kindvar :: String -> (Integer, Set String) -> (Integer, Set String)
+  kindvar _ (b, c) = (b + 1, Data.Set.insert (show b) c)
+  kindvars :: [String] -> (Integer, Set String) -> (Integer, Set String)
+  kindvars a b =
+    case a of
+      [] -> b
+      d : e -> kindvars e (kindvar d b)
   list_kind :: Kind_1 -> Kind_1
   list_kind = Application_kind_1 (Name_kind_1 "List")
   list_type :: Type_1 -> Type_1
@@ -904,51 +913,51 @@ module Typing where
           False -> type_reps e a b c d
           True -> kind_err e
   solvesys ::
-    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, Set String)) ->
+    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
     [(Type_1, Type_1)] ->
-    ([(String, (Name, Type_1))], Typedexpr, Set String) ->
-    Err ([(String, (Name, Type_1))], Typedexpr, Set String)
-  solvesys m b (a', t, u) =
+    ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+    Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))
+  solvesys m b (a', t, (w, u)) =
     case b of
-      [] -> Right (a', t, u)
+      [] -> Right (a', t, (w, u))
       (c, d) : g ->
         case c of
           Application_type_1 e f ->
             case d of
-              Application_type_1 h i -> solvesys m ((e, h) : (f, i) : g) (a', t, u)
-              Name_type_1 h _ -> solvesys' m h c g (a', t, u)
+              Application_type_1 h i -> solvesys m ((e, h) : (f, i) : g) (a', t, (w, u))
+              Name_type_1 h _ -> solvesys' m h c g (a', t, (w, u))
               _ -> undefined
           Char_type_1 e ->
             case d of
-              Char_type_1 f -> if e == f then solvesys m g (a', t, u) else m (show e) (show f)
-              Name_type_1 f _ -> solvesys' m f c g (a', t, u)
+              Char_type_1 f -> if e == f then solvesys m g (a', t, (w, u)) else m (show e) (show f)
+              Name_type_1 f _ -> solvesys' m f c g (a', t, (w, u))
               _ -> undefined
           Int_type_1 e ->
             case d of
-              Int_type_1 f -> if e == f then solvesys m g (a', t, u) else m ('!' : show e) ('!' : show f)
-              Name_type_1 f _ -> solvesys' m f c g (a', t, u)
+              Int_type_1 f -> if e == f then solvesys m g (a', t, (w, u)) else m ('!' : show e) ('!' : show f)
+              Name_type_1 f _ -> solvesys' m f c g (a', t, (w, u))
               _ -> undefined
           Name_type_1 e _ ->
             case d of
               Name_type_1 f _ ->
                 if e == f
-                  then solvesys m g (a', t, u)
+                  then solvesys m g (a', t, (w, u))
                   else
                     case Data.Set.member e u of
                       False ->
                         case Data.Set.member f u of
                           False -> m e f
-                          True -> solvesys_rep m f c g (a', t, u)
-                      True -> solvesys_rep m e d g (a', t, u)
-              _ -> solvesys' m e d g (a', t, u)
+                          True -> solvesys_rep m f c g (a', t, (w, u))
+                      True -> solvesys_rep m e d g (a', t, (w, u))
+              _ -> solvesys' m e d g (a', t, (w, u))
   solvesys' ::
-    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, Set String)) ->
+    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
     String ->
     Type_1 ->
     [(Type_1, Type_1)] ->
-    ([(String, (Name, Type_1))], Typedexpr, Set String) ->
-    Err ([(String, (Name, Type_1))], Typedexpr, Set String)
-  solvesys' h b c d (x, m, a) =
+    ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+    Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))
+  solvesys' h b c d (x, m, (w, a)) =
     let
       (y, _) = typestring c []
     in
@@ -959,19 +968,19 @@ module Typing where
             (case Data.Set.member y a of
               False -> y
               True -> "an application type")
-        True -> solvesys_rep h b c d (x, m, a)
+        True -> solvesys_rep h b c d (x, m, (w, a))
   solvesys_rep ::
-    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, Set String)) ->
+    (String -> String -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
     String ->
     Type_1 ->
     [(Type_1, Type_1)] ->
-    ([(String, (Name, Type_1))], Typedexpr, Set String) ->
-    Err ([(String, (Name, Type_1))], Typedexpr, Set String)
-  solvesys_rep a c d e (x, f, k) =
+    ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+    Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))
+  solvesys_rep a c d e (x, f, (w, k)) =
     let
       m = sysrep' c d
     in
-      solvesys a ((<$>) (bimap m m) e) (second (second m) <$> x, sysrep2 c d f, Data.Set.delete c k)
+      solvesys a ((<$>) (bimap m m) e) (second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
     case (x, y) of
@@ -1088,12 +1097,12 @@ module Typing where
       Map' Polykind ->
       Map' Kind ->
       (Map' (Constructor, Status), Types) ->
-      [(String, Kind_1)] ->
+      KT2 ->
       String ->
       Map' Kind_1 ->
       [Kind_1] ->
       Err (Map' (Constructor, Status), Types))
-  type_branching_1 a b c (Data_case_3 d e f) g h i k l m n =
+  type_branching_1 a b c (Data_case_3 d e f) g h i (KT2 k' k) l m n =
     type_data_br_2
       a
       (sysrep' c (Prelude.foldl (\o -> \(p, _) -> Application_type_1 o (ntype p)) (Name_type_1 d n) e) b)
@@ -1101,7 +1110,7 @@ module Typing where
       (Prelude.foldl (\o -> \(p, q) -> Data.Map.insert p (pkind q) o) g e)
       h
       i
-      (repl_kind_vars c e k)
+      (KT2 k' (repl_kind_vars c e k))
       l
       (Prelude.foldl (\o -> \(p, q) -> Data.Map.insert p q o) m e)
   type_branchings_0 ::
@@ -1124,7 +1133,7 @@ module Typing where
       Map' Polykind ->
       Map' Kind ->
       (Map' (Constructor, Status), Types) ->
-      [(String, Kind_1)] ->
+      KT2 ->
       String ->
       Map' Kind_1 ->
       [Kind_1] ->
@@ -1142,14 +1151,14 @@ module Typing where
     (
       Map' Constructor ->
       (Location_0 -> Location_1) ->
-      Integer ->
+      (Integer, Integer) ->
       Eqtns ->
       Map' Type_2 ->
       (Alg_pat_1, Expression_1) ->
       Integer ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err ((Alg_pat_2, Typedexpr), Eqtns, Integer, [(Location_0, [Alg_pat_3])], Alg_pat_3))
+      Err ((Alg_pat_2, Typedexpr), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
   type_case a c d (Eqtns e p q) f (g, h) i j k =
     (
       get_pattern_type c a (d, e, p, f) g (ntype (show i)) >>=
@@ -1158,14 +1167,14 @@ module Typing where
     (
       Map' Constructor ->
       (Location_0 -> Location_1) ->
-      Integer ->
+      (Integer, Integer) ->
       Eqtns ->
       Map' Type_2 ->
       [(Alg_pat_1, Expression_1)] ->
       Integer ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err ([(Alg_pat_2, Typedexpr)], Eqtns, Integer, [(Location_0, [Alg_pat_3])], [Alg_pat_3]))
+      Err ([(Alg_pat_2, Typedexpr)], Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], [Alg_pat_3]))
   type_cases b c d e f g n h i =
     case g of
       [] -> Right ([], e, d, [], [])
@@ -1233,7 +1242,7 @@ module Typing where
           (\e' ->
             (
               Prelude.foldl
-                (\x -> \(Method_4 t s u0 u) -> ins_new t (Basic_type_1 ((c, k) : s) (Just x1) (x1 : u0) u) x)
+                (\x -> \(Method_4 t s u0 u) -> ins_new t (Basic_type_1 (KT2 [] ((c, k) : s)) (Just x1) (x1 : u0) u) x)
                 f0
                 e',
               ins_new b (Class_4 (c, k) m e') f)) <$>
@@ -1453,15 +1462,14 @@ module Typing where
       Data_2 ->
       (Map' (Polykind, Status), Map' Expression_2) ->
       Err ((Map' (Polykind, Status), Map' Expression_2), Data_3))
--- TODO
--- implement kind polymorphism
-  type_data_1 a (b, c) (Data_2 d e f) (i, k) =
+  type_data_1 a (b, c) (Data_2 d (KT1 e e') f) (i, k) =
     (
-      type_kt_0 (Location_1 a) (e, b) >>=
-      \(KT2 _ l, (_, l')) ->
+      type_kt_0 (Location_1 a) (KT1 e e', b) >>=
+      \(l, y) ->
         (
-          (\(n, o) -> ((ins_new d (pkind (Prelude.foldr arrow_kind star_kind (snd <$> l))) i, n), Data_3 d l o)) <$>
-          type_data_br_1 (a, l', c) f k))
+          (\(n, o) ->
+            ((ins_new d (Polykind e (Prelude.foldr arrow_kind star_kind (snd <$> l))) i, n), Data_3 d (KT2 e l) o)) <$>
+          type_data_br_1 (a, y, c) f k))
   type_data_2 ::
     (
       (Location_0 -> Location_1) ->
@@ -1470,15 +1478,15 @@ module Typing where
       Map' Kind ->
       (Map' (Constructor, Status), Types) ->
       Err (Map' (Constructor, Status), Types))
-  type_data_2 a (Data_3 b c d) e f g =
+  type_data_2 a (Data_3 b (KT2 z c) d) e f g =
     type_data_br_2
       a
       (Prelude.foldl (\n -> \n' -> Application_type_1 n (ntype n')) (ntype b) (fst <$> c))
       d
       (type_kinds c e)
-      f
+      (Prelude.foldl (\m -> \x -> Data.Map.insert x Star_kind m) f z)
       g
-      c
+      (KT2 z c)
       b
       (Prelude.foldl (\m -> \(x, y) -> Data.Map.insert x y m) Data.Map.empty c)
   type_data_br_1 :: (String, Map' Kind_1, Map' Prom_alg) -> Data_br_2 -> Map' Expression_2 -> Err (Map' Expression_2, Data_br_3)
@@ -1546,13 +1554,13 @@ module Typing where
       Map' Polykind ->
       Map' Kind ->
       (Map' (Constructor, Status), Types) ->
-      [(String, Kind_1)] ->
+      KT2 ->
       String ->
       Map' Kind_1 ->
       Err (Map' (Constructor, Status), Types))
-  type_data_br_2 a b c d e (f, g) l o w1 =
+  type_data_br_2 a b c d e (f, g) (KT2 x l) o w1 =
     let
-      m i = Prelude.foldl (\j -> \(k, n) -> ins_new k (Basic_type_1 l Nothing [] n) j) g i
+      m i = Prelude.foldl (\j -> \(k, n) -> ins_new k (Basic_type_1 (KT2 x l) Nothing [] n) j) g i
     in
       case c of
         Algebraic_data_3 i ->
@@ -1561,17 +1569,17 @@ module Typing where
               (
                 Prelude.foldl
                   (\k -> \(Form_2 n p) ->
-                    ins_new n (Constructor l p b ((\(Form_2 h y) -> (h, fromIntegral (length y))) <$> j)) k)
+                    ins_new n (Constructor (KT2 x l) p b ((\(Form_2 h y) -> (h, fromIntegral (length y))) <$> j)) k)
                   f
                   j,
                 m ((\(Form_2 k n) -> (k, Prelude.foldr function_type b n)) <$> j))) <$>
             type_forms a i d e)
-        Branching_data_3 j h k -> type_branchings_1 a b j k (Data.Map.delete j d) e (f, g) l o (Data.Map.delete j w1) h
+        Branching_data_3 j h k -> type_branchings_1 a b j k (Data.Map.delete j d) e (f, g) (KT2 x l) o (Data.Map.delete j w1) h
         Struct_data_3 i j ->
           (
             (\k ->
               (
-                ins_new i (Constructor l (snd <$> k) b [(i, fromIntegral (length j))]) f,
+                ins_new i (Constructor (KT2 x l) (snd <$> k) b [(i, fromIntegral (length j))]) f,
                 m ((i, Prelude.foldr function_type b (snd <$> k)) : (second (function_type b) <$> k)))) <$>
             type_fields a j d e)
   type_datas ::
@@ -1659,7 +1667,7 @@ module Typing where
               type_constraints_0 Data.Map.empty e' (k2, j', (\_ -> Zr) <$> j') l >>=
                 \(o1, o2, _) ->
                 (
-                  (\h -> (Basic_def_4 f d y o1 h i o2, ins_new d (Basic_type_1 y Nothing o1 h) c, t, t', u3)) <$>
+                  (\h -> (Basic_def_4 f d y o1 h i o2, ins_new d (Basic_type_1 (KT2 [] y) Nothing o1 h) c, t, t', u3)) <$>
                   type_typ (Location_1 l) g j x star_kind)))
       Instance_3 d (Name e m) (Name f n) w2 k' o' g ->
         und_err
@@ -1888,30 +1896,33 @@ module Typing where
       n = " in " ++ k
     in
       (
-        type_expression c a w (Eqtns Data.Set.empty [] []) e f h b >>=
+        type_expression c a (0, w) (Eqtns (Data.Set.empty, Data.Set.empty) [] []) e f h b >>=
         \(g, (Eqtns i j x), _, x3) ->
           (
             solvesys (\y -> \p -> Left ("Type mismatch between " ++ min y p ++ " and " ++ max y p ++ n)) j (x, g, i) >>=
-            \(y, p, k') ->
-              case Data.Set.null k' of
-                False -> Left ("Unresolved type variables" ++ n)
+            \(y, p, (k2, k')) ->
+              case Data.Set.null k2 of
+                False -> Left ("Unresolved kind variables" ++ n)
                 True ->
-                  (
-                    addargs w' p <$
-                    slv
-                      m
-                      y
-                      (\(Name p' q) -> \t -> \u ->
-                        (
-                          "Function " ++
-                          q ++
-                          location (a p') ++
-                          " requires instance or constraint " ++
-                          t ++
-                          " " ++
-                          u ++
-                          ".")) <*
-                    pats a ((\(Constructor _ _ _ e') -> e') <$> c) x3)))
+                  case Data.Set.null k' of
+                    False -> Left ("Unresolved type variables" ++ n)
+                    True ->
+                      (
+                        addargs w' p <$
+                        slv
+                          m
+                          y
+                          (\(Name p' q) -> \t -> \u ->
+                            (
+                              "Function " ++
+                              q ++
+                              location (a p') ++
+                              " requires instance or constraint " ++
+                              t ++
+                              " " ++
+                              u ++
+                              ".")) <*
+                        pats a ((\(Constructor _ _ _ e') -> e') <$> c) x3)))
   type_expr' ::
     (Map' Polykind, Map' Constructor, Map' Type_2, Map' Kind) ->
     Expression_1 ->
@@ -1935,14 +1946,14 @@ module Typing where
     (
       Map' Constructor ->
       (Location_0 -> Location_1) ->
-      Integer ->
+      (Integer, Integer) ->
       Eqtns ->
       Map' Type_2 ->
       Expression_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err (Typedexpr, Eqtns, Integer, [(Location_0, [Alg_pat_3])]))
-  type_expression v r o (Eqtns f h c') d b e (r7, m8) =
+      Err (Typedexpr, Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
+  type_expression v r (o', o) (Eqtns (f4, f) h c') d b e (r7, m8) =
     let
       x' a = location' (r a)
     in
@@ -1952,8 +1963,8 @@ module Typing where
             type_expression
               v
               r
-              (o + 1)
-              (Eqtns (Data.Set.insert (show o) f) h c')
+              (o', o + 1)
+              (Eqtns (f4, Data.Set.insert (show o) f) h c')
               d
               c
               (function_type (ntype (show o)) e)
@@ -1962,26 +1973,26 @@ module Typing where
               (
                 (\(l, m, q, e') -> (Application_texpr i l, m, q, d7 ++ e')) <$>
                 type_expression v r p j d g (ntype (show o)) (r7, m8)))
-        Char_expression_1 c -> Right (Char_texpr c, Eqtns f ((e, char_type) : h) c', o, [])
+        Char_expression_1 c -> Right (Char_texpr c, Eqtns (f4, f) ((e, char_type) : h) c', (o', o), [])
         Function_expression_1 c g ->
           (
-            type_pat r v c (ntype (show o)) d (o + 1) (Data.Set.insert (show o) f) h >>=
-            \(a6, b6, c6, d6, f6) ->
+            type_pat r v c (ntype (show o)) d (o', o + 1) (f4, Data.Set.insert (show o) f) h >>=
+            \(a6, b6, (c2, c6), (f5, d6), f6) ->
               (
-                (\(a', b', d', f4) -> (Function_texpr a6 a', b', d', f4)) <$>
+                (\(a', b', d', f7) -> (Function_texpr a6 a', b', d', f7)) <$>
                 type_expression
                   v
                   r
-                  (c6 + 1)
-                  (Eqtns (Data.Set.insert (show c6) d6) ((e, function_type (ntype (show o)) (ntype (show c6))) : f6) c')
+                  (c2, c6 + 1)
+                  (Eqtns (f5, Data.Set.insert (show c6) d6) ((e, function_type (ntype (show o)) (ntype (show c6))) : f6) c')
                   b6
                   g
                   (ntype (show c6))
                   (r7, m8)))
-        Int_expression_1 c -> Right (Int_texpr c, Eqtns f ((e, int_type) : h) c', o, [])
+        Int_expression_1 c -> Right (Int_texpr c, Eqtns (f4, f) ((e, int_type) : h) c', (o', o), [])
         Match_expression_1 a7 c g ->
           (
-            type_expression v r (o + 1) (Eqtns (Data.Set.insert (show o) f) h c') d c (ntype (show o)) (r7, m8) >>=
+            type_expression v r (o', o + 1) (Eqtns (f4, Data.Set.insert (show o) f) h c') d c (ntype (show o)) (r7, m8) >>=
             \(k, m, n, n2) ->
               (\(q, u, x, n3, n4) -> (Match_texpr k q, u, x, n2 ++ [(a7, n4)] ++ n3)) <$> type_cases v r n m d g o e (r7, m8))
         Name_expression_1 (Name a7 c) g k ->
@@ -1993,7 +2004,7 @@ module Typing where
               d
               "variable"
               (r a7)
-              (\(Basic_type_1 i x0 a' j) ->
+              (\(Basic_type_1 (KT2 i3 i) x0 a' j) ->
                 let
                   g7 k2 d3 e4 s' r' =
                     (
@@ -2003,8 +2014,8 @@ module Typing where
                         in
                           (k2 x7, Eqtns n ((e, repl' p j) : h) (x7 ++ c'), s, [])) <$>
                       case k of
-                        [] -> Right (typevars d3 (s', e4, r'))
-                        _ -> (\f9 -> (s', f9, r')) <$> typevars' r (r7, m8) e5 d3 k e4)
+                        [] -> Right (typevars (KT2 i3 d3) ((o', s'), e4, (f4, r')))
+                        _ -> (\f9 -> ((o', s'), f9, (f4, r'))) <$> typevars' r (r7, m8) e5 d3 k e4)
                 in
                   case g of
                     Just t3 ->
@@ -2184,11 +2195,8 @@ module Typing where
         case d of
           [] -> Left (i "few")
           f : g -> type_kind_7 a b Star_kind f >>= \h -> (:) h <$> type_kinds_9 a b e g i
-  type_kt_0 :: (Location_0 -> Location_1) -> (KT1, Map' Kind) -> Err (KT2, (Map' Kind, Map' Kind_1))
--- TODO: finish implementing this part here
--- this is actually not kind-polymorphic
--- this code assumes that there are no kind variables
-  type_kt_0 a (KT1 b c, d) = bimap (KT2 b) ((,) d) <$> type_kinds_5 a d (c, Data.Map.empty)
+  type_kt_0 :: (Location_0 -> Location_1) -> (KT1, Map' Kind) -> Err ([(String, Kind_1)], Map' Kind_1)
+  type_kt_0 a (KT1 b c, d) = type_kinds_5 a (Prelude.foldl (\e -> \f -> Data.Map.insert f Star_kind e) d b) (c, Data.Map.empty)
   type_method :: (Location_0 -> Location_1) -> Method_2 -> Map' Polykind -> Map' Kind -> Err Method_3
   type_method a (Method_2 b c i d) e f = type_kinds_0 a f c e >>= \(g, h) -> Method_3 b g i <$> type_typ a d h f star_kind
   type_method_1 :: String -> Map' Class_5 -> Method_3 -> Err Method_4
@@ -2231,10 +2239,10 @@ module Typing where
       Pat ->
       Type_1 ->
       Map' Type_2 ->
-      Integer ->
-      Set String ->
+      (Integer, Integer) ->
+      (Set String, Set String) ->
       [(Type_1, Type_1)] ->
-      Err (Pat_1, Map' Type_2, Integer, Set String, [(Type_1, Type_1)]))
+      Err (Pat_1, Map' Type_2, (Integer, Integer), (Set String, Set String), [(Type_1, Type_1)]))
   type_pat k h (Pat g b) c d l n o =
     case b of
       Application_pat e f ->
@@ -2254,7 +2262,7 @@ module Typing where
                   type_pats k h f (repl' q <$> j) d p r ((c, repl' q m) : o) (Name g e))
             _ -> Left ("Constructor " ++ e ++ location (k g) ++ " is not a struct constructor."))
       Blank_pat -> Right (Blank_pat_1, d, l, n, o)
-      Name_pat e -> Right (Name_pat_1 e, Data.Map.insert e (Basic_type_1 [] Nothing [] c) d, l, n, o)
+      Name_pat e -> Right (Name_pat_1 e, Data.Map.insert e (Basic_type_1 (KT2 [] []) Nothing [] c) d, l, n, o)
   type_pats ::
     (
       (Location_0 -> Location_1) ->
@@ -2262,11 +2270,11 @@ module Typing where
       [Pat] ->
       [Type_1] ->
       Map' Type_2 ->
-      Integer ->
-      Set String ->
+      (Integer, Integer) ->
+      (Set String, Set String) ->
       [(Type_1, Type_1)] ->
       Name ->
-      Err ([Pat_1], Map' Type_2, Integer, Set String, [(Type_1, Type_1)]))
+      Err ([Pat_1], Map' Type_2, (Integer, Integer), (Set String, Set String), [(Type_1, Type_1)]))
   type_pats a b d e f g h i (Name x y) =
     let
       z a' = Left ("Constructor " ++ y ++ location (a x) ++ " has been given too " ++ a' ++ " arguments.")
@@ -2366,7 +2374,7 @@ module Typing where
               (\x' -> arrow_kind (prom_type x'))
               (Prelude.foldl (\t' -> \u' -> Application_kind_1 t' (Name_kind_1 u')) (Name_kind_1 a) b)
               q'))
-      b' = Basic_type_1 g0 Nothing []
+      b' = Basic_type_1 (KT2 [] g0) Nothing []
     in
       case c of
         Plain_data_alg h ->
@@ -2378,7 +2386,7 @@ module Typing where
                 ins_new a (Prom_alg b (Data.Map.fromList ((\(Form_2 r s) -> (r, prom_type <$> s)) <$> q))) a0,
                 Prelude.foldl
                   (\t -> \(Form_2 u v) ->
-                    ins_new u (Constructor g0 v x ((\(Form_2 r s) -> (r, fromIntegral (length s))) <$> q)) t)
+                    ins_new u (Constructor (KT2 [] g0) v x ((\(Form_2 r s) -> (r, fromIntegral (length s))) <$> q)) t)
                   k7
                   q)) <$>
             type_forms f h g y')
@@ -2392,7 +2400,7 @@ module Typing where
                   (ins_new m3 (b' (Prelude.foldr (function_type <$> snd) x i)) e)
                   i,
                 a0,
-                ins_new m3 (Constructor g0 (snd <$> i) x [(m3, fromIntegral (length i))]) k7)) <$>
+                ins_new m3 (Constructor (KT2 [] g0) (snd <$> i) x [(m3, fromIntegral (length i))]) k7)) <$>
             type_fields f h g y')
   type_proms_1 ::
     (Location_0 -> Location_1) ->
@@ -2434,52 +2442,6 @@ module Typing where
       solve_type_eqs e (Data.Set.delete b a) (bimap f f <$> d)
   type_typ :: (Location_0 -> Location_1) -> Type_8 -> Map' Polykind -> Map' Kind -> Kind_1 -> Err Type_1
   type_typ a (Type_8 b c) d e f = type_eqs a 0 c d e f (Data.Set.empty, []) >>= \(_, (g, h), i) -> i <$ solve_type_eqs (a b) g h
-{-
-  type_type :: (Location_0 -> Location_1) -> Location_0 -> Type_5 -> Map' Polykind -> Map' Kind -> Kind_1 -> Err Type_1
-  type_type l a c d y e =
-    let
-      x = kind_err (l a)
-    in
-      case c of
-        Application_type_5 f g ->
-          (
-            type_type' l a f d y >>=
-            \(h, i) ->
-              case i of
-                Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") j) k ->
-                  if k == e then Application_type_1 h <$> type_type l a g d y j else x
-                _ -> x)
-        Char_type_5 b -> if e == char_kind then Right (Char_type_1 b) else x
-        Int_type_5 b -> if e == int_kind then Right (Int_type_1 b) else x
-        Name_type_5 (Name a' f) b ->
-          und_err
-            f
-            d
-            "type"
-            (l a')
-            (\(Polykind h g) ->
-              ziphelp l y f a' Data.Map.empty h b >>= \(z, w) -> if repkinds w g == e then Right (Name_type_1 f z) else x)
-  type_type' :: (Location_0 -> Location_1) -> Location_0 -> Type_5 -> Map' Polykind -> Map' Kind -> Err (Type_1, Kind_1)
-  type_type' l a c d y =
-    case c of
-      Application_type_5 e f ->
-        (
-          type_type' l a e d y >>=
-          \(g, h) ->
-            case h of
-              Application_kind_1 (Application_kind_1 (Name_kind_1 "Function") i) j ->
-                (\k -> (Application_type_1 g k, j)) <$> type_type l a f d y i
-              _ -> kind_err (l a))
-      Char_type_5 e -> Right (Char_type_1 e, char_kind)
-      Int_type_5 e -> Right (Int_type_1 e, int_kind)
-      Name_type_5 (Name a' e) g ->
-        und_err
-          e
-          d
-          "type"
-          (l a')
-          (\(Polykind h f) -> bimap (Name_type_1 e) (\w -> repkinds w f) <$> ziphelp l y e a' Data.Map.empty h g)
--}
   type_types :: (Location_0 -> Location_1) -> [Type_8] -> Map' Polykind -> Map' Kind -> Err [Type_1]
   type_types f a b g =
     case a of
@@ -2497,100 +2459,100 @@ module Typing where
         (
           "Add",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Ring" "T"))
             [Constraint_1 "Ring" "T"]
             (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))),
         (
           "Compare",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Ord" "T"))
             [Constraint_1 "Ord" "T"]
             (function_type (ntype "T") (function_type (ntype "T") comparison_type))),
         (
           "Construct_List",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             Nothing
             []
             (function_type (ntype "T") (function_type (list_type (ntype "T")) (list_type (ntype "T"))))),
         (
           "Convert",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Ring" "T"))
             [Constraint_1 "Ring" "T"]
             (function_type int_type (ntype "T"))),
-        ("Crash", Basic_type_1 [("T", star_kind)] Nothing [] (ntype "T")),
-        ("Div", Basic_type_1 [] Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
-        ("EQ", Basic_type_1 [] Nothing [] comparison_type),
-        ("Empty_List", Basic_type_1 [("T", star_kind)] Nothing [] (list_type (ntype "T"))),
-        ("False", Basic_type_1 [] Nothing [] logical_type),
+        ("Crash", Basic_type_1 (KT2 [] [("T", star_kind)]) Nothing [] (ntype "T")),
+        ("Div", Basic_type_1 (KT2 [] []) Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
+        ("EQ", Basic_type_1 (KT2 [] []) Nothing [] comparison_type),
+        ("Empty_List", Basic_type_1 (KT2 [] [("T", star_kind)]) Nothing [] (list_type (ntype "T"))),
+        ("False", Basic_type_1 (KT2 [] []) Nothing [] logical_type),
         (
           "First",
           Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             Nothing
             []
             (function_type (pair_type (ntype "T") (ntype "U")) (ntype "T"))),
-        ("GT", Basic_type_1 [] Nothing [] comparison_type),
+        ("GT", Basic_type_1 (KT2 [] []) Nothing [] comparison_type),
         (
           "Left",
           Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             Nothing
             []
             (function_type (ntype "T") (either_type (ntype "T") (ntype "U")))),
-        ("LT", Basic_type_1 [] Nothing [] comparison_type),
+        ("LT", Basic_type_1 (KT2 [] []) Nothing [] comparison_type),
         (
           "Mk_Pair",
           Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             Nothing
             []
             (function_type (ntype "T") (function_type (ntype "U") (pair_type (ntype "T") (ntype "U"))))),
-        ("Mod", Basic_type_1 [] Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
+        ("Mod", Basic_type_1 (KT2 [] []) Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
         (
           "Multiply",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Ring" "T"))
             [Constraint_1 "Ring" "T"]
             (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))),
         (
           "Negate",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Ring" "T"))
             [Constraint_1 "Ring" "T"]
             (function_type (ntype "T") (ntype "T"))),
-        ("Next", Basic_type_1 [] Nothing [] (function_type nat_type nat_type)),
-        ("Nothing", Basic_type_1 [("T", star_kind)] Nothing [] (maybe_type (ntype "T"))),
+        ("Next", Basic_type_1 (KT2 [] []) Nothing [] (function_type nat_type nat_type)),
+        ("Nothing", Basic_type_1 (KT2 [] [("T", star_kind)]) Nothing [] (maybe_type (ntype "T"))),
         (
           "Right",
           Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             Nothing
             []
             (function_type (ntype "U") (either_type (ntype "T") (ntype "U")))),
         (
           "Second",
           Basic_type_1
-            [("T", star_kind), ("U", star_kind)]
+            (KT2 [] [("T", star_kind), ("U", star_kind)])
             Nothing
             []
             (function_type (pair_type (ntype "T") (ntype "U")) (ntype "U"))),
-        ("True", Basic_type_1 [] Nothing [] logical_type),
-        ("Wrap", Basic_type_1 [("T", star_kind)] Nothing [] (function_type (ntype "T") (maybe_type (ntype "T")))),
+        ("True", Basic_type_1 (KT2 [] []) Nothing [] logical_type),
+        ("Wrap", Basic_type_1 (KT2 [] [("T", star_kind)]) Nothing [] (function_type (ntype "T") (maybe_type (ntype "T")))),
         (
           "Write_Brackets",
           Basic_type_1
-            [("T", star_kind)]
+            (KT2 [] [("T", star_kind)])
             (Just (Constraint_1 "Writeable" "T"))
             [Constraint_1 "Writeable" "T"]
             (function_type (ntype "T") (pair_type (list_type char_type) logical_type))),
-        ("Zero", Basic_type_1 [] Nothing [] nat_type)]
+        ("Zero", Basic_type_1 (KT2 [] []) Nothing [] nat_type)]
   typestring :: Type_1 -> [Type_1] -> (String, [Type_1])
   typestring a d =
     case a of
@@ -2604,11 +2566,17 @@ module Typing where
       d = show c
     in
       (c + 1, Data.Map.insert a (Name_type_1 d []) e, Data.Set.insert d f)
-  typevars :: [(String, Kind_1)] -> (Integer, Map' Type_1, Set String) -> (Integer, Map' Type_1, Set String)
-  typevars a b =
-    case a of
-      [] -> b
-      (c, _) : d -> typevars d (typevar c b)
+  typevars ::
+    (
+      KT2 ->
+      ((Integer, Integer), Map' Type_1, (Set String, Set String)) ->
+      ((Integer, Integer), Map' Type_1, (Set String, Set String)))
+  typevars (KT2 a b) ((c, d), e, (f, g)) =
+    let
+      (h, i) = kindvars a (c, f)
+      (j, k, l) = typevars_0 b (d, e, g)
+    in
+      ((h, j), k, (i, l))
   typevars' ::
     (
       (Location_0 -> Location_1) ->
@@ -2628,6 +2596,11 @@ module Typing where
         case c of
           [] -> a "few"
           h : i -> type_typ l h j k f >>= \m -> typevars' l (j, k) a g i (Data.Map.insert e m d)
+  typevars_0 :: [(String, Kind_1)] -> (Integer, Map' Type_1, Set String) -> (Integer, Map' Type_1, Set String)
+  typevars_0 a b =
+    case a of
+      [] -> b
+      (c, _) : d -> typevars_0 d (typevar c b)
   typing ::
     String ->
     Tree_5 ->
