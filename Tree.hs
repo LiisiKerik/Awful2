@@ -14,7 +14,7 @@ module Tree where
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
-  data Class_0 = Class_0 Name (Name, Kind_0) (Maybe Name) [Method] deriving Show
+  data Class_0 = Class_0 Name [Name] (Name, Kind_0) (Maybe Name) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name Name deriving Show
   data Data_0 = Data_0 Location_0 String KT0 Data_br_0 deriving Show
   data Data_br_0 =
@@ -233,7 +233,8 @@ module Tree where
   parse_class =
     (
       Class_0 <$>
-      parse_name'' Class_token <*
+      parse_name'' Class_token <*>
+      parse_kind_vars <*
       parse_token Left_curly_token <*>
       ((,) <$> parse_pattern' <* parse_colon <*> parse_kind) <*
       parse_token Right_curly_token <*>

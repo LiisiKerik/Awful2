@@ -14,8 +14,8 @@ module Naming where
     Int_alg_pat_1 Integer |
     Name_alg_pat_1 String
       deriving Show
-  data Class_1 = Class_1 String (Name, Kind_0) (Maybe Name) [Method_1] deriving Show
-  data Class_2 = Class_2 String (String, Kind_0) (Maybe Name) [Method_2] deriving Show
+  data Class_1 = Class_1 String [Name] (Name, Kind_0) (Maybe Name) [Method_1] deriving Show
+  data Class_2 = Class_2 String [String] (String, Kind_0) (Maybe Name) [Method_2] deriving Show
   data Data_1 = Data_1 String KT0 Data_br_1 deriving Show
   data Data_2 = Data_2 String KT1 Data_br_2 deriving Show
   data Data_br_1 =
@@ -133,9 +133,10 @@ module Naming where
   naming_case a ((b0, b1), g) (c, d) =
     naming_alg_pattern a (b1, g) c >>= \(e, f) -> (,) f <$> naming_expression a d ((b0, b1), e)
   naming_class_0 :: String -> Class_7 -> Locations -> Err (Locations, Class_1)
-  naming_class_0 a (Class_7 b c h d) e = naming_name a b e >>= \(f, g) -> second (Class_1 g c h) <$> naming_methods_0 a d f
+  naming_class_0 a (Class_7 b i c h d) e = naming_name a b e >>= \(f, g) -> second (Class_1 g i c h) <$> naming_methods_0 a d f
   naming_class_1 :: String -> Class_1 -> Locations -> Err Class_2
-  naming_class_1 a (Class_1 b (c, d) h e) f = naming_name a c f >>= \(i, g) -> Class_2 b (g, d) h <$> naming_methods_1 a e i
+  naming_class_1 a (Class_1 b j (c, d) h e) f =
+    naming_name a c f >>= \(i, g) -> naming_names'' a j i >>= \(k, l) -> Class_2 b k (g, d) h <$> naming_methods_1 a e l
   naming_classes_0 :: String -> [Class_7] -> Locations -> Err (Locations, [Class_1])
   naming_classes_0 a b c =
     case b of

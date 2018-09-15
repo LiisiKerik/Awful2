@@ -46,7 +46,7 @@ module Typing where
   data Alg_pat_3 = Blank_alg_pat_3 | Char_alg_pat_3 Char | Int_alg_pat_3 Integer | Struct_alg_pat_3 String [Alg_pat_3]
     deriving Show
   data Brnch_3 = Brnch_3 String [(String, Kind_1)] String [(String, Type_8)] deriving Show
-  data Class_3 = Class_3 String (String, Kind_1) (Maybe Name) [Method_3] deriving Show
+  data Class_3 = Class_3 String [String] (String, Kind_1) (Maybe Name) [Method_3] deriving Show
   data Class_4 = Class_4 (String, Kind_1) (Maybe String) [Method_4] deriving Show
   data Class_5 = Class_5 Kind_1 (Maybe String) [String] deriving Show
   data Constraint_1 = Constraint_1 String String deriving Show
@@ -1202,31 +1202,34 @@ module Typing where
           Map' (Kind_1, Status),
           Map' (Class_5, Status),
           Map' String))
-  type_class_0 a i j (Class_2 b (c, d) g' e) (m, w0, i', j0, x2) =
-    (
-      type_kind_7 a i Star_kind d >>=
-      \h ->
-        let
-          g3 = (\(Name _ t4) -> t4) <$> g'
-        in
-          (
-            type_inh b [b] g3 x2 *>
+  type_class_0 a i j (Class_2 b h0 (c, d) g' e) (m, w0, i', j0, x2) =
+    let
+      i2 = Prelude.foldl (\t4 -> \b2 -> Data.Map.insert b2 Star_kind t4) i h0
+    in
+      (
+        type_kind_7 a i2 Star_kind d >>=
+        \h ->
+          let
+            g3 = (\(Name _ t4) -> t4) <$> g'
+          in
             (
-              (\g ->
-                let
-                  g2 = (\(Method_3 w1 _ _ _) -> w1) <$> g
-                in
-                  (
-                    Class_3 b (c, h) g' g,
+              type_inh b [b] g3 x2 *>
+              (
+                (\g ->
+                  let
+                    g2 = (\(Method_3 w1 _ _ _) -> w1) <$> g
+                  in
                     (
-                      Data.Map.insert b Data.Map.empty m,
-                      Data.Map.insert b (g2, Data.Map.empty) w0,
-                      ins_new b h i',
-                      ins_new b (Class_5 h g3 g2) j0,
-                      case g' of
-                        Just (Name _ t0) -> Data.Map.insert b t0 x2
-                        Nothing -> x2))) <$>
-              type_methods_0 a e (Data.Map.insert c (pkind h) j) i)))
+                      Class_3 b h0 (c, h) g' g,
+                      (
+                        Data.Map.insert b Data.Map.empty m,
+                        Data.Map.insert b (g2, Data.Map.empty) w0,
+                        ins_new b h i',
+                        ins_new b (Class_5 h g3 g2) j0,
+                        case g' of
+                          Just (Name _ t0) -> Data.Map.insert b t0 x2
+                          Nothing -> x2))) <$>
+                type_methods_0 a e (Data.Map.insert c (pkind h) j) i2)))
   type_class_1 ::
     String ->
     Class_3 ->
@@ -1234,7 +1237,7 @@ module Typing where
     Map' Class_5 ->
     (Map' (Type_2, Status), Map' (Class_4, Status)) ->
     Err (Map' (Type_2, Status), Map' (Class_4, Status))
-  type_class_1 a (Class_3 b (c, k) g' e) d f1 (f0, f) =
+  type_class_1 a (Class_3 b g1 (c, k) g' e) d f1 (f0, f) =
     let
       x1 = Constraint_1 b c
       l m =
@@ -1242,7 +1245,7 @@ module Typing where
           (\e' ->
             (
               Prelude.foldl
-                (\x -> \(Method_4 t s u0 u) -> ins_new t (Basic_type_1 (KT2 [] ((c, k) : s)) (Just x1) (x1 : u0) u) x)
+                (\x -> \(Method_4 t s u0 u) -> ins_new t (Basic_type_1 (KT2 g1 ((c, k) : s)) (Just x1) (x1 : u0) u) x)
                 f0
                 e',
               ins_new b (Class_4 (c, k) m e') f)) <$>

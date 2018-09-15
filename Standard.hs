@@ -1,11 +1,11 @@
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Standard where
   import Data.Bifunctor
   import Data.Map
   import Tokenise
   import Tree
-  data Class_7 = Class_7 Name (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
+  data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
     Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
@@ -122,7 +122,7 @@ module Standard where
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
-  std_cls e (Class_0 a b c d) = Class_7 a b c <$> traverse (std_mthd e) d
+  std_cls e (Class_0 a b c f d) = Class_7 a b c f <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
   std_dat a (Data_0 b c d e) = Data_6 b c d <$> std_dat_br a e
   std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
@@ -171,4 +171,4 @@ module Standard where
     case Data.Map.lookup a b of
       Just e -> f e
       Nothing -> Left ("Undefined " ++ c ++ " " ++ a ++ location' d)
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
