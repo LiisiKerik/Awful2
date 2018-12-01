@@ -8,7 +8,7 @@ module Standard where
   data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_1 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
+    Instance_1 Location_0 Name [Kind_0] Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
   data Data_6 = Data_6 Location_0 String KT0 Data_br_6 deriving Show
   data Data_br_6 =
@@ -118,7 +118,7 @@ module Standard where
   standard_def i j a =
     case a of
       Basic_def_0 b c g d e f -> uncurry (Basic_def_1 b c g) <$> standard_arguments i j d e f
-      Instance_def_0 b c d h f g e -> Instance_1 b c d h f g <$> traverse (std_inst i j) e
+      Instance_def_0 b c d h f g k e -> Instance_1 b c d h f g k <$> traverse (std_inst i j) e
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7

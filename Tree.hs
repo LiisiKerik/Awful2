@@ -1,4 +1,4 @@
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Tree where
   import Control.Applicative
@@ -23,7 +23,7 @@ module Tree where
   data Data_case_0 = Data_case_0 Name [Name] Data_br_0 deriving Show
   data Def_0 =
     Basic_def_0 Name KT0 [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
-    Instance_def_0 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, ([Pat], Expression_0))]
+    Instance_def_0 Location_0 Name [Kind_0] Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, ([Pat], Expression_0))]
       deriving Show
   data Eqq = Eqq Name [Pat] Expression_0 deriving Show
   data Expression_0 =
@@ -304,7 +304,8 @@ module Tree where
     (
       Instance_def_0 <&
       parse_token Instance_token <*>
-      parse_name' <*
+      parse_name' <*>
+      parse_kinds' <*
       parse_token Left_curly_token <*>
       parse_name' <*>
       parse_optional' (parse_sq (parse_list 1 parse_kind)) <*>
@@ -346,6 +347,8 @@ module Tree where
   parse_kind_vars = parse_optional (parse_sq <$> parse_sq) parse_name'
   parse_kinds :: Parser' [(Name, Kind_0)]
   parse_kinds = parse_arguments parse_sq parse_name' parse_kind
+  parse_kinds' :: Parser' [Kind_0]
+  parse_kinds' = parse_optional (parse_sq <$> parse_sq) parse_kind
   parse_kt :: Parser' KT0
   parse_kt = KT0 <$> parse_kind_vars <*> parse_kinds
   parse_list :: Integer -> Parser' t -> Parser' [t]
@@ -486,4 +489,4 @@ module Tree where
       Token_1 c _ : _ -> c
   update_location :: State -> Location_0 -> State
   update_location (State a b) c = State a (max b c)
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------

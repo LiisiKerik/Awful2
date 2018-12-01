@@ -1,4 +1,4 @@
-`````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 Class Applicative{F : Star -> Star}<Functor>(Apply[T : Star, U : Star] : F (T -> U) -> F T -> F U, Lift[T : Star] : T -> F T)
 Class Braided{F : Star -> Star -> Star}(
   Associate[T : Star, U : Star, V : Star] : F (F T U) V -> F T (F U V),
@@ -7,7 +7,7 @@ Class Braided{F : Star -> Star -> Star}(
 Class Container{F : Star -> Star}(Empty[T : Star] : F T, Filter[T : Star] : (T -> Logical) -> F T -> F T)
 Class Field{T : Star}<Ring>(Inverse : T -> Maybe T)
 Class Finite{T : Star}<Ord>(All : List T)
-Class Functor{F : Star -> Star}(Fmap[T : Star, U : Star] : (T -> U) -> F T -> F U)
+Class Functor[[K, L]]{F : K -> L}(Fmap[T : K, U : K] : (T -> U) -> F T -> F U)
 Class Monad{F : Star -> Star}<Applicative>(Bind[T : Star, U : Star] : F T -> (T -> F U) -> F U)
 Operator ! Apply 2 Left
 Operator * Multiply 0 Left
@@ -143,4 +143,4 @@ Instance Writeable{Pair T U}<Writeable T, Writeable U>(
   Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' (List ("P", "a", "i", "r")) (List (Brackets x, Brackets y))) True)
 Def Zr[T : Star]<Ring T> : T = Convert 0
 Def Zip[F : Star -> Star, T : Star, U : Star, V : Star]<Applicative F>(f : T -> U -> V, x : F T) : F U -> F V = Apply (f . x)
-`````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````

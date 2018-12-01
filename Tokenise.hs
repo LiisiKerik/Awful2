@@ -1,4 +1,4 @@
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Tokenise where
   import Data.Bifunctor
@@ -31,6 +31,7 @@ module Tokenise where
     Algebraic_token |
     Blank_token |
     Branch_token |
+    Cat_token |
     Char_token Char |
     Class_token |
     Comma_token |
@@ -263,6 +264,7 @@ module Tokenise where
       "_" -> Blank_token
       "Algebraic" -> Algebraic_token
       "Branch" -> Branch_token
+      "Cat" -> Cat_token
       "Class" -> Class_token
       "Data" -> Data_token
       "Def" -> Def_token
@@ -275,4 +277,4 @@ module Tokenise where
       "Operator" -> Opdecl_token
       "Struct" -> Struct_token
       _ -> Name_token a
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------

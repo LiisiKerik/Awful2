@@ -28,11 +28,11 @@ module Naming where
   data Data_case_2 = Data_case_2 Name [String] Data_br_2 deriving Show
   data Def_2 =
     Basic_def_2 Location_0 String KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_2 Location_0 Name Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
+    Instance_2 Location_0 Name [Kind_0] Name [Kind_0] [Pattern_1] [Constraint_0] [(Name, Expression_9)]
       deriving Show
   data Def_3 =
     Basic_def_3 Location_0 String KT1 [Constraint_0] Type_8 Expression_1 |
-    Instance_3 Location_0 Name Name [Kind_0] [Pattern_0] [Constraint_0] [(Name, Expression_1)]
+    Instance_3 Location_0 Name [Kind_0] Name [Kind_0] [Pattern_0] [Constraint_0] [(Name, Expression_1)]
       deriving Show
   data Expression_1 =
     Application_expression_1 Expression_1 Expression_1 |
@@ -213,12 +213,13 @@ module Naming where
   naming_def_1 i a g =
     case a of
       Basic_def_1 c @ (Name h j) b x d e -> (\(f, _) -> (Basic_def_2 h j b x d e, f)) <$> naming_name i c g
-      Instance_1 b c d j f h e -> Right (Instance_2 b c d j f h e, g)
+      Instance_1 b c d j f h e k -> Right (Instance_2 b c d j f h e k, g)
   naming_def_2 :: String -> Def_2 -> ((Set String, Set String), Locations) -> Err Def_3
   naming_def_2 j a (m, b) =
     case a of
       Basic_def_2 k c d t f g -> naming_kt j d b >>= \(h, i) -> Basic_def_3 k c i t f <$> naming_expression j g (m, h)
-      Instance_2 f c d l g k e -> naming_patterns j g b >>= \(h, i) -> Instance_3 f c d l i k <$> naming_nameexprs j (m, h) e
+      Instance_2 f c n d l g k e ->
+        naming_patterns j g b >>= \(h, i) -> Instance_3 f c n d l i k <$> naming_nameexprs j (m, h) e
   naming_defs_1 :: String -> [Def_1] -> Locations -> Err ([Def_2], Locations)
   naming_defs_1 a b c =
     case b of
