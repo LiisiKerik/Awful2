@@ -5,7 +5,7 @@ module Standard where
   import Data.Map
   import Tokenise
   import Tree
-  data Cat_1 = Cat_1 Location_0 (Name, [Name]) (Name, Name, Either Type_8 Data_br_6, Expression_9, Expression_9) deriving Show
+  data Cat_1 = Cat_1 Location_0 (Name, [Name]) (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
   data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
@@ -128,9 +128,7 @@ module Standard where
     (
       (\l -> \m -> \n ->
         Cat_1 c d (e, f, l, Prelude.foldr Function_expression_9 m h, Prelude.foldr Function_expression_9 n j)) <$>
-      (case g of
-        Left l -> Left <$> std_type a l
-        Right l -> Right <$> std_dat_br a l) <*>
+      std_dat_br a g <*>
       std_expr a b i <*>
       std_expr a b k)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7

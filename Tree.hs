@@ -14,8 +14,7 @@ module Tree where
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
-  data Cat_0 = Cat_0 Location_0 (Name, [Name]) (Name, Name, Either Type_7 Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
-    deriving Show
+  data Cat_0 = Cat_0 Location_0 (Name, [Name]) (Name, Name, Data_br_0, [Pat], Expression_0, [Pat], Expression_0) deriving Show
   data Class_0 = Class_0 Name [Name] (Name, Kind_0) (Maybe Name) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name Name deriving Show
   data Data_0 = Data_0 Location_0 String KT0 Data_br_0 deriving Show
@@ -218,7 +217,7 @@ module Tree where
           parse_arrow <*>
           parse_name' <*
           parse_eq <*>
-          (Left <$> parse_type <+> Right <$> parse_data_br) <*
+          parse_data_br <*
           parse_comma <*
           parse_name_4 "Compose" <*>
           parse_many parse_brack_pat <*

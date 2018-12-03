@@ -14,9 +14,8 @@ module Naming where
     Int_alg_pat_1 Integer |
     Name_alg_pat_1 String
       deriving Show
-  data Cat_2 = Cat_2 Location_0 (Name, [Name]) (Name, Name, Either Type_8 Data_br_1, Expression_9, Expression_9) deriving Show
-  data Cat_3 = Cat_3 Location_0 (Name, [String]) (String, String, Either Type_8 Data_br_2, Expression_1, Expression_1)
-    deriving Show
+  data Cat_2 = Cat_2 Location_0 (Name, [Name]) (Name, Name, Data_br_1, Expression_9, Expression_9) deriving Show
+  data Cat_3 = Cat_3 Location_0 (Name, [String]) (String, String, Data_br_2, Expression_1, Expression_1) deriving Show
   data Class_1 = Class_1 String [Name] (Name, Kind_0) (Maybe Name) [Method_1] deriving Show
   data Class_2 = Class_2 String [String] (String, Kind_0) (Maybe Name) [Method_2] deriving Show
   data Data_1 = Data_1 String KT0 Data_br_1 deriving Show
@@ -154,9 +153,7 @@ module Naming where
           bimap
             (\(j, m) -> (j, m, Data.Map.insert n (Library (Location_1 a c)) l))
             (\j -> Cat_2 c (Name d n, o) (e, f, j, h, i)) <$>
-          case g of
-            Left j -> Right ((b, k), Left j)
-            Right j -> second Right <$> naming_data_br_1 a j (b, k))
+          naming_data_br_1 a g (b, k))
       Just j -> Left (location_err ("categories for kind " ++ n) j (Location_1 a c))
   naming_cat_1 :: String -> (Set String, Locations) -> Cat_2 -> Err Cat_3
   naming_cat_1 a (b, d) (Cat_2 e (f, g) (h, i, j, k, l)) =
@@ -165,17 +162,7 @@ module Naming where
       \(m, n) ->
         (
           (\(o, p, q) -> \r -> \s -> Cat_3 e (f, m) (o, p, q, r, s)) <$>
-          (
-            naming_name a h n >>=
-            \(o, p) ->
-              (
-                naming_name a i o >>=
-                \(q, r) ->
-                  (
-                    (\s -> (p, r, s)) <$>
-                    case j of
-                      Left s -> Right (Left s)
-                      Right s -> Right <$> naming_data_br_2 a s q))) <*>
+          (naming_name a h n >>= \(o, p) -> naming_name a i o >>= \(q, r) -> (\s -> (p, r, s)) <$> naming_data_br_2 a j q) <*>
           naming_expression a k (b, n) <*>
           naming_expression a l (b, n)))
   naming_cats_0 :: String -> ((Set String, Locations, Locations), [Cat_1]) -> Err ((Set String, Locations, Locations), [Cat_2])
