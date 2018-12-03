@@ -23,6 +23,11 @@ piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair
 All Ord C, All c C <- klassimuutuja
 polütüüpsus
 check if things are put correctly into local or global context; (esp. classes and methods)
+promote field names?
+pattern match types with only one type constructor?
+promote constructor operators
+improve cat syntax
+viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
@@ -627,9 +632,11 @@ module Typing where
         (\x -> (x, Language)) <$>
         [
           "Add",
+          "Arrow",
           "Char",
           "Compare",
           "Comparison",
+          "Compose",
           "Construct_List",
           "Convert",
           "Crash",
@@ -641,6 +648,7 @@ module Typing where
           "First",
           "Function",
           "GT",
+          "Id",
           "Int",
           "LT",
           "Left",
@@ -1023,22 +1031,20 @@ module Typing where
       String ->
       Tree_0 ->
       (
-        ((Set String, Set String), Locations, Locations),
+        (Set String, Locations, Locations, Locations, Map' (Map' Location')),
         (File, Map' Op),
         Map' Expression_2,
-        Map' (Map' Location'),
         Map' ([String], Map' [(String, Nat)])) ->
       Err
         (
-          ((Set String, Set String), Locations, Locations),
+          (Set String, Locations, Locations, Locations, Map' (Map' Location')),
           (File, Map' Op),
           Map' Expression_2,
-          Map' (Map' Location'),
           Map' ([String], Map' [(String, Nat)])))
-  standard_naming_typing f a (b, (c, t), g, m, w) =
+  standard_naming_typing f a (b, (c, t), g, w) =
     (
       standard_1 (Location_1 f) t a >>=
-      \(v, n') -> naming f n' b >>= \(d, e) -> (\(h, i, n, u) -> (d, (h, v), i, n, u)) <$> typing f e (c, g, m, w))
+      \(v, n') -> naming f n' b >>= \(d, e) -> (\(h, i, n) -> (d, (h, v), i, n)) <$> typing f e (c, g, w))
   star_kind :: Kind_1
   star_kind = Name_kind_1 "Star"
   struct_pattern :: Map' [(String, Integer)] -> String -> [(Pattern_5, Alg_pat_3)] -> ([(Pattern_5, Bool)], Bool)
@@ -1195,26 +1201,14 @@ module Typing where
           type_case b c d e f l n h i >>=
           \(o, p, q, r0, r') -> (\(r, s, t, r1, w) -> (o : r, s, t, r0 ++ r1, r' : w)) <$> type_cases b c q p f m n h i)
   type_class_0 ::
-    (Location_0 -> Location_1) ->
-    Map' Kind ->
-    Map' Polykind ->
-    Class_2 ->
     (
-      Map' (Map' Location'),
-      Map' ([String], Map' [(String, Nat)]),
-      Map' (Kind_1, Status),
-      Map' (Class_5, Status),
-      Map' String) ->
-    Err
-      (
-        Class_3,
-        (
-          Map' (Map' Location'),
-          Map' ([String], Map' [(String, Nat)]),
-          Map' (Kind_1, Status),
-          Map' (Class_5, Status),
-          Map' String))
-  type_class_0 a i j (Class_2 b h0 (c, d) g' e) (m, w0, i', j0, x2) =
+      (Location_0 -> Location_1) ->
+      Map' Kind ->
+      Map' Polykind ->
+      Class_2 ->
+      (Map' ([String], Map' [(String, Nat)]), Map' (Kind_1, Status), Map' (Class_5, Status), Map' String) ->
+      Err (Class_3, (Map' ([String], Map' [(String, Nat)]), Map' (Kind_1, Status), Map' (Class_5, Status), Map' String)))
+  type_class_0 a i j (Class_2 b h0 (c, d) g' e) (w0, i', j0, x2) =
     let
       i2 = Prelude.foldl (\t4 -> \b2 -> Data.Map.insert b2 Star_kind t4) i h0
     in
@@ -1234,7 +1228,6 @@ module Typing where
                     (
                       Class_3 b h0 (c, h) g' g,
                       (
-                        Data.Map.insert b Data.Map.empty m,
                         Data.Map.insert b (g2, Data.Map.empty) w0,
                         ins_new b h i',
                         ins_new b (Class_5 h0 h g3 g2) j0,
@@ -1304,49 +1297,36 @@ module Typing where
                 Name_pattern j -> i j c
           _ -> e
   type_classes ::
-    String ->
-    Map' Kind ->
-    Map' Polykind ->
-    [Class_2] ->
     (
-      Map' (Class_4, Status),
-      Map' (Map' Location'),
-      Map' (Type_2, Status),
-      Map' ([String], Map' [(String, Nat)]),
-      Map' (Kind_1, Status),
-      Map' (Class_5, Status)) ->
-    Err
+      String ->
+      Map' Kind ->
+      Map' Polykind ->
+      [Class_2] ->
       (
         Map' (Class_4, Status),
-        Map' (Map' Location'),
         Map' (Type_2, Status),
         Map' ([String], Map' [(String, Nat)]),
         Map' (Kind_1, Status),
-        Map' (Class_5, Status))
-  type_classes a b c d (e, f, g, i, o, o') =
-    (
-      type_classes_0 (Location_1 a) b c d (f, i, o, o', Data.Map.empty) >>=
-      \(r, (j, m, p, p', _)) -> (\(k, n) -> (n, j, k, m, p, p')) <$> type_classes_1 a r (fst <$> p) (fst <$> p') (g, e))
-  type_classes_0 ::
-    (Location_0 -> Location_1) ->
-    Map' Kind ->
-    Map' Polykind ->
-    [Class_2] ->
-    (
-      Map' (Map' Location'),
-      Map' ([String], Map' [(String, Nat)]),
-      Map' (Kind_1, Status),
-      Map' (Class_5, Status),
-      Map' String) ->
-    Err
-      (
-        [Class_3],
+        Map' (Class_5, Status)) ->
+      Err
         (
-          Map' (Map' Location'),
+          Map' (Class_4, Status),
+          Map' (Type_2, Status),
           Map' ([String], Map' [(String, Nat)]),
           Map' (Kind_1, Status),
-          Map' (Class_5, Status),
-          Map' String))
+          Map' (Class_5, Status)))
+  type_classes a b c d (e, g, i, o, o') =
+    (
+      type_classes_0 (Location_1 a) b c d (i, o, o', Data.Map.empty) >>=
+      \(r, (m, p, p', _)) -> (\(k, n) -> (n, k, m, p, p')) <$> type_classes_1 a r (fst <$> p) (fst <$> p') (g, e))
+  type_classes_0 ::
+    (
+      (Location_0 -> Location_1) ->
+      Map' Kind ->
+      Map' Polykind ->
+      [Class_2] ->
+      (Map' ([String], Map' [(String, Nat)]), Map' (Kind_1, Status), Map' (Class_5, Status), Map' String) ->
+      Err ([Class_3], (Map' ([String], Map' [(String, Nat)]), Map' (Kind_1, Status), Map' (Class_5, Status), Map' String)))
   type_classes_0 a f g b c =
     case b of
       [] -> Right ([], c)
@@ -1655,24 +1635,18 @@ module Typing where
       [] -> Right c
       d : e -> type_data_2 f d b y c >>= type_datas_2 f e b y
   type_def_1 ::
-    String ->
-    Map' Kind ->
-    Def_3 ->
-    Map' Polykind ->
-    Map' (Type_2, Status) ->
-    Map' Class_4 ->
-    Map' Class_5 ->
-    Map' (Map' Location') ->
-    Map' (Map' ([[String]], Status)) ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    Err
-      (
-        Def_4,
-        Map' (Type_2, Status),
-        Map' (Map' Location'),
-        Map' (Map' ([[String]], Status)),
-        Map' ([String], Map' [(String, Nat)]))
-  type_def_1 l x a b c k k2 t t' u3 =
+    (
+      String ->
+      Map' Kind ->
+      Def_3 ->
+      Map' Polykind ->
+      Map' (Type_2, Status) ->
+      Map' Class_4 ->
+      Map' Class_5 ->
+      Map' (Map' ([[String]], Status)) ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      Err (Def_4, Map' (Type_2, Status), Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)])))
+  type_def_1 l x a b c k k2 t' u3 =
     case a of
       Basic_def_3 f d (KT1 e0 e) e' g i ->
         (
@@ -1682,10 +1656,9 @@ module Typing where
               type_constraints_0 Data.Map.empty e' (k2, j', (\_ -> Zr) <$> j') l >>=
                 \(o1, o2, _) ->
                 (
-                  (\h ->
-                    (Basic_def_4 f d (KT2 e0 y) o1 h i o2, ins_new d (Basic_type_1 (KT2 e0 y) Nothing o1 h) c, t, t', u3)) <$>
+                  (\h -> (Basic_def_4 f d (KT2 e0 y) o1 h i o2, ins_new d (Basic_type_1 (KT2 e0 y) Nothing o1 h) c, t', u3)) <$>
                   type_typ (Location_1 l) g j x2 star_kind)))
-      Instance_3 d (Name e m) k3 (Name f n) w2 k' o' g ->
+      Instance_3 d (Name e m) k3 (Name f n, w2, k') o' g ->
         und_err
           m
           k
@@ -1729,20 +1702,15 @@ module Typing where
                                       q')
                                 in
                                   (
-                                    type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d >>=
-                                    \w ->
-                                      case Data.Map.lookup n (unsafe_lookup m t) of
-                                        Just u -> Left (location_err ("instances of " ++ m ++ " " ++ n) u (Location_1 l d))
-                                        Nothing ->
-                                          Right
-                                            (
-                                              Instance_4 d m w0 o n q' p' w s' o1 o2 r',
-                                              c,
-                                              adjust (Data.Map.insert n (Library (Location_1 l d))) m t,
-                                              (case Data.Map.lookup m t' of
-                                                Just _ -> adjust (ins_new n r') m
-                                                Nothing -> Data.Map.insert m (Data.Map.singleton n (r', New))) t',
-                                              adjust (second (Data.Map.insert n o3)) m u3))))))))
+                                    (\w ->
+                                      (
+                                        Instance_4 d m w0 o n q' p' w s' o1 o2 r',
+                                        c,
+                                        (case Data.Map.lookup m t' of
+                                          Just _ -> adjust (ins_new n r') m
+                                          Nothing -> Data.Map.insert m (Data.Map.singleton n (r', New))) t',
+                                        adjust (second (Data.Map.insert n o3)) m u3)) <$>
+                                    type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d)))))))
   type_def_2 ::
     (Location_0 -> Location_1) ->
     Def_4 ->
@@ -1807,51 +1775,45 @@ module Typing where
                   Nothing -> s
             Nothing -> r
   type_defs ::
-    String ->
-    Map' Kind ->
-    [Def_3] ->
-    [Name] ->
-    (Map' Polykind, Map' Constructor) ->
-    (Map' Expression_2, Types) ->
-    Map' Class_4 ->
-    Map' Class_5 ->
-    Map' (Map' Location') ->
-    Map' (Map' ([[String]], Status)) ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    Err
-      (
-        Map' Expression_2,
-        Types,
-        Map' (Map' Location'),
-        Map' (Map' ([[String]], Status)),
-        Map' ([String], Map' [(String, Nat)]))
-  type_defs h x a a2 (b, i) (c, d) y y0 z t u' =
     (
-      type_defs_1 h x a b d y y0 z t u' >>=
-      \(g, e, k, u, f') ->
+      String ->
+      Map' Kind ->
+      [Def_3] ->
+      [Name] ->
+      (Map' Polykind, Map' Constructor) ->
+      (Map' Expression_2, Types) ->
+      Map' Class_4 ->
+      Map' Class_5 ->
+      Map' (Map' ([[String]], Status)) ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      Err (Map' Expression_2, Types, Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)])))
+  type_defs h x a a2 (b, i) (c, d) y y0 t u' =
+    (
+      type_defs_1 h x a b d y y0 t u' >>=
+      \(g, e, u, f') ->
         (
-          (\f -> (f, e, k, u, f')) <$
+          (\f -> (f, e, u, f')) <$
           type_ops h (fst <$> e) a2 <*>
           type_defs_2 (Location_1 h) g (i, fst <$> e) c ((<$>) fst <$> u) b f' y x))
   type_defs_1 ::
-    String ->
-    Map' Kind ->
-    [Def_3] ->
-    Map' Polykind ->
-    Types ->
-    Map' Class_4 ->
-    Map' Class_5 ->
-    Map' (Map' Location') ->
-    Map' (Map' ([[String]], Status)) ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    Err ([Def_4], Types, Map' (Map' Location'), Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)]))
-  type_defs_1 h x a b c y y0 z u v =
+    (
+      String ->
+      Map' Kind ->
+      [Def_3] ->
+      Map' Polykind ->
+      Types ->
+      Map' Class_4 ->
+      Map' Class_5 ->
+      Map' (Map' ([[String]], Status)) ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      Err ([Def_4], Types, Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)])))
+  type_defs_1 h x a b c y y0 u v =
     case a of
-      [] -> Right ([], c, z, u, v)
+      [] -> Right ([], c, u, v)
       d : e ->
         (
-          type_def_1 h x d b c y y0 z u v >>=
-          \(f, g, t, u', v') -> (\(k, l, m, t', k') -> (f : k, l, m, t', k')) <$> type_defs_1 h x e b g y y0 t u' v')
+          type_def_1 h x d b c y y0 u v >>=
+          \(f, g, u', v') -> (\(k, l, m, k') -> (f : k, l, m, k')) <$> type_defs_1 h x e b g y y0 u' v')
   type_defs_2 ::
     (Location_0 -> Location_1) ->
     [Def_4] ->
@@ -2638,17 +2600,17 @@ module Typing where
   typing ::
     String ->
     Tree_5 ->
-    (File, Map' Expression_2, Map' (Map' Location'), Map' ([String], Map' [(String, Nat)])) ->
-    Err (File, Map' Expression_2, Map' (Map' Location'), Map' ([String], Map' [(String, Nat)]))
-  typing k (Tree_5 a a' x7 c) (File d t v w w0 b' c5 x t2 u0, l, m', n4) =
+    (File, Map' Expression_2, Map' ([String], Map' [(String, Nat)])) ->
+    Err (File, Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
+  typing k (Tree_5 m2 a a' x7 c) (File d t v w w0 b' c5 x t2 u0, l, n4) =
     (
       type_datas k a (old d, old t, old v, old w, l, old w0, old u0) >>=
       \(e, b, g, o, f, w1, u1) ->
         (
-          type_classes k (fst <$> o) (fst <$> e) a' (old b', m', g, n4, old t2, old c5) >>=
-          \(c', m2, g0, x1, x2, t3) ->
+          type_classes k (fst <$> o) (fst <$> e) a' (old b', g, n4, old t2, old c5) >>=
+          \(c', g0, x1, x2, t3) ->
             (
-              (\(i, j, n', y, y2) ->
+              (\(i, j, y, y2) ->
                 (
                   File
                     (rem_old e)
@@ -2662,9 +2624,8 @@ module Typing where
                     (rem_old x2)
                     (rem_old u1),
                   i,
-                  n',
                   y2)) <$>
-              type_defs k (fst <$> o) c x7 (fst <$> e, fst <$> b) (f, g0) (fst <$> c') (fst <$> t3) m2 (old' x) x1)))
+              type_defs k (fst <$> o) c x7 (fst <$> e, fst <$> b) (f, g0) (fst <$> c') (fst <$> t3) (old' x) x1)))
   unif :: String -> Kind_1 -> Map' (Maybe Kind_1) -> Kind_1 -> Err (Map' (Maybe Kind_1))
   unif a b c d =
     case (b, d) of

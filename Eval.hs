@@ -179,7 +179,7 @@ module Eval where
       [] -> b
       (c, d) : e -> subst_pats e (subst_pat' c d b)
   tokenise_parse_naming_typing_eval ::
-    ((Set String, Set String), Locations) ->
+    (Set String, Locations) ->
     Map' Polykind ->
     (Map' Constructor, Map' Type_2) ->
     Map' Expression_2 ->

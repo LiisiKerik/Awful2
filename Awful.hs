@@ -19,9 +19,8 @@ check ::
     [String] ->
     (
       Files,
-      ((Set String, Set String), Locations, Locations),
+      (Set String, Locations, Locations, Locations, Map' (Map' Location')),
       Map' Expression_2,
-      Map' (Map' Location'),
       Map' ([String], Map' [(String, Nat)])) ->
     Location' ->
     String ->
@@ -30,12 +29,11 @@ check ::
         (
           (
             Files,
-            ((Set String, Set String), Locations, Locations),
+            (Set String, Locations, Locations, Locations, Map' (Map' Location')),
             Map' Expression_2,
-            Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
-check b m' @ (f, _, _, _, _) j name_qc =
+check b m' @ (f, _, _, _) j name_qc =
   case Data.Map.lookup name_qc f of
     Just a -> return (Right (m', a))
     Nothing ->
@@ -57,10 +55,10 @@ check b m' @ (f, _, _, _, _) j name_qc =
                   return
                     (
                       g >>=
-                      \((h, i, l, p', r'), m) ->
+                      \((h, i, l, p'), m) ->
                         (
-                          (\(k, n, o, s, t') -> ((Data.Map.insert name_qc n h, k, o, s, t'), n)) <$>
-                          standard_naming_typing name_qc d (i, m, l, p', r')))
+                          (\(k, n, o, s) -> ((Data.Map.insert name_qc n h, k, o, s), n)) <$>
+                          standard_naming_typing name_qc d (i, m, l, p')))
             Nothing ->
               err
                 (
@@ -91,9 +89,8 @@ check_imports ::
     (
       (
         Files,
-        ((Set String, Set String), Locations, Locations),
+        (Set String, Locations, Locations, Locations, Map' (Map' Location')),
         Map' Expression_2,
-        Map' (Map' Location'),
         Map' ([String], Map' [(String, Nat)])),
       (File, Map' Op)) ->
     [(Location', String)] ->
@@ -102,9 +99,8 @@ check_imports ::
         (
           (
             Files,
-            ((Set String, Set String), Locations, Locations),
+            (Set String, Locations, Locations, Locations, Map' (Map' Location')),
             Map' Expression_2,
-            Map' (Map' Location'),
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
 check_imports a b @ (f, k) c =
@@ -123,45 +119,43 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (e, t, _), f, _, y), (File j g i w _ _ _ m _ _, u)) ->
+      \((_, (e, t, _, _, _), f, y), (File j g i w _ _ _ m _ _, u)) ->
         tokenise_parse_naming_typing_eval (e, t) j (g, i) f b m y w u)
 init' ::
   (
     Files,
-    ((Set String, Set String), Locations, Locations),
+    (Set String, Locations, Locations, Locations, Map' (Map' Location')),
     Map' Expression_2,
-    Map' (Map' Location'),
     Map' ([String], Map' [(String, Nat)]))
 init' =
   (
     Data.Map.empty,
     (
-      (
-        Data.Set.singleton "Mk_Pair",
-        Data.Set.fromList
-          [
-            "Construct_List",
-            "EQ",
-            "Empty_List",
-            "False",
-            "GT",
-            "Left",
-            "LT",
-            "Mk_Pair",
-            "Next",
-            "Nothing",
-            "Right",
-            "True",
-            "Wrap",
-            "Zero"]),
+      Data.Set.fromList
+        [
+          "Construct_List",
+          "EQ",
+          "Empty_List",
+          "False",
+          "GT",
+          "Left",
+          "LT",
+          "Mk_Pair",
+          "Next",
+          "Nothing",
+          "Right",
+          "True",
+          "Wrap",
+          "Zero"],
       locations,
-      Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="])),
+      Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="]),
+      Data.Map.empty,
+      Data.Map.fromList
+        [
+          ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language)]),
+          ("Ring", Data.Map.fromList [("Int", Language)]),
+          ("Writeable", Data.Map.fromList [("Int", Language)])]),
     defs,
-    Data.Map.fromList
-      [
-        ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language)]),
-        ("Ring", Data.Map.fromList [("Int", Language)]),
-        ("Writeable", Data.Map.fromList [("Int", Language)])],
     Data.Map.fromList
       [
         ("Ord", (["Compare"], Data.Map.fromList [("Char", []), ("Int", [])])),
