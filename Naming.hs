@@ -1,4 +1,4 @@
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Naming where
   import Data.Bifunctor
@@ -8,7 +8,7 @@ module Naming where
   import Tokenise
   import Tree
   data Alg_pat_1 =
-    Application_alg_pat_1 Location_0 String [Alg_pat_1] |
+    Application_alg_pat_1 Name [Alg_pat_1] |
     Blank_alg_pat_1 |
     Char_alg_pat_1 Char |
     Int_alg_pat_1 Integer |
@@ -39,7 +39,7 @@ module Naming where
   data Expression_1 =
     Application_expression_1 Expression_1 Expression_1 |
     Char_expression_1 Char |
-    Function_expression_1 Pat Expression_1 |
+    Function_expression_1 Pat' Expression_1 |
     Int_expression_1 Integer |
     Match_expression_1 Location_0 Expression_1 [(Alg_pat_1, Expression_1)] |
     Name_expression_1 Name (Maybe Type_8) [Type_8]
@@ -47,7 +47,7 @@ module Naming where
   data Form_1 = Form_1 String [Type_8] deriving Show
   data KT1 = KT1 [String] [(String, Kind_0)] deriving Show
   type Locations = Map' Location'
-  data Match_Algebraic_1 = Match_Algebraic_1 Name [Pat] Expression_1 deriving Show
+  data Match_Algebraic_1 = Match_Algebraic_1 Name [Pat'] Expression_1 deriving Show
   data Match_char_1 = Match_char_1 Location_0 Char Expression_1 deriving Show
   data Match_Int_1 = Match_Int_1 Location_0 Integer Expression_1 deriving Show
   data Matches_1 =
@@ -57,6 +57,7 @@ module Naming where
       deriving Show
   data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
+  data Pat' = Application_pat' Name [Pat'] | Blank_pat' | Name_pat' String deriving Show
   data Tree_4 = Tree_4 [Cat_2] [Data_1] [Class_1] [Name] [Def_2] deriving Show
   data Tree_5 = Tree_5 [Cat_3] [Data_2] [Class_2] [Name] [Def_3] deriving Show
   add :: Ord t => Map t u -> t -> u -> Either u (Map t u)
@@ -112,22 +113,22 @@ module Naming where
       naming_classes_1 a d h <*>
       Right e <*>
       naming_defs_2 a f (g, h))
-  naming_alg_pats :: String -> (Set String, Locations) -> [Alg_pat] -> Err (Locations, [Alg_pat_1])
+  naming_alg_pats :: String -> (Set String, Locations) -> [Alg_pat_7] -> Err (Locations, [Alg_pat_1])
   naming_alg_pats a (b, c) d =
     case d of
       [] -> Right (c, [])
       e : f -> naming_alg_pattern a (b, c) e >>= \(g, h) -> second ((:) h) <$> naming_alg_pats a (b, g) f
-  naming_alg_pattern :: String -> (Set String, Locations) -> Alg_pat -> Err (Locations, Alg_pat_1)
+  naming_alg_pattern :: String -> (Set String, Locations) -> Alg_pat_7 -> Err (Locations, Alg_pat_1)
   naming_alg_pattern a (b, c) d =
     case d of
-      Application_alg_pat g e f -> second (Application_alg_pat_1 g e) <$> naming_alg_pats a (b, c) f
-      Blank_alg_pat -> Right (c, Blank_alg_pat_1)
-      Char_alg_pat e -> Right (c, Char_alg_pat_1 e)
-      Int_alg_pat e -> Right (c, Int_alg_pat_1 e)
-      Name_alg_pat (Name e f) ->
+      Application_alg_pat_7 g f -> second (Application_alg_pat_1 g) <$> naming_alg_pats a (b, c) f
+      Blank_alg_pat_7 -> Right (c, Blank_alg_pat_1)
+      Char_alg_pat_7 e -> Right (c, Char_alg_pat_1 e)
+      Int_alg_pat_7 e -> Right (c, Int_alg_pat_1 e)
+      Name_alg_pat_7 (Name e f) ->
         case Data.Set.member f b of
           False -> (\(g, _) -> (g, Name_alg_pat_1 f)) <$> naming_name a (Name e f) c
-          True -> Right (c, Application_alg_pat_1 e f [])
+          True -> Right (c, Application_alg_pat_1 (Name e f) [])
   naming_application :: String -> (Set String, Locations) -> Err Expression_1 -> Expression_9 -> Err Expression_1
   naming_application a b c d = c >>= \e -> Application_expression_1 e <$> naming_expression a d b
   naming_args :: String -> [(Name, t)] -> Locations -> Err [(String, t)]
@@ -143,7 +144,7 @@ module Naming where
   naming_arguments = naming_list <$> naming_argument
   naming_arguments' :: String -> (String -> t -> Locations -> Err (Locations, u)) -> [(t, v)] -> Locations -> Err [(u, v)]
   naming_arguments' c a b = (<$>) snd <$> naming_arguments a c b
-  naming_case :: String -> (Set String, Locations) -> (Alg_pat, Expression_9) -> Err (Alg_pat_1, Expression_1)
+  naming_case :: String -> (Set String, Locations) -> (Alg_pat_7, Expression_9) -> Err (Alg_pat_1, Expression_1)
   naming_case a (b, g) (c, d) = naming_alg_pattern a (b, g) c >>= \(e, f) -> (,) f <$> naming_expression a d (b, e)
   naming_cat_0 :: String -> ((Set String, Locations, Locations), Cat_1) -> Err ((Set String, Locations, Locations), Cat_2)
   naming_cat_0 a ((b, k, l), Cat_1 c (Name d n, o) (e, f, g, h, i)) =
@@ -266,13 +267,13 @@ module Naming where
       Char_expression_9 c -> Right (Char_expression_1 c)
       Function_expression_9 c d -> naming_fun g (f, b) c d
       Int_expression_9 c -> Right (Int_expression_1 c)
-      Let_expression_9 (Eqq' (Name l c) d e) h ->
+      Let_expression_9 (Eqq' (Name c d) e i) h ->
         let
-          i j = naming_application g (f, b) (naming_fun g (f, b) (Pat l j) h)
+          x y = naming_application g (f, b) (naming_fun g (f, b) y h)
         in
-          case Data.Set.member c f of
-            False -> i (Name_pat c) (Prelude.foldr Function_expression_9 e d)
-            True -> i (Application_pat c d) e
+          case Data.Set.member d f of
+            False -> x (Name_pat_2 (Name c d)) (Prelude.foldr Function_expression_9 i e)
+            True -> x (Application_pat_2 (Name c d) e) i
       Match_expression_9 h c d ->
         naming_expression g c (f, b) >>= \e -> Match_expression_1 h e <$> traverse (naming_case g (f, b)) d
       Name_expression_9 c d e -> Right (Name_expression_1 c d e)
@@ -282,7 +283,7 @@ module Naming where
   naming_form d (Form_6 a b) c = second (flip Form_1 b) <$> naming_name d a c
   naming_forms :: String -> [Form_6] -> Locations -> Err (Locations, [Form_1])
   naming_forms = naming_list naming_form
-  naming_fun :: String -> (Set String, Locations) -> Pat -> Expression_9 -> Err Expression_1
+  naming_fun :: String -> (Set String, Locations) -> Pat_2 -> Expression_9 -> Err Expression_1
   naming_fun x (d, b) z w = naming_pat x z (d, b) >>= \(a, c) -> Function_expression_1 c <$> naming_expression x w (d, a)
   naming_kt :: String -> KT0 -> Locations -> Err (Locations, KT1)
   naming_kt a (KT0 b c) d = naming_names'' a b d >>= \(e, f) -> second (KT1 e) <$> naming_arguments naming_name a c f
@@ -339,16 +340,16 @@ module Naming where
           case Data.Map.lookup e b of
             Just g -> Left (location_err ("definitions of " ++ e) g h)
             Nothing -> second ((:) f) <$> naming_ops a (Data.Map.insert e (Library h) b) i
-  naming_pat :: String -> Pat -> (Set String, Locations) -> Err (Locations, Pat)
-  naming_pat a (Pat b c) (f, d) =
+  naming_pat :: String -> Pat_2 -> (Set String, Locations) -> Err (Locations, Pat')
+  naming_pat a c (f, d) =
     case c of
-      Application_pat g e -> second (\h -> Pat b (Application_pat g h)) <$> naming_pats a e (f, d)
-      Blank_pat -> Right (d, Pat b Blank_pat)
-      Name_pat e ->
+      Application_pat_2 b e -> second (Application_pat' b) <$> naming_pats a e (f, d)
+      Blank_pat_2 -> Right (d, Blank_pat')
+      Name_pat_2 (Name b e) ->
         case Data.Set.member e f of
-          False -> (\(g, _) -> (g, Pat b c)) <$> naming_name a (Name b e) d
-          True -> Right (d, Pat b (Application_pat e []))
-  naming_pats :: String -> [Pat] -> (Set String, Locations) -> Err (Locations, [Pat])
+          False -> second Name_pat' <$> naming_name a (Name b e) d
+          True -> Right (d, Application_pat' (Name b e) [])
+  naming_pats :: String -> [Pat_2] -> (Set String, Locations) -> Err (Locations, [Pat'])
   naming_pats a b (f, c) =
     case b of
       [] -> Right (c, [])
@@ -360,4 +361,4 @@ module Naming where
       Name_pattern e -> second Name_pattern <$> naming_name f (Name a e) d
   naming_patterns :: String -> [Pattern_1] -> Locations -> Err (Locations, [Pattern_0])
   naming_patterns = naming_list naming_pattern
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------

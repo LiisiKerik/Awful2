@@ -2,11 +2,8 @@
 todo: make a function writing operator/function. For printing stuff like "Complex (Fraction 0 1) (Fraction 1 1)"
 checki abil võiks saada tüübikontrollida korraga mitut moodulit, andes ette nimekirja
 semantics of "Pair -> f" should be "Pair x y -> f x y"
-mis juhtub kui esimeses moodulis on kusagil tüübimuutuja T ja järgmises moodulis sama nimega globaalne tüüp?
 Let f = Crash, x = f f In 0 -- tüüpimine läheb lõpmatusse tsüklisse sest puudub occur check
 "./Awful eval "List (0)"" without importing Standard.awf - error message about Writeable class looks bad; fix
-let expr de-sugaring (and therefore struct name collection) completely to Standard.hs module
-all de-sugaring: remove from Tree.hs, put into Standard.hs
 What happens with unary minus and binary minus during parsing?
 allow using operators in class method definitions? Instance Ring{Complex T}<Ring T>(..., Complex x y * Complex z w = ...)
 Jaskelioff "Modular Monad Transformers" - saada need naited toole Awfulis
@@ -28,6 +25,7 @@ pattern match types with only one type constructor?
 promote constructor operators
 improve cat syntax
 viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
+in naming module: check name patterns and turn some into constructors without arguments
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
@@ -466,7 +464,7 @@ module Typing where
       Err (((Integer, Integer), (Set String, Set String), [(Type_1, Type_1)], Map' Type_2), (Alg_pat_2, Alg_pat_3)))
   get_pattern_type a b (d, e, f, n) g h =
     case g of
-      Application_alg_pat_1 o i j ->
+      Application_alg_pat_1 (Name o i) j ->
         und_err
           i
           b
@@ -2232,16 +2230,16 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       Map' Constructor ->
-      Pat ->
+      Pat' ->
       Type_1 ->
       Map' Type_2 ->
       (Integer, Integer) ->
       (Set String, Set String) ->
       [(Type_1, Type_1)] ->
       Err (Pat_1, Map' Type_2, (Integer, Integer), (Set String, Set String), [(Type_1, Type_1)]))
-  type_pat k h (Pat g b) c d l n o =
+  type_pat k h b c d l n o =
     case b of
-      Application_pat e f ->
+      Application_pat' (Name g e) f ->
         und_err
         e
         h
@@ -2257,13 +2255,13 @@ module Typing where
                   (\(s, t, u, v, w) -> (Application_pat_1 s, t, u, v, w)) <$>
                   type_pats k h f (repl' q <$> j) d p r ((c, repl' q m) : o) (Name g e))
             _ -> Left ("Constructor " ++ e ++ location (k g) ++ " is not a struct constructor."))
-      Blank_pat -> Right (Blank_pat_1, d, l, n, o)
-      Name_pat e -> Right (Name_pat_1 e, Data.Map.insert e (Basic_type_1 (KT2 [] []) Nothing [] c) d, l, n, o)
+      Blank_pat' -> Right (Blank_pat_1, d, l, n, o)
+      Name_pat' e -> Right (Name_pat_1 e, Data.Map.insert e (Basic_type_1 (KT2 [] []) Nothing [] c) d, l, n, o)
   type_pats ::
     (
       (Location_0 -> Location_1) ->
       Map' Constructor ->
-      [Pat] ->
+      [Pat'] ->
       [Type_1] ->
       Map' Type_2 ->
       (Integer, Integer) ->

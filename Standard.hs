@@ -5,6 +5,9 @@ module Standard where
   import Data.Map
   import Tokenise
   import Tree
+  data Alg_pat_7 =
+    Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
+      deriving Show
   data Cat_1 = Cat_1 Location_0 (Name, [Name]) (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
   data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
@@ -16,23 +19,23 @@ module Standard where
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
   data Data_case_6 = Data_case_6 Name [Name] Data_br_6 deriving Show
-  data Eqq' = Eqq' Name [Pat] Expression_9 deriving Show
+  data Eqq' = Eqq' Name [Pat_2] Expression_9 deriving Show
   data Expression_9 =
     Application_expression_9 Expression_9 Expression_9 |
     Char_expression_9 Char |
-    Function_expression_9 Pat Expression_9 |
+    Function_expression_9 Pat_2 Expression_9 |
     Int_expression_9 Integer |
     Let_expression_9 Eqq' Expression_9 |
-    Match_expression_9 Location_0 Expression_9 [(Alg_pat, Expression_9)] |
+    Match_expression_9 Location_0 Expression_9 [(Alg_pat_7, Expression_9)] |
     Name_expression_9 Name (Maybe Type_8) [Type_8]
       deriving Show
   data Form_6 = Form_6 Name [Type_8] deriving Show
   data Location' = Language | Library Location_1 deriving Show
   type Map' t = Map String t
   data Method_9 = Method_9 Name [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
-  data Op = Op Integer Assoc String deriving Show
   data Op' = Op' Location_0 Op deriving Show
   data Opdecl_1 = Opdecl_1 Location_0 String Name deriving Show
+  data Pat_2 = Application_pat_2 Name [Pat_2] | Blank_pat_2 | Name_pat_2 Name deriving Show
   data Status = New | Old deriving (Eq, Show)
   data Tree_2 = Tree_2 [Cat_1] [Data_6] [Class_7] [Opdecl_1] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
@@ -48,7 +51,7 @@ module Standard where
   ins_new a b = Data.Map.insert a (b, New)
   old :: Map' t -> Map' (t, Status)
   old = (<$>) (flip (,) Old)
-  pop :: (t -> t -> t, Name -> t) -> [(Op', t)] -> t -> Op' -> [(Op', t)]
+  pop :: (Name -> t -> t -> t) -> [(Op', t)] -> t -> Op' -> [(Op', t)]
   pop f x expr (Op' l (Op pr assoc name)) =
     let
       u = (Op' l (Op pr assoc name), expr) : x
@@ -61,16 +64,16 @@ module Standard where
             True -> pop' pop f x' l' name' expr' expr (Op' l (Op pr assoc name))
   pop' ::
     (
-      ((t -> t -> t, Name -> t) -> [(Op', t)] -> t -> u) ->
-      (t -> t -> t, Name -> t) ->
+      ((Name -> t -> t -> t) -> [(Op', t)] -> t -> u) ->
+      (Name -> t -> t -> t) ->
       [(Op', t)] ->
       Location_0 ->
       String ->
       t ->
       t ->
       u)
-  pop' h (f, g) x' l name expr' expr = h (f, g) x' (f (f (g (Name l name)) expr') expr)
-  pop_all :: (t -> t -> t, Name -> t) -> [(Op', t)] -> t -> t
+  pop' h f x' l name expr' expr = h f x' (f (Name l name) expr' expr)
+  pop_all :: (Name -> t -> t -> t) -> [(Op', t)] -> t -> t
   pop_all f x expr =
     case x of
       [] -> expr
@@ -78,20 +81,23 @@ module Standard where
   rem_old :: Map' (t, Status) -> Map' t
   rem_old a = fst <$> Data.Map.filter (\(_, b) -> b == New) a
   shunting_yard ::
-    (Location_0 -> Location_1) -> (t -> Err u, u -> u -> u, Name -> u) -> Map' Op -> [(Op', u)] -> t -> [(Name, t)] -> Err u
-  shunting_yard a (f, g, h) ops x expr y =
+    (
+      (Location_0 -> Location_1) ->
+      String ->
+      (t -> Err u, Name -> u -> u -> u) ->
+      Map' Op ->
+      [(Op', u)] ->
+      t ->
+      [(Name, t)] ->
+      Err u)
+  shunting_yard a k (f, g) ops x expr y =
     (
       f expr >>=
       \expr'' ->
         case y of
-          [] -> Right (pop_all (g, h) x expr'')
+          [] -> Right (pop_all g x expr'')
           (Name l op, expr') : y' ->
-            und_err
-              op
-              ops
-              "operator"
-              (a l)
-              (\op' -> shunting_yard a (f, g, h) ops (pop (g, h) x expr'' (Op' l op')) expr' y'))
+            und_err op ops k (a l) (\op' -> shunting_yard a k (f, g) ops (pop g x expr'' (Op' l op')) expr' y'))
   standard_1 :: (Location_0 -> Location_1) -> Map' Op -> Tree_0 -> Err (Map' Op, Tree_2)
   standard_1 d f (Tree_0 l a b e c) =
       let
@@ -110,10 +116,11 @@ module Standard where
       [] -> (,) <$> std_type a c <*> std_expr a m d
       (e, Type_7 l f) : g ->
         (
-          (\h -> \(Type_8 i j, k) ->
+          (\q -> \h -> \(Type_8 i j, k) ->
             (
               Type_8 i (Application_type_5 (Application_type_5 (Name_type_5 (Name l "Function") []) h) j),
-              Function_expression_9 e k)) <$>
+              Function_expression_9 q k)) <$>
+          std_pat a m e <*>
           std_type' a f <*>
           standard_arguments a m g c d)
   standard_def :: (Location_0 -> Location_1) -> Map' Op -> Def_0 -> Err Def_1
@@ -123,13 +130,24 @@ module Standard where
       Instance_def_0 b c d f g e -> Instance_1 b c d f g <$> traverse (std_inst i j) e
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
+  std_apat :: (Location_0 -> Location_1) -> Map' Op -> Alg_pat -> Err Alg_pat_7
+  std_apat a b c =
+    case c of
+      Application_alg_pat d f -> Application_alg_pat_7 d <$> traverse (std_apat a b) f
+      Blank_alg_pat -> Right Blank_alg_pat_7
+      Char_alg_pat d -> Right (Char_alg_pat_7 d)
+      Int_alg_pat d -> Right (Int_alg_pat_7 d)
+      Name_alg_pat d -> Right (Name_alg_pat_7 d)
+      Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
   std_cat :: (Location_0 -> Location_1) -> Map' Op -> Cat_0 -> Err Cat_1
   std_cat a b (Cat_0 c d (e, f, g, h, i, j, k)) =
     (
-      (\l -> \m -> \n ->
-        Cat_1 c d (e, f, l, Prelude.foldr Function_expression_9 m h, Prelude.foldr Function_expression_9 n j)) <$>
+      (\l -> \o -> \m -> \p -> \n ->
+        Cat_1 c d (e, f, l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
       std_dat_br a g <*>
+      traverse (std_pat a b) h <*>
       std_expr a b i <*>
+      traverse (std_pat a b) j <*>
       std_expr a b k)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c f d) = Class_7 a b c f <$> traverse (std_mthd e) d
@@ -142,23 +160,48 @@ module Standard where
       Branching_data_0 h c d -> Branching_data_6 h c <$> traverse (\(Data_case_0 e f g) -> Data_case_6 e f <$> std_dat_br a g) d
       Struct_data_0 c d -> Struct_data_6 c <$> traverse (\(e, f) -> (,) e <$> std_type a f) d
   std_eqq :: (Location_0 -> Location_1) -> Map' Op -> Eqq -> Err Eqq'
-  std_eqq a e (Eqq b c d) = Eqq' b c <$> std_expr a e d
+  std_eqq a e (Eqq b c d) = Eqq' b <$> traverse (std_pat a e) c <*> std_expr a e d
   std_expr :: (Location_0 -> Location_1) -> Map' Op -> Expression_0 -> Err Expression_9
   std_expr a f b =
     case b of
       Application_expression_0 c d -> Prelude.foldl Application_expression_9 <$> std_expr a f c <*> traverse (std_expr a f) d
       Char_expression_0 c -> Right (Char_expression_9 c)
-      Function_expression_0 c d -> Function_expression_9 c <$> std_expr a f d
+      Function_expression_0 c d -> Function_expression_9 <$> std_pat a f c <*> std_expr a f d
       Int_expression_0 c -> Right (Int_expression_9 c)
       Let_expression_0 c d -> Let_expression_9 <$> std_eqq a f c <*> std_expr a f d
-      Match_expression_0 c d e -> Match_expression_9 c <$> std_expr a f d <*> traverse (\(g, h) -> (,) g <$> std_expr a f h) e
+      Match_expression_0 c d e ->
+        Match_expression_9 c <$> std_expr a f d <*> traverse (\(g, h) -> (,) <$> std_apat a f g <*> std_expr a f h) e
       Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
       Op_expression_0 c d ->
-        shunting_yard a (std_expr a f, Application_expression_9, \e -> Name_expression_9 e Nothing []) f [] c d
-  std_inst :: (Location_0 -> Location_1) -> Map' Op -> (Name, ([Pat], Expression_0)) -> Err (Name, Expression_9)
-  std_inst a f (b, (c, d)) = (\e -> (b, Prelude.foldr Function_expression_9 e c)) <$> std_expr a f d
+        shunting_yard
+          a
+          "operator"
+          (std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e Nothing []) g))
+          f
+          []
+          c
+          d
+  std_inst :: (Location_0 -> Location_1) -> Map' Op -> (Pat, Expression_0) -> Err (Name, Expression_9)
+  std_inst a b (c, d) =
+    case c of
+      Blank_pat e -> Left ("Invalid blank pattern " ++ location' (a e))
+      _ ->
+        (
+          std_pat a b c >>=
+          \e ->
+            case e of
+              Application_pat_2 h f -> (\g -> (h, Prelude.foldr Function_expression_9 g f)) <$> std_expr a b d
+              Blank_pat_2 -> undefined
+              Name_pat_2 f -> (,) f <$> std_expr a b d)
   std_mthd :: (Location_0 -> Location_1) -> Method -> Err Method_9
   std_mthd a (Method b c d e) = Method_9 b c d <$> std_type a e
+  std_pat :: (Location_0 -> Location_1) -> Map' Op -> Pat -> Err Pat_2
+  std_pat a b c =
+    case c of
+      Application_pat d e -> Application_pat_2 d <$> traverse (std_pat a b) e
+      Blank_pat _ -> Right Blank_pat_2
+      Name_pat d -> Right (Name_pat_2 d)
+      Op_pat d e -> shunting_yard a "operator" (std_pat a b, \f -> \g -> \h -> Application_pat_2 f [g, h]) b [] d e
   std_type :: (Location_0 -> Location_1) -> Type_7 -> Err Type_8
   std_type c (Type_7 a b) = Type_8 a <$> std_type' c b
   std_type' :: (Location_0 -> Location_1) -> Type_0 -> Err Type_5
@@ -171,8 +214,9 @@ module Standard where
       Op_type_0 a c ->
         shunting_yard
           e
-          (std_type' e, Application_type_5, \f -> Name_type_5 f [])
-          (fromList [("*", Op 0 Rght "Pair"), ("+", Op 1 Rght "Either"), ("->", Op 2 Rght "Function")])
+          "type operator"
+          (std_type' e, \d -> \f -> Application_type_5 (Application_type_5 (Name_type_5 d []) f))
+          (Data.Map.fromList typeops)
           []
           a
           c
