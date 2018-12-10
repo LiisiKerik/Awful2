@@ -1,9 +1,8 @@
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 import Data.Bifunctor
 import Data.List
 import Data.Map
-import Data.Set
 import Eval
 import Naming
 import Standard
@@ -19,7 +18,7 @@ check ::
     [String] ->
     (
       Files,
-      (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+      (Locations, Locations, Locations, Map' (Map' Location')),
       Map' Expression_2,
       Map' ([String], Map' [(String, Nat)])) ->
     Location' ->
@@ -29,7 +28,7 @@ check ::
         (
           (
             Files,
-            (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+            (Locations, Locations, Locations, Map' (Map' Location')),
             Map' Expression_2,
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
@@ -89,7 +88,7 @@ check_imports ::
     (
       (
         Files,
-        (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+        (Locations, Locations, Locations, Map' (Map' Location')),
         Map' Expression_2,
         Map' ([String], Map' [(String, Nat)])),
       (File, Map' Op)) ->
@@ -99,7 +98,7 @@ check_imports ::
         (
           (
             Files,
-            (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+            (Locations, Locations, Locations, Map' (Map' Location')),
             Map' Expression_2,
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
@@ -119,48 +118,27 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (e, t, _, _, _), f, y), (File j g i w _ _ _ m _ _, u)) ->
-        tokenise_parse_naming_typing_eval (e, t) j (g, i) f b m y w u)
+      \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ _, u)) -> tokenise_parse_naming_typing_eval t j (g, i) f b m y w u)
 init' ::
-  (
-    Files,
-    (Set String, Locations, Locations, Locations, Map' (Map' Location')),
-    Map' Expression_2,
-    Map' ([String], Map' [(String, Nat)]))
+  (Files, (Locations, Locations, Locations, Map' (Map' Location')), Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
 init' =
   (
-    Data.Map.empty,
+    empty,
     (
-      Data.Set.fromList
-        [
-          "Construct_List",
-          "EQ",
-          "Empty_List",
-          "False",
-          "GT",
-          "Left",
-          "LT",
-          "Mk_Pair",
-          "Next",
-          "Nothing",
-          "Right",
-          "True",
-          "Wrap",
-          "Zero"],
       locations,
-      Data.Map.fromList ((\x -> (x, Language)) <$> ["#", "->", "="]),
-      Data.Map.empty,
-      Data.Map.fromList
+      fromList ((\x -> (x, Language)) <$> ["#", "->", "="]),
+      empty,
+      fromList
         [
-          ("Ord", Data.Map.fromList [("Char", Language), ("Int", Language)]),
-          ("Ring", Data.Map.fromList [("Int", Language)]),
-          ("Writeable", Data.Map.fromList [("Int", Language)])]),
+          ("Ord", fromList [("Char", Language), ("Int", Language)]),
+          ("Ring", fromList [("Int", Language)]),
+          ("Writeable", fromList [("Int", Language)])]),
     defs,
-    Data.Map.fromList
+    fromList
       [
-        ("Ord", (["Compare"], Data.Map.fromList [("Char", []), ("Int", [])])),
-        ("Ring", (["Add", "Convert", "Multiply", "Negate"], Data.Map.fromList [("Int", [])])),
-        ("Writeable", (["Write_Brackets"], Data.Map.fromList [("Int", [])]))])
+        ("Ord", (["Compare"], fromList [("Char", []), ("Int", [])])),
+        ("Ring", (["Add", "Convert", "Multiply", "Negate"], fromList [("Int", [])])),
+        ("Writeable", (["Write_Brackets"], fromList [("Int", [])]))])
 main :: IO ()
 main = do
   args <- getArgs
@@ -193,4 +171,4 @@ main = do
                       Right f -> f)
             _ -> putStrLn "Command eval expects at least 1 argument."
         _ -> putStrLn ("Invalid command " ++ command ++ ".")
------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------

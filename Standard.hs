@@ -12,20 +12,19 @@ module Standard where
   data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_1 Location_0 Name [Kind_0] (Name, [Kind_0], [Pattern_1]) [Constraint_0] [(Name, Expression_9)]
+    Instance_1 Location_0 [Name] Name [Kind_0] (Name, [Kind_0], [Pattern_1]) [Constraint_0] [(Name, Expression_9)]
       deriving Show
   data Data_6 = Data_6 Location_0 String KT0 Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
   data Data_case_6 = Data_case_6 Name [Name] Data_br_6 deriving Show
-  data Eqq' = Eqq' Name [Pat_2] Expression_9 deriving Show
   data Expression_9 =
     Application_expression_9 Expression_9 Expression_9 |
     Char_expression_9 Char |
     Function_expression_9 Pat_2 Expression_9 |
     Int_expression_9 Integer |
-    Let_expression_9 Eqq' Expression_9 |
+    Let_expression_9 Pat_2 Expression_9 Expression_9 |
     Match_expression_9 Location_0 Expression_9 [(Alg_pat_7, Expression_9)] |
     Name_expression_9 Name (Maybe Type_8) [Type_8]
       deriving Show
@@ -127,7 +126,7 @@ module Standard where
   standard_def i j a =
     case a of
       Basic_def_0 b c g d e f -> uncurry (Basic_def_1 b c g) <$> standard_arguments i j d e f
-      Instance_def_0 b c d f g e -> Instance_1 b c d f g <$> traverse (std_inst i j) e
+      Instance_def_0 b c d f g h e -> Instance_1 b c d f g h <$> traverse (std_inst i j) e
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
   std_apat :: (Location_0 -> Location_1) -> Map' Op -> Alg_pat -> Err Alg_pat_7
@@ -159,8 +158,6 @@ module Standard where
       Algebraic_data_0 c -> Algebraic_data_6 <$> traverse (\(Form_0 d e) -> Form_6 d <$> traverse (std_type a) e) c
       Branching_data_0 h c d -> Branching_data_6 h c <$> traverse (\(Data_case_0 e f g) -> Data_case_6 e f <$> std_dat_br a g) d
       Struct_data_0 c d -> Struct_data_6 c <$> traverse (\(e, f) -> (,) e <$> std_type a f) d
-  std_eqq :: (Location_0 -> Location_1) -> Map' Op -> Eqq -> Err Eqq'
-  std_eqq a e (Eqq b c d) = Eqq' b <$> traverse (std_pat a e) c <*> std_expr a e d
   std_expr :: (Location_0 -> Location_1) -> Map' Op -> Expression_0 -> Err Expression_9
   std_expr a f b =
     case b of
@@ -168,7 +165,12 @@ module Standard where
       Char_expression_0 c -> Right (Char_expression_9 c)
       Function_expression_0 c d -> Function_expression_9 <$> std_pat a f c <*> std_expr a f d
       Int_expression_0 c -> Right (Int_expression_9 c)
-      Let_expression_0 c d -> Let_expression_9 <$> std_eqq a f c <*> std_expr a f d
+      Let_expression_0 (c, e) d ->
+        (
+          (\(g, h) -> \i -> Let_expression_9 g (Prelude.foldr Function_expression_9 i h)) <$>
+          std_pat'' a f c <*>
+          std_expr a f e <*>
+          std_expr a f d)
       Match_expression_0 c d e ->
         Match_expression_9 c <$> std_expr a f d <*> traverse (\(g, h) -> (,) <$> std_apat a f g <*> std_expr a f h) e
       Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
@@ -182,26 +184,48 @@ module Standard where
           c
           d
   std_inst :: (Location_0 -> Location_1) -> Map' Op -> (Pat, Expression_0) -> Err (Name, Expression_9)
-  std_inst a b (c, d) =
-    case c of
-      Blank_pat e -> Left ("Invalid blank pattern " ++ location' (a e))
-      _ ->
-        (
-          std_pat a b c >>=
-          \e ->
-            case e of
-              Application_pat_2 h f -> (\g -> (h, Prelude.foldr Function_expression_9 g f)) <$> std_expr a b d
-              Blank_pat_2 -> undefined
-              Name_pat_2 f -> (,) f <$> std_expr a b d)
+  std_inst a b (c, d) = (\(e, f) -> \g -> (e, Prelude.foldr Function_expression_9 g f)) <$> std_pat' a b c <*> std_expr a b d
   std_mthd :: (Location_0 -> Location_1) -> Method -> Err Method_9
   std_mthd a (Method b c d e) = Method_9 b c d <$> std_type a e
   std_pat :: (Location_0 -> Location_1) -> Map' Op -> Pat -> Err Pat_2
   std_pat a b c =
     case c of
-      Application_pat d e -> Application_pat_2 d <$> traverse (std_pat a b) e
+      Application_pat d e ->
+        case d of
+          Blank_pat f -> Left ("Invalid blank pattern" ++ location' (a f))
+          Name_pat (Name f g) -> Left ("Invalid name pattern " ++ g ++ location' (a f))
+          _ -> (\(Application_pat_2 f g) -> \h -> Application_pat_2 f (g ++ h)) <$> std_pat a b d <*> traverse (std_pat a b) e
       Blank_pat _ -> Right Blank_pat_2
+      Constr_pat d -> Right (Application_pat_2 d [])
       Name_pat d -> Right (Name_pat_2 d)
       Op_pat d e -> shunting_yard a "operator" (std_pat a b, \f -> \g -> \h -> Application_pat_2 f [g, h]) b [] d e
+  std_pat' :: (Location_0 -> Location_1) -> Map' Op -> Pat -> Err (Name, [Pat_2])
+  std_pat' a b c =
+    case c of
+      Application_pat d e -> (\(f, g) -> \h -> (f, g ++ h)) <$> std_pat' a b d <*> traverse (std_pat a b) e
+      Blank_pat d -> Left ("Invalid blank pattern" ++ location' (a d))
+      Constr_pat d -> Right (d, [])
+      Name_pat d -> Right (d, [])
+      Op_pat d e ->
+        (
+          (\(Application_pat_2 f [g, h]) -> (f, [g, h])) <$>
+          shunting_yard a "operator" (std_pat a b, \f -> \g -> \h -> Application_pat_2 f [g, h]) b [] d e)
+  std_pat'' :: (Location_0 -> Location_1) -> Map' Op -> Pat -> Err (Pat_2, [Pat_2])
+  std_pat'' a b c =
+    case c of
+      Application_pat d e ->
+        (
+          (\(f, g) -> \h ->
+            case f of
+              Application_pat_2 i j -> (Application_pat_2 i (j ++ h), [])
+              _ -> (f, g ++ h)) <$>
+          std_pat'' a b d <*>
+          traverse (std_pat a b) e)
+      Blank_pat _ -> Right (Blank_pat_2, [])
+      Constr_pat d -> Right (Application_pat_2 d [], [])
+      Name_pat d -> Right (Name_pat_2 d, [])
+      Op_pat d e ->
+        (\f -> (f, [])) <$> shunting_yard a "operator" (std_pat a b, \f -> \g -> \h -> Application_pat_2 f [g, h]) b [] d e
   std_type :: (Location_0 -> Location_1) -> Type_7 -> Err Type_8
   std_type c (Type_7 a b) = Type_8 a <$> std_type' c b
   std_type' :: (Location_0 -> Location_1) -> Type_0 -> Err Type_5

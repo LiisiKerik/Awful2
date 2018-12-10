@@ -4,6 +4,7 @@ module Tree where
   import Control.Applicative
   import Control.Monad
   import Data.Bifunctor
+  import Data.Char
   import Tokenise
   data Alg_pat =
     Application_alg_pat Name [Alg_pat] |
@@ -25,15 +26,14 @@ module Tree where
   data Data_case_0 = Data_case_0 Name [Name] Data_br_0 deriving Show
   data Def_0 =
     Basic_def_0 Name KT0 [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
-    Instance_def_0 Location_0 Name [Kind_0] (Name, [Kind_0], [Pattern_1]) [Constraint_0] [(Pat, Expression_0)]
+    Instance_def_0 Location_0 [Name] Name [Kind_0] (Name, [Kind_0], [Pattern_1]) [Constraint_0] [(Pat, Expression_0)]
       deriving Show
-  data Eqq = Eqq Name [Pat] Expression_0 deriving Show
   data Expression_0 =
     Application_expression_0 Expression_0 [Expression_0] |
     Char_expression_0 Char |
     Function_expression_0 Pat Expression_0 |
     Int_expression_0 Integer |
-    Let_expression_0 Eqq Expression_0 |
+    Let_expression_0 (Pat, Expression_0) Expression_0 |
     Match_expression_0 Location_0 Expression_0 [(Alg_pat, Expression_0)] |
     Name_expression_0 Name (Maybe Type_7) [Type_7] |
     Op_expression_0 Expression_0 [(Name, Expression_0)]
@@ -46,7 +46,8 @@ module Tree where
   data Name = Name Location_0 String deriving Show
   data Op = Op Integer Assoc String deriving Show
   data Opdecl_0 = Opdecl_0 Location_0 String Name Integer Assoc deriving Show
-  data Pat = Application_pat Name [Pat] | Blank_pat Location_0 | Name_pat Name | Op_pat Pat [(Name, Pat)] deriving Show
+  data Pat = Application_pat Pat [Pat] | Blank_pat Location_0 | Constr_pat Name | Name_pat Name | Op_pat Pat [(Name, Pat)]
+    deriving Show
   data Pattern_1 = Pattern_1 Location_0 Pattern_0 deriving Show
   data Pattern_0 = Blank_pattern | Name_pattern String deriving Show
   newtype Parser s f t = Parser {parser :: s -> f (t, s)}
@@ -127,7 +128,7 @@ module Tree where
   parse_ap_expr :: Parser' Expression_0
   parse_ap_expr = Application_expression_0 <$> parse_br_expr <*> parse_some parse_br_expr
   parse_ap_pat :: Parser' Pat
-  parse_ap_pat = Application_pat <$> parse_name' <*> parse_some parse_br_pat
+  parse_ap_pat = Application_pat <$> parse_br_pat <*> parse_some parse_br_pat
   parse_ap_type :: Parser' Type_0
   parse_ap_type = Application_type_0 <$> parse_br_type <*> parse_some parse_br_type
   parse_application_alg_pattern :: Parser' Alg_pat
@@ -310,6 +311,7 @@ module Tree where
     (
       Instance_def_0 <&
       parse_token Instance_token <*>
+      parse_kind_vars <*>
       parse_name' <*>
       parse_kinds' <*>
       parse_curlies
@@ -337,7 +339,7 @@ module Tree where
     (
       flip (Prelude.foldr Let_expression_0) <$
       parse_token Let_token <*>
-      parse_list 1 (Eqq <$> parse_name' <*> parse_many parse_br_pat <* parse_eq <*> parse_expression') <*
+      parse_list 1 ((,) <$> parse_pat <* parse_eq <*> parse_expression') <*
       parse_token In_token <*>
       parse_expression')
   parse_kind :: Parser' Kind_0
@@ -391,7 +393,14 @@ module Tree where
   parse_name_4 :: String -> Parser' ()
   parse_name_4 = parse_token <$> Name_token
   parse_name_alg_pattern :: Parser' Alg_pat
-  parse_name_alg_pattern = Name_alg_pat <$> parse_name'
+  parse_name_alg_pattern =
+    (
+      parse_name' >>=
+      \(Name a (b : c)) ->
+        case (isUpper b, isLower b) of
+          (False, False) -> empty_parser
+          (False, True) -> return (Name_alg_pat (Name a (b : c)))
+          (True, _) -> return (Application_alg_pat (Name a (b : c)) []))
   parse_name_expression :: Parser' Expression_0
   parse_name_expression =
     (
@@ -402,7 +411,14 @@ module Tree where
   parse_name_kind :: Parser' Kind_branch_0
   parse_name_kind = Name_kind_0 <$> parse_name
   parse_name_pat :: Parser' Pat
-  parse_name_pat = Name_pat <$> parse_name'
+  parse_name_pat =
+    (
+      parse_name' >>=
+      \(Name a (b : c)) ->
+        case (isUpper b, isLower b) of
+          (False, False) -> empty_parser
+          (False, True) -> return (Name_pat (Name a (b : c)))
+          (True, _) -> return (Constr_pat (Name a (b : c))))
   parse_name_pattern :: Parser' Pattern_0
   parse_name_pattern = Name_pattern <$> parse_name
   parse_name_type :: Parser' Type_0
@@ -500,7 +516,7 @@ module Tree where
       [] -> b
       Token_1 c _ : _ -> c
   typeops :: [(String, Op)]
-  typeops = [("*", Op 0 Rght "Pair"), ("+", Op 1 Rght "Either"), ("->", Op 2 Rght "Function")]
+  typeops = [("*", Op 0 Rght "Pair"), ("+", Op 1 Rght "Either"), ("->", Op 2 Rght "Arrow")]
   update_location :: State -> Location_0 -> State
   update_location (State a b) c = State a (max b c)
 --------------------------------------------------------------------------------------------------------------------------------

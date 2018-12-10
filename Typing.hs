@@ -26,6 +26,7 @@ promote constructor operators
 improve cat syntax
 viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
 in naming module: check name patterns and turn some into constructors without arguments
+ensure that the user starts all data constructors with a capital letter!
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
@@ -1029,13 +1030,13 @@ module Typing where
       String ->
       Tree_0 ->
       (
-        (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+        (Locations, Locations, Locations, Map' (Map' Location')),
         (File, Map' Op),
         Map' Expression_2,
         Map' ([String], Map' [(String, Nat)])) ->
       Err
         (
-          (Set String, Locations, Locations, Locations, Map' (Map' Location')),
+          (Locations, Locations, Locations, Map' (Map' Location')),
           (File, Map' Op),
           Map' Expression_2,
           Map' ([String], Map' [(String, Nat)])))
@@ -1656,7 +1657,7 @@ module Typing where
                 (
                   (\h -> (Basic_def_4 f d (KT2 e0 y) o1 h i o2, ins_new d (Basic_type_1 (KT2 e0 y) Nothing o1 h) c, t', u3)) <$>
                   type_typ (Location_1 l) g j x2 star_kind)))
-      Instance_3 d (Name e m) k3 (Name f n, w2, k') o' g ->
+      Instance_3 d t8 (Name e m) k3 (Name f n, w2, k') o' g ->
         und_err
           m
           k

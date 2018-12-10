@@ -1,39 +1,32 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 Class Applicative{F : Star -> Star}<Functor>(Ap[T : Star, U : Star] : F (T -> U) -> F T -> F U, Return[T : Star] : T -> F T)
-Class Bifunctor{F : Star -> Star -> Star}(
-  Bimap[T : Star, U : Star, V : Star, W : Star] : (T -> U) -> (V -> W) -> F T V -> F U W)
+Class Bifunctor[[K, L, M]]{F : K -> L -> M}(Bimap[T : K, U : K, V : L, W : L] : (T -> U) -> (V -> W) -> F T V -> F U W)
 Class Container{F : Star -> Star}(Empty[T : Star] : F T, Filter[T : Star] : (T -> Logical) -> F T -> F T)
 Class Field{T : Star}<Ring>(Inverse : T -> Maybe T)
 Class Finite{T : Star}<Ord>(All : List T)
-Class Functor[[K, L]]{F : K -> L}(Fmap[T : K, U : K] : (T -> U) -> F T -> F U)
+Class Functor[[K, L]]<<Cat K, Cat L>>{F : K -> L}(Fmap[T : K, U : K] : (T -> U) -> F T -> F U)
 Class Monad{F : Star -> Star}<Applicative>(Bind[T : Star, U : Star] : F T -> (T -> F U) -> F U)
 Operator * Multiply 7 Left
 Operator + Add 6 Left
 Operator ++ Concat 5 Right
 Operator - Minus 6 Left
 Operator . Compose 9 Right
+Operator : Concat 5 Right
 Operator <$> Fmap 4 Left
 Operator <*> Ap 4 Left
 Operator >>= Bind 1 Left
 Def Add'[F : Star -> Star, T : Star]<Applicative F, Ring T> : F T -> F T -> F T = Zip Add
-Instance Applicative{Either _}(Apply x y = Match x {Left z -> Left z, Right f -> f . y}, Lift = Right)
-Instance Applicative{Function _}(Apply f g x = f x (g x), Lift x _ = x)
+Instance Applicative{Either _}(x <*> y = Match x {Left z -> Left z, Right f -> f . y}, Return = Right)
+Instance Applicative{Function _}((f <*> g) x = f x (g x), Return x _ = x)
 Instance Applicative{List}(
   x <*> y = Match x {Empty_List -> List, Construct_List f z -> (f <$> y) ++ (z <*> y)},
-  Lift x = List (x))
-Instance Applicative{Maybe}(Apply x y = Match x {Nothing -> Nothing, Wrap f -> f . y}, Lift = Wrap)
-Instance Braided{Either}(
-  Associate x = Match x {Left y -> Match y {Left z -> Left z, Right z -> Right (Left z)}, Right y -> Right (Right y)},
-  Bimap f g x = Match x {Left y -> Left (f y), Right y -> Right (g y)},
-  Commute x = Match x {Left y -> Right y, Right y -> Left y})
-Instance Braided{Pair}(
-  Associate (Mk_Pair (Mk_Pair x y) z) = Mk_Pair x (Mk_Pair y z),
-  Bimap f g (Mk_Pair x y) = Mk_Pair (f x) (g y),
-  Commute (Mk_Pair x y) = Mk_Pair y x)
+  Return x = List (x))
+Instance Applicative{Maybe}(x <*> y = Match x {Nothing -> Nothing, Wrap f -> f . y}, Lift = Wrap)
+Instance Bifunctor[[Star, Star, Star]]{Either}(Bimap f g x = Match x {Left y -> Left (f y), Right y -> Right (g y)})
+Instance Bifunctor[[Star, Star, Star]]{Pair}(Bimap f g (Mk_Pair x y) = Mk_Pair (f x) (g y))
 Def Brackets[T : Star]<Writeable T>(x : T) : List Char =
-  Let Mk_Pair y z = Write_Brackets x In Match z {False -> y, True -> Cat (Lift "(") (Cat y (Lift ")"))}
-Def Concat[T : Star](x : List T, y : List T) : List T =
-  Match x {Empty_List -> y, Construct_List z a -> Construct_List z (Cat a y)}
+  Let Mk_Pair y z = Write_Brackets x In Match z {False -> y, True -> Lift "(" ++ y ++ Lift ")"}
+Def Concat[T : Star](x : List T, y : List T) : List T = Match x {Empty_List -> y, Construct_List z a -> z : a ++ y}
 Instance Container{List}(
   Empty = List,
   Filter f x =
@@ -47,14 +40,13 @@ Instance Field{Int}(Inverse x = Match x {-1 -> Wrap -1, 1 -> Wrap 1, Default -> 
 Instance Field{Logical}(Inverse x = Match x {False -> Nothing, True -> Wrap True})
 Instance Field{Pair T U}<Field T, Field U>(Inverse (Mk_Pair x y) = Zip Mk_Pair (Inverse x) (Inverse y))
 Instance Finite{Comparison}(All = List (LT,  EQ,  GT))
-Instance Finite{Either T U}<Finite T, Finite U>(All = Cat (Left . All) (Right .  All))
+Instance Finite{Either T U}<Finite T, Finite U>(All = Left . All ++ Right . All)
 Instance Finite{Logical}(All = List (False, True))
 Instance Finite{Maybe T}<Finite T>(All = Construct_List Nothing (Wrap . All))
 Instance Finite{Pair T U}<Finite T, Finite U>(All = Zip Mk_Pair All All)
 Def Flatten[F : Star -> Star, T : Star]<Monad F>(x : F (F T)) : F T = Bind x Id
-Instance[[K]] Functor[[K, Star]]{Arrow[[K]] _}(Fmap = Compose)
+Instance[[K]]<<Cat K>> Functor[[K, Star]]{Arrow[[K]] _}(Fmap = Compose)
 Instance Functor{Either _}(Fmap = Map_right)
-`Instance Functor{Function _}(Fmap f g x = f (g x))
 Instance Functor{List}(Fmap f x = Match x {Empty_List -> List, Construct_List y z -> Construct_List (f y) (f . z)})
 Instance Functor{Maybe}(Fmap f x = Match x {Nothing -> Nothing, Wrap y -> Wrap (f y)})
 Instance Functor{Pair _}(Fmap = Map_right)
