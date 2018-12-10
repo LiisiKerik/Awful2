@@ -1292,8 +1292,8 @@ module Typing where
                     (Nxt n))
             in
               case h of
-                Blank_pattern -> i (show c) (c + 1)
-                Name_pattern j -> i j c
+                Blank_pattern_0 -> i (show c) (c + 1)
+                Name_pattern_0 j -> i j c
           _ -> e
   type_classes ::
     (

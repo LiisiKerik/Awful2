@@ -48,8 +48,7 @@ module Tree where
   data Opdecl_0 = Opdecl_0 Location_0 String Name Integer Assoc deriving Show
   data Pat = Application_pat Pat [Pat] | Blank_pat Location_0 | Constr_pat Name | Name_pat Name | Op_pat Pat [(Name, Pat)]
     deriving Show
-  data Pattern_1 = Pattern_1 Location_0 Pattern_0 deriving Show
-  data Pattern_0 = Blank_pattern | Name_pattern String deriving Show
+  data Pattern_1 = Blank_pattern_1 | Name_pattern_1 Name deriving Show
   newtype Parser s f t = Parser {parser :: s -> f (t, s)}
   type Parser' = Parser State (Either Location_0)
   data State = State Tokens Location_0 deriving Show
@@ -63,8 +62,6 @@ module Tree where
     Op_type_0 Type_0 [(Name, Type_0)]
       deriving Show
   data Type_7 = Type_7 Location_0 Type_0 deriving Show
-  class Get_location t where
-    get_location :: t -> Location_0
   infixl 4 <&
   (<&) :: (Location_0 -> t) -> Parser' () -> Parser' t
   f <& p = f <$> parse_location <* p
@@ -79,10 +76,6 @@ module Tree where
     pure x = Parser (\y -> return (x, y))
   instance Functor f => Functor (Parser s f) where
     fmap a (Parser b) = Parser (\c -> first a <$> b c)
-  instance Get_location Kind_0 where
-    get_location (Kind_0 a _) = a
-  instance Get_location Pattern_1 where
-    get_location (Pattern_1 a _) = a
   instance Monad f => Monad (Parser s f) where
     Parser p >>= f = Parser (p >=> \(y, z) -> parser (f y) z)
   empty_parser :: Parser' t
@@ -173,8 +166,6 @@ module Tree where
       parse_type <*
       parse_eq <*>
       parse_expression')
-  parse_blank :: Parser' Pattern_0
-  parse_blank = Blank_pattern <$ parse_token Blank_token
   parse_blank_alg_pattern :: Parser' Alg_pat
   parse_blank_alg_pattern = Blank_alg_pat <$ parse_token Blank_token
   parse_blank_pat :: Parser' Pat
@@ -419,8 +410,6 @@ module Tree where
           (False, False) -> empty_parser
           (False, True) -> return (Name_pat (Name a (b : c)))
           (True, _) -> return (Constr_pat (Name a (b : c))))
-  parse_name_pattern :: Parser' Pattern_0
-  parse_name_pattern = Name_pattern <$> parse_name
   parse_name_type :: Parser' Type_0
   parse_name_type =
     (
@@ -478,10 +467,8 @@ module Tree where
           (\a -> first (\(b, c) -> (a, b) : c)) <$>
           (Name <&> parse_op_0) <*>
           parse_pat_and_type)))
-  parse_pattern_0 :: Parser' Pattern_0
-  parse_pattern_0 = parse_blank <+> parse_name_pattern
   parse_pattern_1 :: Parser' Pattern_1
-  parse_pattern_1 = Pattern_1 <&> parse_pattern_0
+  parse_pattern_1 = Blank_pattern_1 <$ parse_token Blank_token <+> Name_pattern_1 <$> parse_name'
   parse_pattern' :: Parser' Name
   parse_pattern' = Name <&> ("_" <$ parse_token Blank_token <+> parse_name)
   parse_round :: Parser' t -> Parser' t

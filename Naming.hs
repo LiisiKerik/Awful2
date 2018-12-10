@@ -57,6 +57,7 @@ module Naming where
   data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Pat' = Application_pat' Name [Pat'] | Blank_pat' | Name_pat' String deriving Show
+  data Pattern_0 = Blank_pattern_0 | Name_pattern_0 String deriving Show
   data Tree_4 = Tree_4 [Cat_2] [Data_1] [Class_1] [Name] [Def_2] deriving Show
   data Tree_5 = Tree_5 [Cat_3] [Data_2] [Class_2] [Name] [Def_3] deriving Show
   add :: Ord t => Map t u -> t -> u -> Either u (Map t u)
@@ -337,10 +338,10 @@ module Naming where
       [] -> Right (d, [])
       e : f -> naming_pat a e d >>= \(g, h) -> second ((:) h) <$> naming_pats a f g
   naming_pattern :: String -> Pattern_1 -> Locations -> Err (Locations, Pattern_0)
-  naming_pattern f (Pattern_1 a c) d =
+  naming_pattern f c d =
     case c of
-      Blank_pattern -> Right (d, Blank_pattern)
-      Name_pattern e -> second Name_pattern <$> naming_name f (Name a e) d
+      Blank_pattern_1 -> Right (d, Blank_pattern_0)
+      Name_pattern_1 a -> second Name_pattern_0 <$> naming_name f a d
   naming_patterns :: String -> [Pattern_1] -> Locations -> Err (Locations, [Pattern_0])
   naming_patterns = naming_list naming_pattern
 --------------------------------------------------------------------------------------------------------------------------------
