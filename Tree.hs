@@ -16,7 +16,8 @@ module Tree where
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
-  data Cat_0 = Cat_0 Location_0 (Name, [Name]) (Name, Name, Data_br_0, [Pat], Expression_0, [Pat], Expression_0) deriving Show
+  data Cat_0 = Cat_0 Location_0 (Name, [Name]) [Name] (Name, Name, Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
+    deriving Show
   data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name Name deriving Show
   data Data_0 = Data_0 Location_0 String [Name] [(Name, Kind_0)] Data_br_0 deriving Show
@@ -28,6 +29,7 @@ module Tree where
     Basic_def_0 Name KT0 [Constraint_0] [(Pat, Type_7)] Type_7 Expression_0 |
     Instance_def_0
       Location_0
+      [Name]
       [Name]
       Name
       [Kind_0]
@@ -58,7 +60,7 @@ module Tree where
   newtype Parser s f t = Parser {parser :: s -> f (t, s)}
   type Parser' = Parser State (Either Location_0)
   data State = State Tokens Location_0 deriving Show
-  data Tree_0 = Tree_0 [Cat_0] [Data_0] [Class_0] [Opdecl_0] [Def_0] deriving Show
+  data Tree_0 = Tree_0 [Data_0] [Cat_0] [Class_0] [Opdecl_0] [Def_0] deriving Show
   data Tree_1 = Tree_1 [Name] Tree_0 deriving Show
   data Type_0 =
     Application_type_0 Type_0 [Type_0] |
@@ -202,6 +204,7 @@ module Tree where
       Cat_0 <&
       parse_token Cat_token <*>
       parse_curlies (parse_curlies ((,) <$> parse_name' <*> parse_many parse_name')) <*>
+      parse_cat_constrs <*>
       parse_round
         (
           (,,,,,,) <$>
@@ -223,7 +226,7 @@ module Tree where
   parse_cat_constr :: Parser' Name
   parse_cat_constr = parse_token Cat_token *> parse_name'
   parse_cat_constrs :: Parser' [Name]
-  parse_cat_constrs = parse_optional (parse_angulars <$> parse_angulars) parse_cat_constr
+  parse_cat_constrs = parse_optional (\a -> parse_operator "<<" *> a <* parse_operator ">>") parse_cat_constr
   parse_char :: Parser' Char
   parse_char =
     parse_elementary
@@ -312,6 +315,7 @@ module Tree where
       Instance_def_0 <&
       parse_token Instance_token <*>
       parse_kind_vars <*>
+      parse_cat_constrs <*>
       parse_name' <*>
       parse_kinds' <*>
       parse_curlies
@@ -502,8 +506,8 @@ module Tree where
       parse_many parse_load <*>
       (
         Tree_0 <$>
-        parse_many parse_cat <*>
         parse_many parse_data <*>
+        parse_many parse_cat <*>
         parse_many parse_class <*>
         parse_many parse_opdecl <*>
         parse_many parse_def))

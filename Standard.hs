@@ -8,12 +8,20 @@ module Standard where
   data Alg_pat_7 =
     Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
       deriving Show
-  data Cat_1 = Cat_1 Location_0 (Name, [Name]) (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
+  data Cat_1 = Cat_1 Location_0 (Name, [Name]) [Name] (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
   data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_1 Location_0 [Name] Name [Kind_0] (Name, Maybe Kind_0, [Kind_0], [Pattern_1]) [Constraint_0] [(Name, Expression_9)]
-      deriving Show
+    Instance_1
+      Location_0
+      [Name]
+      [Name]
+      Name
+      [Kind_0]
+      (Name, Maybe Kind_0, [Kind_0], [Pattern_1])
+      [Constraint_0]
+      [(Name, Expression_9)]
+        deriving Show
   data Data_6 = Data_6 Location_0 String [Name] [(Name, Kind_0)] Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
@@ -36,7 +44,7 @@ module Standard where
   data Opdecl_1 = Opdecl_1 Location_0 String Name deriving Show
   data Pat_2 = Application_pat_2 Name [Pat_2] | Blank_pat_2 | Name_pat_2 Name deriving Show
   data Status = New | Old deriving (Eq, Show)
-  data Tree_2 = Tree_2 [Cat_1] [Data_6] [Class_7] [Opdecl_1] [Def_1] deriving Show
+  data Tree_2 = Tree_2 [Data_6] [Cat_1] [Class_7] [Opdecl_1] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
   data Type_5 =
     Application_type_5 Type_5 Type_5 | Char_type_5 Char | Int_type_5 Integer | Name_type_5 Name (Maybe Kind_0) [Kind_0]
@@ -99,14 +107,14 @@ module Standard where
           (Name l op, expr') : y' ->
             und_err op ops k (a l) (\op' -> shunting_yard a k (f, g) ops (pop g x expr'' (Op' l op')) expr' y'))
   standard_1 :: (Location_0 -> Location_1) -> Map' Op -> Tree_0 -> Err (Map' Op, Tree_2)
-  standard_1 d f (Tree_0 l a b e c) =
+  standard_1 d f (Tree_0 a l b e c) =
       let
         (i, j) = gather_ops d (old f) e
       in
         (
           (\m -> \g -> \h -> \k -> (rem_old i, Tree_2 m g h j k)) <$>
-          traverse (std_cat d (fst <$> i)) l <*>
           traverse (std_dat d) a <*>
+          traverse (std_cat d (fst <$> i)) l <*>
           traverse (std_cls d) b <*>
           standard_defs d (fst <$> i) c)
   standard_arguments ::
@@ -131,7 +139,7 @@ module Standard where
   standard_def i j a =
     case a of
       Basic_def_0 b c g d e f -> uncurry (Basic_def_1 b c g) <$> standard_arguments i j d e f
-      Instance_def_0 b c d f g h e -> Instance_1 b c d f g h <$> traverse (std_inst i j) e
+      Instance_def_0 b c d f g h k e -> Instance_1 b c d f g h k <$> traverse (std_inst i j) e
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
   std_apat :: (Location_0 -> Location_1) -> Map' Op -> Alg_pat -> Err Alg_pat_7
@@ -144,10 +152,10 @@ module Standard where
       Name_alg_pat d -> Right (Name_alg_pat_7 d)
       Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
   std_cat :: (Location_0 -> Location_1) -> Map' Op -> Cat_0 -> Err Cat_1
-  std_cat a b (Cat_0 c d (e, f, g, h, i, j, k)) =
+  std_cat a b (Cat_0 c d q (e, f, g, h, i, j, k)) =
     (
       (\l -> \o -> \m -> \p -> \n ->
-        Cat_1 c d (e, f, l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
+        Cat_1 c d q (e, f, l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
       std_dat_br a g <*>
       traverse (std_pat a b) h <*>
       std_expr a b i <*>

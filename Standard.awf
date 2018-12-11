@@ -1,6 +1,7 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 Class Applicative{F : Star -> Star}<Functor>(Ap[T : Star, U : Star] : F (T -> U) -> F T -> F U, Return[T : Star] : T -> F T)
-Class Bifunctor[[K, L, M]]{F : K -> L -> M}(Bimap[T : K, U : K, V : L, W : L] : (T -> U) -> (V -> W) -> F T V -> F U W)
+Class Bifunctor[[K, L, M]]<<Cat K, Cat L, Cat M>>{F : K -> L -> M}(
+  Bimap[T : K, U : K, V : L, W : L] : (T -> U) -> (V -> W) -> F T V -> F U W)
 Class Container{F : Star -> Star}(Empty[T : Star] : F T, Filter[T : Star] : (T -> Logical) -> F T -> F T)
 Class Field{T : Star}<Ring>(Inverse : T -> Maybe T)
 Class Finite{T : Star}<Ord>(All : List T)
@@ -52,21 +53,20 @@ Instance Functor{Maybe}(Fmap f x = Match x {Nothing -> Nothing, Wrap y -> Wrap (
 Instance Functor{Pair _}(Fmap = Map_right)
 Def Greater[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {GT -> True, Default -> False}
 Def Greater_or_equal[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {LT -> False, Default -> True}
-Def Id[T : Star](x : T) : T = x
 Def Identity[T : Star]<Ring T> : T = Convert 1
 Def Interleave[T : Star](x : List T, y : List (List T)) : List T =
-  Match y {Empty_List -> List, Construct_List z a -> Cat z (Flatten (Cat x . a))}
+  Match y {Empty_List -> List, z : a -> Concat z (Flatten (Concat x . a))}
 Def Is_Zero[T : Star]<Ord T, Ring T> : T -> Logical = Equal Zr
 Def Less[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {LT -> True, Default -> False}
 Def Less_or_equal[T : Star]<Ord T>(x : T, y : T) : Logical = Match Compare x y {GT -> False, Default -> True}
-Def Map_left[T : Star, U : Star, F : Star -> Star -> Star, V : Star]<Braided F>(f : T -> U) : F T V -> F U V = f .. Id
-Def Map_right[T : Star, U : Star, F : Star -> Star -> Star, V : Star]<Braided F> : (T -> U) -> F V T -> F V U = Bimap Id
+Def Map_left[T : Star, U : Star, F : Star -> Star -> Star, V : Star]<Bifunctor F>(f : T -> U) : F T V -> F U V = Bimap Id
+Def Map_right[T : Star, U : Star, F : Star -> Star -> Star, V : Star]<Bifunctor F> : (T -> U) -> F V T -> F V U = Bimap Id
 Def Max[T : Star]<Ord T>(x : T, y : T) : T = Match Compare x y {LT -> y, Default -> x}
 Def Min[T : Star]<Ord T>(x : T, y : T) : T = Match Compare x y {LT -> x, Default -> y}
 Def Minus[T : Star]<Ring T>(x : T, y : T) : T = x + Negate y
 Instance Monad{Either _}(Bind x f = Match x {Left y -> Left y, Right y -> f y})
 Instance Monad{Function _}(Bind f g x = g (f x) x)
-Instance Monad{List}(Bind x f = Match x {Empty_List -> List, Construct_List y z -> Cat (f y) (Bind z f)})
+Instance Monad{List}(Bind x f = Match x {Empty_List -> List, y : z -> Concat (f y) (z >>= f)})
 Instance Monad{Maybe}(Bind x f = Match x {Nothing -> Nothing, Wrap y -> f y})
 Def Multiply'[F : Star -> Star, T : Star]<Applicative F, Ring T> : F T -> F T -> F T = Zip Multiply
 Def Negate'[F : Star -> Star, T : Star]<Functor F, Ring T> : F T -> F T = Fmap Negate
@@ -113,8 +113,8 @@ Instance Writeable{Either T U}<Writeable T, Writeable U>(
   Write_Brackets x =
     Mk_Pair
       (Match x {
-        Left y -> Cat (List ("L", "e", "f", "t")) (Brackets y),
-        Right y -> Cat (List ("R", "i", "g", "h", "t")) (Brackets y)})
+        Left y -> Concat (List ("L", "e", "f", "t")) (Brackets y),
+        Right y -> Concat (List ("R", "i", "g", "h", "t")) (Brackets y)})
       True)
 Instance Writeable{List T}<Writeable T>(
   Write_Brackets x =
@@ -122,7 +122,7 @@ Instance Writeable{List T}<Writeable T>(
       Empty_List -> Mk_Pair (List ("L", "i", "s", "t")) False,
       Construct_List y z ->
         Mk_Pair
-          (Cat (List ("L", "i", "s", "t", " ", "(")) (Cat (Interleave (List (",", " ")) (Write . x)) (Lift ")")))
+          (Concat (List ("L", "i", "s", "t", " ", "(")) (Concat (Interleave (List (",", " ")) (Write . x)) (Lift ")")))
           True})
 Instance Writeable{Logical}(
   Write_Brackets x = Mk_Pair (Match x {False -> List ("F", "a", "l", "s", "e"), True -> List ("T", "r", "u", "e")}) False)
@@ -130,7 +130,7 @@ Instance Writeable{Maybe T}<Writeable T>(
   Write_Brackets x =
     Match x {
       Nothing -> Mk_Pair (List ("N", "o", "t", "h", "i", "n", "g")) False,
-      Wrap y -> Mk_Pair (Cat (List ("W", "r", "a", "p", " ")) (Brackets y)) True})
+      Wrap y -> Mk_Pair (Concat (List ("W", "r", "a", "p", " ")) (Brackets y)) True})
 Instance Writeable{Pair T U}<Writeable T, Writeable U>(
   Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' (List ("P", "a", "i", "r")) (List (Brackets x, Brackets y))) True)
 Def Zr[T : Star]<Ring T> : T = Convert 0
