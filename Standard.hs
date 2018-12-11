@@ -9,12 +9,12 @@ module Standard where
     Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
       deriving Show
   data Cat_1 = Cat_1 Location_0 (Name, [Name]) (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
-  data Class_7 = Class_7 Name [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
+  data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_1 Location_0 [Name] Name [Kind_0] (Name, [Kind_0], [Pattern_1]) [Constraint_0] [(Name, Expression_9)]
+    Instance_1 Location_0 [Name] Name [Kind_0] (Name, Maybe Kind_0, [Kind_0], [Pattern_1]) [Constraint_0] [(Name, Expression_9)]
       deriving Show
-  data Data_6 = Data_6 Location_0 String KT0 Data_br_6 deriving Show
+  data Data_6 = Data_6 Location_0 String [Name] [(Name, Kind_0)] Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
@@ -38,8 +38,9 @@ module Standard where
   data Status = New | Old deriving (Eq, Show)
   data Tree_2 = Tree_2 [Cat_1] [Data_6] [Class_7] [Opdecl_1] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
-  data Type_5 = Application_type_5 Type_5 Type_5 | Char_type_5 Char | Int_type_5 Integer | Name_type_5 Name [Kind_0]
-    deriving Show
+  data Type_5 =
+    Application_type_5 Type_5 Type_5 | Char_type_5 Char | Int_type_5 Integer | Name_type_5 Name (Maybe Kind_0) [Kind_0]
+      deriving Show
   data Type_8 = Type_8 Location_0 Type_5 deriving Show
   gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Opdecl_1])
   gather_ops a b c =
@@ -117,7 +118,11 @@ module Standard where
         (
           (\q -> \h -> \(Type_8 i j, k) ->
             (
-              Type_8 i (Application_type_5 (Application_type_5 (Name_type_5 (Name l "Function") []) h) j),
+              Type_8
+                i
+                (Application_type_5
+                  (Application_type_5 (Name_type_5 (Name l "Arrow") (Just (Name_kind_0 (Name l "Star"))) []) h)
+                  j),
               Function_expression_9 q k)) <$>
           std_pat a m e <*>
           std_type' a f <*>
@@ -149,9 +154,9 @@ module Standard where
       traverse (std_pat a b) j <*>
       std_expr a b k)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
-  std_cls e (Class_0 a b c f d) = Class_7 a b c f <$> traverse (std_mthd e) d
+  std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
-  std_dat a (Data_0 b c d e) = Data_6 b c d <$> std_dat_br a e
+  std_dat a (Data_0 b c d f e) = Data_6 b c d f <$> std_dat_br a e
   std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
   std_dat_br a b =
     case b of
@@ -234,12 +239,12 @@ module Standard where
       Application_type_0 c d -> Prelude.foldl Application_type_5 <$> std_type' e c <*> traverse (std_type' e) d
       Char_type_0 c -> Right (Char_type_5 c)
       Int_type_0 c -> Right (Int_type_5 c)
-      Name_type_0 c d -> Right (Name_type_5 c d)
+      Name_type_0 a c d -> Right (Name_type_5 a c d)
       Op_type_0 a c ->
         shunting_yard
           e
           "type operator"
-          (std_type' e, \d -> \f -> Application_type_5 (Application_type_5 (Name_type_5 d []) f))
+          (std_type' e, \d -> \f -> Application_type_5 (Application_type_5 (Name_type_5 d Nothing []) f))
           (Data.Map.fromList typeops)
           []
           a

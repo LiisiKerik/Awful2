@@ -118,7 +118,7 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ _, u)) -> tokenise_parse_naming_typing_eval t j (g, i) f b m y w u)
+      \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ _ _, u)) -> tokenise_parse_naming_typing_eval t j (g, i) f b m y w u)
 init' ::
   (Files, (Locations, Locations, Locations, Map' (Map' Location')), Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
 init' =
@@ -127,7 +127,7 @@ init' =
     (
       locations,
       fromList ((\x -> (x, Language)) <$> ["#", "->", "="]),
-      empty,
+      singleton "Star" Language,
       fromList
         [
           ("Ord", fromList [("Char", Language), ("Int", Language)]),
@@ -146,7 +146,7 @@ main = do
     [] -> putStrLn "Missing command."
     command : arguments ->
       case command of
-        "check" ->
+        "Check" ->
           case arguments of
             [f] ->
               case check_extension f of
@@ -158,7 +158,7 @@ main = do
                       Left e -> e
                       _ -> "Library check successful!")
             _ -> putStrLn "Command check expects 1 argument."
-        "eval" ->
+        "Eval" ->
           case arguments of
             a : b ->
               case check_extensions a b of

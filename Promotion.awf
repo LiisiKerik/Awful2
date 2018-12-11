@@ -6,7 +6,6 @@ Data Array'[L : List Nat, T : Star] =
 Data Conj[L : List Star] =
   Branch L {Empty_List -> Struct Empty_Conj, Construct_List T L' -> Struct Construct_Conj(Head_Conj : T, Tail_Conj : Conj L')}
 Data Disj[L : List Star] = Branch L {Construct_List T L' -> Algebraic {Left_Disj T, Right_Disj (Disj L')}}
-Data Fun[T : Star, U : Star] = Struct Mk_Fun (Fun' : Function T U)
 Class Commutative_Conj{L : List Star}<Ring_Conj>
 Class Field_Conj{L : List Star}<Ring_Conj>(Inverse_Conj : Conj L -> Maybe (Conj L))
 Class Finite_Conj{L : List Star}<Ord_Conj>(All_Conj : List (Conj L))
