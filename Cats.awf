@@ -1,5 +1,18 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 Data Opp[T : Star] = Algebraic {Mk_Opp T}
+Cat{{K + L}}<<Cat K, Cat L>>(
+  T -> U =
+    Branch Mk_Pair T U {
+      Mk_Pair (Left V) (Left W) -> Algebraic {Left_Arrow (V -> W)},
+      Mk_Pair (Right V) (Right W) -> Algebraic {Right_Arrow (V -> W)},
+      _ -> Algebraic {}},
+  Compose[T, U, V] f g =
+    Branch Mk_Pair T (Mk_Pair U V) {
+      Mk_Pair (Left _) (Mk_Pair (Left _) (Left _)) -> Match Mk_Pair f g {Mk_Pair (Left_Arrow h) (Left_Arrow i) -> Left_Arrow (h . i)},
+      Mk_Pair (Right _) (Mk_Pair (Right _) (Right _)) ->
+        Match Mk_Pair f g {Mk_Pair (Right_Arrow h) (Right_Arrow i) -> Right_Arrow (h . i)},
+      _ -> Match Mk_Pair f g {}},
+  Id[T] = Branch T {Left _ -> Left_Arrow Id, Right _ -> Right_Arrow Id})
 Cat{{Opp K}}<<Cat K>>(
   Mk_Opp T -> Mk_Opp U = Algebraic {Opp_Arrow (U -> T)},
   Opp_Arrow f . Opp_Arrow g = Opp_Arrow (g . f),
