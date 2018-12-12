@@ -16,8 +16,13 @@ module Tree where
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
   data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
-  data Cat_0 = Cat_0 Location_0 (Name, [Name]) [Name] (Name, Name, Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
-    deriving Show
+  data Cat_0 =
+    Cat_0
+      Location_0
+      (Name, [Name])
+      [Name]
+      ((Location_0, Pat), (Location_0, Pat), Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
+        deriving Show
   data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name Name deriving Show
   data Data_0 = Data_0 Location_0 String [Name] [(Name, Kind_0)] Data_br_0 deriving Show
@@ -208,9 +213,9 @@ module Tree where
       parse_round
         (
           (,,,,,,) <$>
-          parse_name' <*
+          ((,) <&> parse_pat) <*
           parse_arrow <*>
-          parse_name' <*
+          ((,) <&> parse_pat) <*
           parse_eq <*>
           parse_data_br <*
           parse_comma <*
@@ -440,7 +445,7 @@ module Tree where
           Operator_token b -> Just b
           _ -> Nothing)
   parse_op_0 :: Parser' String
-  parse_op_0 = filter_parser (\x -> notElem x ["#", "->", "="]) parse_op
+  parse_op_0 = filter_parser (\x -> notElem x ["->", "="]) parse_op
   parse_op_0' :: Parser' Name
   parse_op_0' = Name <&> parse_op_0
   parse_op_alg_pattern :: Parser' Alg_pat

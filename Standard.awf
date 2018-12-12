@@ -1,21 +1,21 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
-Class Applicative{F : Star -> Star}<Functor>(Ap[T : Star, U : Star] : F (T -> U) -> F T -> F U, Return[T : Star] : T -> F T)
-Class Bifunctor[[K, L, M]]<<Cat K, Cat L, Cat M>>{F : K -> L -> M}(
-  Bimap[T : K, U : K, V : L, W : L] : (T -> U) -> (V -> W) -> F T V -> F U W)
-Class Container{F : Star -> Star}(Empty[T : Star] : F T, Filter[T : Star] : (T -> Logical) -> F T -> F T)
-Class Field{T : Star}<Ring>(Inverse : T -> Maybe T)
-Class Finite{T : Star}<Ord>(All : List T)
-Class Functor[[K, L]]<<Cat K, Cat L>>{F : K -> L}(Fmap[T : K, U : K] : (T -> U) -> F T -> F U)
-Class Monad{F : Star -> Star}<Applicative>(Bind[T : Star, U : Star] : F T -> (T -> F U) -> F U)
-Operator * Multiply 7 Left
-Operator + Add 6 Left
-Operator ++ Concat 5 Right
-Operator - Minus 6 Left
-Operator . Compose 9 Right
-Operator : Concat 5 Right
-Operator <$> Fmap 4 Left
-Operator <*> Ap 4 Left
-Operator >>= Bind 1 Left
+Class Applicative{f : Star -> Star}<Functor>(ap[t : Star, u : Star] : f (t -> u) -> f t -> f u, Return[t : Star] : t -> f t)
+Class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f : k -> l -> m}(
+  bimap[t : k, u : k, v : l, w : l] : (t -> u) -> (v -> w) -> f t v -> f u w)
+Class Container{f : Star -> Star}(empty[t : Star] : f t, filter[t : star] : (t -> Logical) -> f t -> f t)
+Class Field{t : Star}<Ring>(inverse : t -> Maybe t)
+Class Finite{t : Star}<Ord>(all : List t)
+Class Functor[[k, l]]<<Cat k, Cat l>>{f : k -> l}(fmap[t : k, u : k] : (t -> u) -> f t -> f u)
+Class Monad{f : Star -> Star}<Applicative>(bind[t : Star, u : Star] : f t -> (t -> f u) -> f u)
+Operator * multiply 7 Left
+Operator + add 6 Left
+Operator ++ concat 5 Right
+Operator - minus 6 Left
+Operator . compose 9 Right
+Operator : concat 5 Right
+Operator <$> fmap 4 Left
+Operator <*> ap 4 Left
+Operator >>= bind 1 Left
 Def Add'[F : Star -> Star, T : Star]<Applicative F, Ring T> : F T -> F T -> F T = Zip Add
 Instance Applicative{Either _}(x <*> y = Match x {Left z -> Left z, Right f -> f . y}, Return = Right)
 Instance Applicative{Function _}((f <*> g) x = f x (g x), Return x _ = x)

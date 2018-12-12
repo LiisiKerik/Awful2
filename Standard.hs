@@ -8,7 +8,9 @@ module Standard where
   data Alg_pat_7 =
     Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
       deriving Show
-  data Cat_1 = Cat_1 Location_0 (Name, [Name]) [Name] (Name, Name, Data_br_6, Expression_9, Expression_9) deriving Show
+  data Cat_1 =
+    Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Pat_2), (Location_0, Pat_2), Data_br_6, Expression_9, Expression_9)
+      deriving Show
   data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
@@ -152,10 +154,16 @@ module Standard where
       Name_alg_pat d -> Right (Name_alg_pat_7 d)
       Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
   std_cat :: (Location_0 -> Location_1) -> Map' Op -> Cat_0 -> Err Cat_1
-  std_cat a b (Cat_0 c d q (e, f, g, h, i, j, k)) =
+  std_cat a b (Cat_0 c d q ((a1, e), (a2, f), g, h, i, j, k)) =
     (
-      (\l -> \o -> \m -> \p -> \n ->
-        Cat_1 c d q (e, f, l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
+      (\v -> \w -> \l -> \o -> \m -> \p -> \n ->
+        Cat_1
+          c
+          d
+          q
+          ((a1, v), (a2, w), l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
+      std_pat a b e <*>
+      std_pat a b f <*>
       std_dat_br a g <*>
       traverse (std_pat a b) h <*>
       std_expr a b i <*>
