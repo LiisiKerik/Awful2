@@ -118,7 +118,8 @@ eval'' a b = do
   return
     (
       c >>=
-      \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ _ _ _, u)) -> tokenise_parse_naming_typing_eval t j (g, i) f b m y w u)
+      \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ _ w' _, u)) ->
+        tokenise_parse_naming_typing_eval t j (g, i) f b m y w u w')
 init' ::
   (Files, (Locations, Locations, Locations, Map' (Map' Location')), Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
 init' =

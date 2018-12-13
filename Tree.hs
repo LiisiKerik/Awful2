@@ -256,7 +256,7 @@ module Tree where
       (Just <$ parse_operator "<" <*> parse_name' <* parse_operator ">" <+> pure Nothing) <*>
       parse_optional parse_round parse_method)
   parse_colon :: Parser' ()
-  parse_colon = parse_operator ":"
+  parse_colon = parse_operator "::"
   parse_comma :: Parser' ()
   parse_comma = parse_token Comma_token
   parse_comp_expr :: Parser' Expression_0
@@ -445,7 +445,7 @@ module Tree where
           Operator_token b -> Just b
           _ -> Nothing)
   parse_op_0 :: Parser' String
-  parse_op_0 = filter_parser (\x -> notElem x ["->", "="]) parse_op
+  parse_op_0 = filter_parser (\x -> notElem x ["->", "::", "="]) parse_op
   parse_op_0' :: Parser' Name
   parse_op_0' = Name <&> parse_op_0
   parse_op_alg_pattern :: Parser' Alg_pat
@@ -524,7 +524,7 @@ module Tree where
       [] -> b
       Token_1 c _ : _ -> c
   typeops :: [(String, Op)]
-  typeops = [("*", Op 0 Rght "Pair"), ("+", Op 1 Rght "Either"), ("->", Op 2 Rght "Arrow")]
+  typeops = [("->", Op 2 Rght "Arrow")]
   update_location :: State -> Location_0 -> State
   update_location (State a b) c = State a (max b c)
 --------------------------------------------------------------------------------------------------------------------------------
