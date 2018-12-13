@@ -2053,14 +2053,56 @@ module Typing where
             (\(i2, f2, c') -> (i2, f2, Application_type_1 b' c')) <$> type_eqs m i' c d e (Name_kind_1 (show i)) f')
       Char_type_5 b -> Right (i, (s, (k, char_kind) : f), Char_type_1 b)
       Int_type_5 b -> Right (i, (s, (k, int_kind) : f), Int_type_1 b)
-      Name_type_5 (Name l b) v c ->
+      Name_type_5 (Name b c) h g ->
         und_err
-          b
+          c
           d
           "type"
-          (m l)
-          (\(Polykind n p q) ->
-            (\((w, t), u) -> (i, (s, (k, repkinds u q) : f), Name_type_1 b w t)) <$> ziph m e b l (n, p) (v, c))
+          (m b)
+          (\(Polykind j l n) ->
+            let
+              o = maybeToList j ++ l
+              p = i + fromIntegral (length o)
+              q = show <$> [i .. p - 1]
+              x = Name_kind_1 <$> q
+              t u =
+                Right
+                  (
+                    p,
+                    (Data.Set.union s (Data.Set.fromList q), u ++ [(k, kindrep' (Data.Map.fromList (zip o x)) n)] ++ f),
+                    case j of
+                      Nothing -> Name_type_1 c Nothing x
+                      Just r -> Name_type_1 c (Just (head x)) (tail x))
+            in
+              case (j, h) of
+                (Nothing, Nothing) ->
+                  case g of
+                    [] -> t []
+                    _ ->
+                      case compare (length g) (length l) of
+                        LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
+                        EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip x v)
+                        GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))
+                (Nothing, Just _) -> Left ("Illegal ad hoc kind argument for " ++ c ++ location' (m b))
+                (Just _, Nothing) ->
+                  case g of
+                    [] -> t []
+                    _ ->
+                      case compare (length g) (length l) of
+                        LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
+                        EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip (tail x) v)
+                        GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))
+                (Just _, Just s') ->
+                  (
+                    type_kind_7 m e Star_kind s' >>=
+                    \u -> 
+                      case g of
+                        [] -> t [(head x, u)]
+                        _ ->
+                          case compare (length g) (length l) of
+                            LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
+                            EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip x (u : v))
+                            GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))))
   type_expr ::
     String ->
     Type_1 ->
