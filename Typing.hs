@@ -241,7 +241,7 @@ module Typing where
       (c, d) = kind_string b []
     in
       case Data.Map.lookup c a of
-        Nothing -> Left ("Kind " ++ c ++ location g ++ " should have an instance of Cat.")
+        Nothing -> Left ("Kind " ++ c ++ " should have an instance of Cat because of something going on" ++ location' g)
         Just (Cat_4 e f) -> check_cats' g a (zip d e) (Data.Set.fromList f)
   check_cats :: Location_1 -> Map' Cat_4 -> Map' Kind_1 -> [String] -> Err ()
   check_cats f e a b =
@@ -1372,6 +1372,7 @@ module Typing where
                                           m'
                                           (t3, y)
                                           (fst <$> j)
+                                          b
                                     in
                                       (
                                         (\j7 -> \j8 ->
@@ -2009,7 +2010,8 @@ module Typing where
             (
               Prelude.foldl (\y -> \(z, w) -> Data.Map.insert z (pkind w) y) n b,
               Prelude.foldl (\m0 -> \m1 -> Data.Map.insert m1 Star_kind m0) v2 b0)
-            f1)
+            f1
+            r)
       Instance_4 l' e' w0 w e e0 e1 f f' g' c2 r' ->
         let
           f4 = Prelude.foldl (\x -> \(y, g) -> Data.Map.insert y (pkind g) x) n e0
@@ -2187,8 +2189,9 @@ module Typing where
     Map' ([String], Map' [(String, Nat)]) ->
     (Map' Polykind, Map' Kind) ->
     Map' Cat_4 ->
+    Location_0 ->
     Err Expression_2
-  type_expr k h a (c, e) f m w w' b a3 =
+  type_expr k h a (c, e) f m w w' b a3 l3 =
     let
       n = " in " ++ k
     in
@@ -2206,6 +2209,7 @@ module Typing where
                     True ->
                       (
                         addargs w' p <$
+                        traverse_ (check_cat (a l3) a3) q8 <*
                         slv
                           m
                           y
@@ -2227,7 +2231,7 @@ module Typing where
     Map' ([String], Map' [(String, Nat)]) ->
     Map' Cat_4 ->
     Err Expression_2
-  type_expr' (b, c, e, i) f g h =
+  type_expr' (b, c, e, i) f g h c3 =
     type_expr
       "input."
       (list_type char_type)
@@ -2240,6 +2244,8 @@ module Typing where
       0
       h
       (b, i)
+      c3
+      (Location_0 0 0)
   type_expression ::
     (
       Map' Constructor ->
@@ -2381,7 +2387,7 @@ module Typing where
   type_exprs a b c d h i t z w f' t' t0 (x2, t4) t9 =
     case h of
       [] -> Right i
-      (j @ (Name _ y), k, s, t5, l) : m ->
+      (j @ (Name l2 y), k, s, t5, l) : m ->
         (
           type_expr
             (a j)
@@ -2393,7 +2399,8 @@ module Typing where
             w
             t'
             (Prelude.foldl (\k' -> \(l', m0) -> Data.Map.insert l' (pkind m0) k') x2 s, t4)
-            t9 >>=
+            t9
+            l2 >>=
           \g -> type_exprs a b c d m (Data.Map.insert (y ++ " " ++ t) (f' g) i) t z w f' t' t0 (x2, t4) t9)
   type_field :: (Location_0 -> Location_1) -> (String, Type_8) -> Map' Polykind -> Map' Kind -> Err (String, Type_1)
   type_field d (a, b) c e  = (,) a <$> type_typ d c e star_kind b
