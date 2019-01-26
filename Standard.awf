@@ -1,9 +1,9 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
-Class Applicative{f :: Star -> Star}<Functor>(
-  ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, Return[t :: Star] :: t -> f t)
+Class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
+  ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
 Class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f :: k -> l -> m}(
   bimap[t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
-Class Container{f :: Star -> Star}(empty[t :: Star] :: f t, filter[t :: star] :: (t -> Logical) -> f t -> f t)
+Class Container{f :: Star -> Star}(empty[t :: Star] :: f t, filter[t :: Star] :: (t -> Logical) -> f t -> f t)
 Class Field{t :: Star}<Ring>(inverse :: t -> Maybe t)
 Class Finite{t :: Star}<Ord>(all :: List t)
 Class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
@@ -47,11 +47,12 @@ Instance Finite{Logical}(All = List (False, True))
 Instance Finite{Maybe T}<Finite T>(All = Construct_List Nothing (Wrap . All))
 Instance Finite{Pair T U}<Finite T, Finite U>(All = Zip Mk_Pair All All)
 Def Flatten[F :: Star -> Star, T :: Star]<Monad F>(x :: F (F T)) :: F T = Bind x Id
-Instance[[K]]<<Cat K>> Functor[[K, Star]]{Arrow[[K]] _}(Fmap = Compose)
-Instance Functor{Either _}(Fmap = Map_right)
-Instance Functor{List}(Fmap f x = Match x {Empty_List -> List, Construct_List y z -> Construct_List (f y) (f . z)})
-Instance Functor{Maybe}(Fmap f x = Match x {Nothing -> Nothing, Wrap y -> Wrap (f y)})
-Instance Functor{Pair _}(Fmap = Map_right)
+Instance[[k]]<<Cat k>> Functor[[k, Star]]{Arrow[[k]] _}(fmap = compose)
+Instance Functor[[Star, Star]]{Either _}(Fmap = Map_right)
+Instance Functor[[Star, Star]]{List}(Fmap f x = Match x {Empty_List -> List, Construct_List y z -> Construct_List (f y) (f . z)})
+Instance Functor[[Star, Star]]{Maybe}(
+  fmap f x = Match x {Nothing -> Nothing, Wrap y -> Wrap (f y)})
+Instance Functor[[Star, Star]]{Pair _}(Fmap = Map_right)
 Def Greater[T :: Star]<Ord T>(x :: T, y :: T) :: Logical = Match Compare x y {GT -> True, Default -> False}
 Def Greater_or_equal[T :: Star]<Ord T>(x :: T, y :: T) :: Logical = Match Compare x y {LT -> False, Default -> True}
 Def Identity[T :: Star]<Ring T> :: T = Convert 1
@@ -70,7 +71,7 @@ Instance Monad{Function _}(Bind f g x = g (f x) x)
 Instance Monad{List}(Bind x f = Match x {Empty_List -> List, y : z -> Concat (f y) (z >>= f)})
 Instance Monad{Maybe}(Bind x f = Match x {Nothing -> Nothing, Wrap y -> f y})
 Def Multiply'[F :: Star -> Star, T :: Star]<Applicative F, Ring T> :: F T -> F T -> F T = Zip Multiply
-Def Negate'[F :: Star -> Star, T :: Star]<Functor F, Ring T> :: F T -> F T = Fmap Negate
+Def Negate'[F :: Star -> Star, T :: Star]<Functor[[Star, Star]] F, Ring T> :: F T -> F T = Fmap Negate
 Def Not(x :: Logical) :: Logical = Match x {False -> True, True -> False}
 Def Not_equal[T :: Star]<Ord T>(x :: T, y :: T) :: Logical = Match Compare x y {EQ -> False, Default -> True}
 Instance Ord{Comparison}(

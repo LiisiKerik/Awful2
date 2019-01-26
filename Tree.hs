@@ -23,8 +23,8 @@ module Tree where
       [Name]
       ((Location_0, Pat), (Location_0, Pat), Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
         deriving Show
-  data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe Name) [Method] deriving Show
-  data Constraint_0 = Constraint_0 Name Name deriving Show
+  data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method] deriving Show
+  data Constraint_0 = Constraint_0 Name [Kind_0] Name deriving Show
   data Data_0 = Data_0 Location_0 String [Name] [(Name, Kind_0)] Data_br_0 deriving Show
   data Data_br_0 =
     Algebraic_data_0 [Form_0] | Branching_data_0 Location_0 Name [Data_case_0] | Struct_data_0 Name [(Name, Type_7)]
@@ -253,7 +253,7 @@ module Tree where
       parse_kind_vars <*>
       parse_cat_constrs <*>
       parse_curlies ((,) <$> parse_pattern' <* parse_colon <*> parse_kind) <*>
-      (Just <$ parse_operator "<" <*> parse_name' <* parse_operator ">" <+> pure Nothing) <*>
+      (Just <$ parse_operator "<" <*> ((,) <$> parse_name' <*> parse_kinds') <* parse_operator ">" <+> pure Nothing) <*>
       parse_optional parse_round parse_method)
   parse_colon :: Parser' ()
   parse_colon = parse_operator "::"
@@ -262,7 +262,7 @@ module Tree where
   parse_comp_expr :: Parser' Expression_0
   parse_comp_expr = parse_list_expr <+> parse_let_expression <+> parse_match_expression <+> parse_function <+> parse_op_expr
   parse_constraint :: Parser' Constraint_0
-  parse_constraint = Constraint_0 <$> parse_name' <*> parse_name'
+  parse_constraint = Constraint_0 <$> parse_name' <*> parse_kinds' <*> parse_name'
   parse_constraints :: Parser' [Constraint_0]
   parse_constraints = parse_optional parse_angulars parse_constraint
   parse_curlies :: Parser' t -> Parser' t
