@@ -1933,54 +1933,62 @@ module Typing where
           "class"
           (Location_1 l e)
           (\(Class_4 d2 k9 (o, p) w0 q) ->
-            (
-              ziphelp (Location_1 l) x m e Data.Map.empty d2 k3 >>=
-              \(_, g9) ->
-                und_err
-                  n
-                  b
-                  "type"
-                  (Location_1 l f)
-                  (\(Polykind t1 r s) ->
-                    (
-                      ziph (Location_1 l) x n f (t1, r) (u4, w2) >>=
-                      \((t6, e4), w3) ->
-                        (
-                          type_class_args
-                            (repkinds w3 s)
-                            k'
-                            (kind_err (Location_1 l f))
-                            (repkinds g9 p)
-                            0
-                            (Name_type_1 n t6 e4)
-                            Data.Map.empty
-                            Data.Map.empty
-                            Zr >>=
-                          \(q', p', s', t0, t7) ->
+            let
+              x4 = Data.Map.union x (Data.Map.fromList ((\t7 -> (t7, Star_kind)) <$> t8))
+            in
+              (
+                type_cat_constrs (Location_1 l, Data.Set.fromList t8) (w4, a9) >>=
+                \(w5, s3) ->
+                  (
+                    ziphelp (Location_1 l) x4 m e Data.Map.empty d2 k3 >>=
+                    \(_, g9) ->
+                      (
+                        check_cats (Location_1 l d) w5 g9 k9 *>
+                        und_err
+                          n
+                          b
+                          "type"
+                          (Location_1 l f)
+                          (\(Polykind t1 r s) ->
                             (
-                              type_constraints_0 Data.Map.empty o' (k2, t0, t7) l >>=
-                              \(o1, o2, o3) ->
-                                let
-                                  r' =
+                              ziph (Location_1 l) x4 n f (t1, r) (u4, w2) >>=
+                              \((t6, e4), w3) ->
+                                (
+                                  type_class_args
+                                    (repkinds w3 s)
+                                    k'
+                                    (kind_err (Location_1 l f))
+                                    (repkinds g9 p)
+                                    0
+                                    (Name_type_1 n t6 e4)
+                                    Data.Map.empty
+                                    Data.Map.empty
+                                    Zr >>=
+                                  \(q', p', s', t0, t7) ->
                                     (
-                                      (\(x', _) ->
-                                        (
-                                          (\(Constraint_1 y' _ _) -> y') <$>
-                                          Data.List.filter (\(Constraint_1 _ _ y') -> y' == x') o1)) <$>
-                                      q')
-                                in
-                                  (
-                                    (\w ->
-                                      (
-                                        Instance_4 d m (fst <$> w0) o n q' p' w s' o1 o2 r',
-                                        c,
-                                        (
-                                          (case Data.Map.lookup m t' of
-                                            Just _ -> adjust (ins_new n r') m
-                                            Nothing -> Data.Map.insert m (Data.Map.singleton n (r', New)))
-                                              t',
-                                          adjust (second (Data.Map.insert n o3)) m u3))) <$>
-                                    type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d)))))))
+                                      type_constraints_0 Data.Map.empty o' (k2, t0, t7) l >>=
+                                      \(o1, o2, o3) ->
+                                        let
+                                          r' =
+                                            (
+                                              (\(x', _) ->
+                                                (
+                                                  (\(Constraint_1 y' _ _) -> y') <$>
+                                                  Data.List.filter (\(Constraint_1 _ _ y') -> y' == x') o1)) <$>
+                                              q')
+                                        in
+                                          (
+                                            (\w ->
+                                              (
+                                                Instance_4 d m (fst <$> w0) o n q' p' w s' o1 o2 r',
+                                                c,
+                                                (
+                                                  (case Data.Map.lookup m t' of
+                                                    Just _ -> adjust (ins_new n r') m
+                                                    Nothing -> Data.Map.insert m (Data.Map.singleton n (r', New)))
+                                                      t',
+                                                  adjust (second (Data.Map.insert n o3)) m u3))) <$>
+                                            type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d)))))))))
   type_def_2 ::
     (Location_0 -> Location_1) ->
     Def_4 ->
@@ -2010,7 +2018,7 @@ module Typing where
             (
               Prelude.foldl (\y -> \(z, w) -> Data.Map.insert z (pkind w) y) n b,
               Prelude.foldl (\m0 -> \m1 -> Data.Map.insert m1 Star_kind m0) v2 b0)
-            f1
+            (Prelude.foldl (\y -> \z -> Data.Map.insert z (Cat_4 [] []) y) f1 g3)
             r)
       Instance_4 l' e' w0 w e e0 e1 f f' g' c2 r' ->
         let
@@ -2147,7 +2155,7 @@ module Typing where
                     (Data.Set.union s (Data.Set.fromList q), u ++ [(k, kindrep' (Data.Map.fromList (zip o x)) n)] ++ f),
                     case j of
                       Nothing -> Name_type_1 c Nothing x
-                      Just r -> Name_type_1 c (Just (head x)) (tail x))
+                      Just _ -> Name_type_1 c (Just (head x)) (tail x))
             in
               case (j, h) of
                 (Nothing, Nothing) ->
