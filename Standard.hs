@@ -256,15 +256,6 @@ module Standard where
       Char_type_0 c -> Right (Char_type_5 c)
       Int_type_0 c -> Right (Int_type_5 c)
       Name_type_0 a c d -> Right (Name_type_5 a c d)
-      Op_type_0 a c ->
-        shunting_yard
-          e
-          "type operator"
-          (std_type' e, \d -> \f -> Application_type_5 (Application_type_5 (Name_type_5 d Nothing []) f))
-          (Data.Map.fromList typeops)
-          []
-          a
-          c
   und_err :: String -> Map' t -> String -> Location_1 -> (t -> Err u) -> Err u
   und_err a b c d f =
     case Data.Map.lookup a b of

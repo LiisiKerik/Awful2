@@ -11,7 +11,7 @@ module Eval where
   eval a b =
     case eval' a b of
       Just c -> tostr c
-      Nothing -> "Crash"
+      Nothing -> "undefined"
   eval' :: Map' Expression_2 -> Expression_2 -> Maybe Expression_2
   eval' a c =
     case c of
@@ -132,12 +132,12 @@ module Eval where
   list_expression :: String -> Expression_2
   list_expression =
     Prelude.foldr
-      (\x -> \y -> Algebraic_expression_2 "Construct_List" [Char_expression_2 x, y])
-      (Algebraic_expression_2 "Empty_List" [])
+      (\x -> \y -> Algebraic_expression_2 "ConstructList" [Char_expression_2 x, y])
+      (Algebraic_expression_2 "EmptyList" [])
   nothing_algebraic :: Expression_2
   nothing_algebraic = Algebraic_expression_2 "Nothing" []
   pair_expression :: Expression_2 -> Expression_2 -> Expression_2
-  pair_expression x y = Algebraic_expression_2 "Pair" [x, y]
+  pair_expression x y = Algebraic_expression_2 "Mk_Pair" [x, y]
   subst_expr :: String -> Expression_2 -> Expression_2 -> Expression_2
   subst_expr a b c =
     let
@@ -199,9 +199,9 @@ module Eval where
   tostr :: Expression_2 -> String
   tostr x =
     case x of
-      Algebraic_expression_2 "Empty_List" [] -> []
-      Algebraic_expression_2 "Construct_List" [Char_expression_2 y, z] -> y : tostr z
+      Algebraic_expression_2 "EmptyList" [] -> []
+      Algebraic_expression_2 "ConstructList" [Char_expression_2 y, z] -> y : tostr z
       _ -> undefined
   wrap_algebraic :: Expression_2 -> Expression_2
-  wrap_algebraic x = Algebraic_expression_2 "Wrap" [x]
+  wrap_algebraic x = Algebraic_expression_2 "Just" [x]
 --------------------------------------------------------------------------------------------------------------------------------

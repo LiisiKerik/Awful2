@@ -294,7 +294,7 @@ module Typing where
             []
             ("T", star_kind)
             Nothing
-            [Method_4 "Compare" [] [] (function_type (ntype "T") (function_type (ntype "T") comparison_type))]),
+            [Method_4 "compare" [] [] (function_type (ntype "T") (function_type (ntype "T") comparison_type))]),
         (
           "Ring",
           Class_4
@@ -320,9 +320,9 @@ module Typing where
   classes_2 :: Map' ([String], [String], Kind_1)
   classes_2 = (\(Class_4 b c (_, a) _ _) -> (b, c, a)) <$> classes_0
   comparison_kind :: Kind_1
-  comparison_kind = Name_kind_1 "Comparison"
+  comparison_kind = Name_kind_1 "Ordering"
   comparison_type :: Type_1
-  comparison_type = ntype "Comparison"
+  comparison_type = ntype "Ordering"
   compose_patterns :: (Pattern_5, Bool) -> ([Pattern_5], Bool) -> ([Pattern_5], Bool)
   compose_patterns (x, y) (z, w) = (x : z, y && w)
   constr_check :: Map' Class_4 -> [String] -> [[String]] -> [[String]] -> Maybe String
@@ -432,8 +432,6 @@ module Typing where
   defs =
     Data.Map.fromList
       [
-        ("Compare Char", Compare_Char_0_expression_2),
-        ("Compare Int", Compare_Int_0_expression_2),
         (
           "Compose Star",
           Function_expression_2
@@ -475,6 +473,8 @@ module Typing where
         ("Write_Brackets Int", Write_Brackets_Int_expression_2),
         ("Zero", Algebraic_expression_2 "Zero" []),
         ("add Int", Add_Int_0_expression_2),
+        ("compare Char", Compare_Char_0_expression_2),
+        ("compare Int", Compare_Int_0_expression_2),
         ("convert Int", Convert_Int_expression_2),
         ("div", Div_0_expression_2),
         ("multiply Int", Multiply_Int_0_expression_2),
@@ -567,12 +567,12 @@ module Typing where
       [
         ("Arrow", Arrow_kind (Arrow_kind Star_kind)),
         ("Char", Star_kind),
-        ("Comparison", Star_kind),
         ("Either", Arrow_kind (Arrow_kind Star_kind)),
         ("Int", Star_kind),
         ("List", Arrow_kind Star_kind),
         ("Maybe", Arrow_kind Star_kind),
         ("Nat", Star_kind),
+        ("Ordering", Star_kind),
         ("Pair", Arrow_kind (Arrow_kind Star_kind)),
         ("Star", Star_kind)]
   init_type_context :: (File, Map' Op)
@@ -648,7 +648,6 @@ module Typing where
       [
         ("Arrow", Polykind (Just "K") [] (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "K") (Name_kind_1 "Star")))),
         ("Char", pkind star_kind),
-        ("Comparison", pkind star_kind),
         (
           "ConstructList",
           Polykind
@@ -674,6 +673,7 @@ module Typing where
         ("Nat", pkind star_kind),
         ("Next", pkind (arrow_kind nat_kind nat_kind)),
         ("Nothing", Polykind Nothing ["K"] (maybe_kind (Name_kind_1 "K"))),
+        ("Ordering", pkind star_kind),
         ("Pair", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
         ("Right", Polykind Nothing ["K", "L"] (arrow_kind (Name_kind_1 "L") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
         ("Zero", pkind nat_kind)]
@@ -705,8 +705,6 @@ module Typing where
         [
           "Arrow",
           "Char",
-          "Compare",
-          "Comparison",
           "Compose",
           "ConstructList",
           "EQ",
@@ -727,6 +725,7 @@ module Typing where
           "Next",
           "Nothing",
           "Ord",
+          "Ordering",
           "Pair",
           "Right",
           "Ring",
@@ -736,6 +735,7 @@ module Typing where
           "Writeable",
           "Zero",
           "add",
+          "compare",
           "convert",
           "div",
           "multiply",
@@ -845,7 +845,6 @@ module Typing where
   prom_algs =
     Data.Map.fromList
       [
-        ("Comparison", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])])),
         ("Either", Prom_alg ["K", "L"] (Data.Map.fromList [("Left", [Name_kind_1 "K"]), ("Right", [Name_kind_1 "L"])])),
         (
           "List",
@@ -856,7 +855,8 @@ module Typing where
                 ("ConstructList", [Name_kind_1 "K", Application_kind_1 (Name_kind_1 "List") (Name_kind_1 "K")]),
                 ("EmptyList", [])])),
         ("Maybe", Prom_alg ["K"] (Data.Map.fromList [("Just", [Name_kind_1 "K"]), ("Nothing", [])])),
-        ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])]))]
+        ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])])),
+        ("Ordering", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])]))]
   prom_type :: Type_1 -> Kind_1
   prom_type a =
     case a of
@@ -878,7 +878,7 @@ module Typing where
       _ -> False
   promotables :: Map' Bool
   promotables =
-    Data.Map.fromList ((\a -> (a, True)) <$> ["Char", "Comparison", "Either", "Int", "List", "Maybe", "Nat", "Pair"])
+    Data.Map.fromList ((\a -> (a, True)) <$> ["Char", "Either", "Int", "List", "Maybe", "Nat", "Ordering", "Pair"])
   rem_old' :: Map' (Map' (t, Status)) -> Map' (Map' t)
   rem_old' a = Data.Map.filter (\b -> not (Data.Map.null b)) (rem_old <$> a)
   repkinds :: Map' Kind_1 -> Kind_1 -> Kind_1
@@ -2878,7 +2878,7 @@ module Typing where
                   (\(s, t, u, v, w, n3) -> (c : s, t, u, v, w, n3)) <$> type_tpats a b k n o p q r (Name x y) k2)
   type_typ :: (Location_0 -> Location_1) -> Map' Polykind -> Map' Kind -> Kind_1 -> Type_8 -> Err Type_1
   type_typ a d e f (Type_8 b c) =
-    type_eqs a 0 c d e f (Data.Set.empty, []) >>= \(_, (g, h), i) -> i <$ solve_type_eqs (a b) g h (Data.Map.empty, ntype "")
+    type_eqs a 0 c d e f (Data.Set.empty, []) >>= \(_, (g, h), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i)
   type_types :: (Location_0 -> Location_1) -> [Type_8] -> Map' Polykind -> Map' Kind -> Err [Type_1]
   type_types f a b g =
     case a of
@@ -2893,16 +2893,6 @@ module Typing where
   types =
     Data.Map.fromList
       [
-        (
-          "Compare",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind)]
-            (Just (Constraint_1 "Ord" [] "T"))
-            [Constraint_1 "Ord" [] "T"]
-            (function_type (ntype "T") (function_type (ntype "T") comparison_type))),
         (
           "Compose",
           Type_2
@@ -3018,6 +3008,16 @@ module Typing where
             (Just (Constraint_1 "Ring" [] "T"))
             [Constraint_1 "Ring" [] "T"]
             (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))),
+        (
+          "compare",
+          Type_2
+            Nothing
+            []
+            []
+            [(Name_tpat "T", star_kind)]
+            (Just (Constraint_1 "Ord" [] "T"))
+            [Constraint_1 "Ord" [] "T"]
+            (function_type (ntype "T") (function_type (ntype "T") comparison_type))),
         (
           "convert",
           Type_2

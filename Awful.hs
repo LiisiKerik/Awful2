@@ -127,7 +127,7 @@ init' =
     empty,
     (
       locations,
-      fromList ((\x -> (x, Language)) <$> ["->", "::", "="]),
+      (fromList ((\x -> (x, Language)) <$> ["->", "::", "="])),
       singleton "Star" Language,
       fromList
         [

@@ -68,11 +68,7 @@ module Tree where
   data Tree_0 = Tree_0 [Data_0] [Cat_0] [Class_0] [Opdecl_0] [Def_0] deriving Show
   data Tree_1 = Tree_1 [Name] Tree_0 deriving Show
   data Type_0 =
-    Application_type_0 Type_0 [Type_0] |
-    Char_type_0 Char |
-    Int_type_0 Integer |
-    Name_type_0 Name (Maybe Kind_0) [Kind_0] |
-    Op_type_0 Type_0 [(Name, Type_0)]
+    Application_type_0 Type_0 [Type_0] | Char_type_0 Char | Int_type_0 Integer | Name_type_0 Name (Maybe Kind_0) [Kind_0]
       deriving Show
   data Type_7 = Type_7 Location_0 Type_0 deriving Show
   infixl 4 <&
@@ -165,6 +161,13 @@ module Tree where
       parse_kind)
   parse_arrow_loc :: Parser' Location_0
   parse_arrow_loc = id <& parse_arrow
+  parse_arrow_type :: Parser' Type_0
+  parse_arrow_type =
+    (
+      (\a -> \b -> \c -> Application_type_0 (Name_type_0 (Name b "Arrow") Nothing []) [a, c]) <$>
+      parse_br_type' <*>
+      (return <&> parse_arrow) <*>
+      parse_type')
   parse_basic :: Parser' Def_0
   parse_basic =
     (
@@ -196,9 +199,9 @@ module Tree where
   parse_bracketed_kind :: Parser' Kind_0
   parse_bracketed_kind = parse_round (parse_arrow_kind <+> parse_application_kind) <+> parse_name_kind
   parse_br_type :: Parser' Type_0
-  parse_br_type = parse_round (parse_op_type <+> parse_ap_type) <+> parse_elementary_type
+  parse_br_type = parse_round (parse_arrow_type <+> parse_ap_type) <+> parse_elementary_type
   parse_br_type' :: Parser' Type_0
-  parse_br_type' = parse_round parse_op_type <+> parse_ap_type <+> parse_elementary_type
+  parse_br_type' = parse_round parse_arrow_type <+> parse_ap_type <+> parse_elementary_type
   parse_brackets :: Token_0 -> Parser' t -> Token_0 -> Parser' t
   parse_brackets a b c = parse_token a *> b <* parse_token c
   parse_branch :: Parser' Data_br_0
@@ -328,7 +331,8 @@ module Tree where
           (,,,) <$>
           parse_name' <*>
           parse_optional' (Just <$> parse_curlies (parse_curlies parse_kind)) <*>
-          parse_optional (parse_sq <$> parse_sq) parse_kind <*> parse_many parse_pattern_1) <*>
+          parse_optional (parse_sq <$> parse_sq) parse_kind <*>
+          parse_many parse_pattern_1) <*>
       parse_constraints <*>
       parse_optional parse_round ((,) <$> parse_pat <* parse_eq <*> parse_expression'))
   parse_int :: Parser' Integer
@@ -454,12 +458,6 @@ module Tree where
   parse_op_expr = Op_expression_0 <$> parse_br_expr' <*> parse_some ((,) <$> parse_op_0' <*> parse_br_expr')
   parse_op_pat :: Parser' Pat
   parse_op_pat = Op_pat <$> parse_br_pat' <*> parse_some ((,) <$> parse_op_0' <*> parse_br_pat')
-  parse_op_type :: Parser' Type_0
-  parse_op_type =
-    (
-      Op_type_0 <$>
-      parse_br_type' <*>
-      parse_some ((,) <$> (Name <&> filter_parser (\x -> elem x (fst <$> typeops)) parse_op) <*> parse_br_type'))
   parse_opdecl :: Parser' Opdecl_0
   parse_opdecl =
     (
@@ -517,14 +515,14 @@ module Tree where
         parse_many parse_opdecl <*>
         parse_many parse_def))
   parse_type :: Parser' Type_7
-  parse_type = Type_7 <&> (parse_op_type <+> parse_ap_type <+> parse_elementary_type)
+  parse_type = Type_7 <&> parse_type'
+  parse_type' :: Parser' Type_0
+  parse_type' = parse_arrow_type <+> parse_ap_type <+> parse_elementary_type
   state_location :: State -> Location_0
   state_location (State (Tokens a b) _) =
     case a of
       [] -> b
       Token_1 c _ : _ -> c
-  typeops :: [(String, Op)]
-  typeops = [("->", Op 2 Rght "Arrow")]
   update_location :: State -> Location_0 -> State
   update_location (State a b) c = State a (max b c)
 --------------------------------------------------------------------------------------------------------------------------------
