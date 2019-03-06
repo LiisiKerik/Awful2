@@ -24,7 +24,7 @@ module Standard where
       [Constraint_0]
       [(Name, Expression_9)]
         deriving Show
-  data Data_6 = Data_6 Location_0 String [Name] [(Name, Kind_0)] Data_br_6 deriving Show
+  data Data_6 = Data_6 Location_0 String [(Name, Kind_0)] Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
@@ -36,27 +36,25 @@ module Standard where
     Int_expression_9 Integer |
     Let_expression_9 Pat_2 Expression_9 Expression_9 |
     Match_expression_9 Location_0 Expression_9 [(Alg_pat_7, Expression_9)] |
-    Name_expression_9 Name (Maybe Type_8) [Type_8]
+    -- Name_expression_9 Name (Maybe Type_8) [Type_8]
+    Name_expression_9 Name
       deriving Show
   data Form_6 = Form_6 Name [Type_8] deriving Show
   data Location' = Language | Library Location_1 deriving Show
   type Map' t = Map String t
   data Method_9 = Method_9 Name [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Op' = Op' Location_0 Op deriving Show
-  data Opdecl_1 = Opdecl_1 Location_0 String Name deriving Show
   data Pat_2 = Application_pat_2 Name [Pat_2] | Blank_pat_2 | Name_pat_2 Name deriving Show
   data Status = New | Old deriving (Eq, Show)
-  data Tree_2 = Tree_2 [Data_6] [Cat_1] [Class_7] [Opdecl_1] [Def_1] deriving Show
+  data Tree_2 = Tree_2 [Data_6] [Cat_1] [Class_7] [Name] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
-  data Type_5 =
-    Application_type_5 Type_5 Type_5 | Char_type_5 Char | Int_type_5 Integer | Name_type_5 Name (Maybe Kind_0) [Kind_0]
-      deriving Show
+  data Type_5 = Application_type_5 Type_5 Type_5 | Name_type_5 Name (Maybe Kind_0) [Kind_0] deriving Show
   data Type_8 = Type_8 Location_0 Type_5 deriving Show
-  gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Opdecl_1])
+  gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Name])
   gather_ops a b c =
     case c of
       [] -> (b, [])
-      Opdecl_0 d e (Name f g) h i : j -> second ((:) (Opdecl_1 d e (Name f g))) (gather_ops a (ins_new e (Op h i g) b) j)
+      Opdecl_0 d e g h i : j -> second ((:) (Name d e)) (gather_ops a (ins_new e (Op h i g) b) j)
   ins_new :: Ord t => t -> u -> Map t (u, Status) -> Map t (u, Status)
   ins_new a b = Data.Map.insert a (b, New)
   old :: Map' t -> Map' (t, Status)
@@ -172,7 +170,7 @@ module Standard where
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
-  std_dat a (Data_0 b c d f e) = Data_6 b c d f <$> std_dat_br a e
+  std_dat a (Data_0 b c d e) = Data_6 b c d <$> std_dat_br a e
   std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
   std_dat_br a b =
     case b of
@@ -194,12 +192,14 @@ module Standard where
           std_expr a f d)
       Match_expression_0 c d e ->
         Match_expression_9 c <$> std_expr a f d <*> traverse (\(g, h) -> (,) <$> std_apat a f g <*> std_expr a f h) e
-      Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
+      --Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
+      Name_expression_0 c -> Right (Name_expression_9 c)
       Op_expression_0 c d ->
         shunting_yard
           a
           "operator"
-          (std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e Nothing []) g))
+          --(std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e Nothing []) g))
+          (std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e) g))
           f
           []
           c
@@ -253,8 +253,6 @@ module Standard where
   std_type' e b =
     case b of
       Application_type_0 c d -> Prelude.foldl Application_type_5 <$> std_type' e c <*> traverse (std_type' e) d
-      Char_type_0 c -> Right (Char_type_5 c)
-      Int_type_0 c -> Right (Int_type_5 c)
       Name_type_0 a c d -> Right (Name_type_5 a c d)
   und_err :: String -> Map' t -> String -> Location_1 -> (t -> Err u) -> Err u
   und_err a b c d f =

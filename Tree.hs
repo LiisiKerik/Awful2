@@ -15,7 +15,6 @@ module Tree where
     Op_alg_pat Alg_pat [(Name, Alg_pat)]
       deriving Show
   data Assoc = Lft | Rght deriving (Eq, Show)
-  data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type_7)] deriving Show
   data Cat_0 =
     Cat_0
       Location_0
@@ -25,7 +24,7 @@ module Tree where
         deriving Show
   data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name [Kind_0] Name deriving Show
-  data Data_0 = Data_0 Location_0 String [Name] [(Name, Kind_0)] Data_br_0 deriving Show
+  data Data_0 = Data_0 Location_0 String [(Name, Kind_0)] Data_br_0 deriving Show
   data Data_br_0 =
     Algebraic_data_0 [Form_0] | Branching_data_0 Location_0 Name [Data_case_0] | Struct_data_0 Name [(Name, Type_7)]
       deriving Show
@@ -49,7 +48,8 @@ module Tree where
     Int_expression_0 Integer |
     Let_expression_0 (Pat, Expression_0) Expression_0 |
     Match_expression_0 Location_0 Expression_0 [(Alg_pat, Expression_0)] |
-    Name_expression_0 Name (Maybe Type_7) [Type_7] |
+    -- Name_expression_0 Name (Maybe Type_7) [Type_7] |
+    Name_expression_0 Name |
     Op_expression_0 Expression_0 [(Name, Expression_0)]
       deriving Show
   data Form_0 = Form_0 Name [Type_7] deriving Show
@@ -58,7 +58,7 @@ module Tree where
   data Method = Method Name [(Name, Kind_0)] [Constraint_0] Type_7 deriving Show
   data Name = Name Location_0 String deriving Show
   data Op = Op Integer Assoc String deriving Show
-  data Opdecl_0 = Opdecl_0 Location_0 String Name Integer Assoc deriving Show
+  data Opdecl_0 = Opdecl_0 Location_0 String String Integer Assoc deriving Show
   data Pat = Application_pat Pat [Pat] | Blank_pat Location_0 | Constr_pat Name | Name_pat Name | Op_pat Pat [(Name, Pat)]
     deriving Show
   data Pattern_1 = Blank_pattern_1 | Name_pattern_1 Name deriving Show
@@ -67,9 +67,7 @@ module Tree where
   data State = State Tokens Location_0 deriving Show
   data Tree_0 = Tree_0 [Data_0] [Cat_0] [Class_0] [Opdecl_0] [Def_0] deriving Show
   data Tree_1 = Tree_1 [Name] Tree_0 deriving Show
-  data Type_0 =
-    Application_type_0 Type_0 [Type_0] | Char_type_0 Char | Int_type_0 Integer | Name_type_0 Name (Maybe Kind_0) [Kind_0]
-      deriving Show
+  data Type_0 = Application_type_0 Type_0 [Type_0] | Name_type_0 Name (Maybe Kind_0) [Kind_0] deriving Show
   data Type_7 = Type_7 Location_0 Type_0 deriving Show
   infixl 4 <&
   (<&) :: (Location_0 -> t) -> Parser' () -> Parser' t
@@ -106,9 +104,13 @@ module Tree where
   mk_list :: Location_0 -> [Expression_0] -> Expression_0
   mk_list l =
     Prelude.foldr
+{-
       (\x -> \y ->
         Application_expression_0 (Application_expression_0 (Name_expression_0 (Name l "Construct_List") Nothing []) [x]) [y])
       (Name_expression_0 (Name l "Empty_List") Nothing [])
+-}
+      (\x -> \y -> Application_expression_0 (Application_expression_0 (Name_expression_0 (Name l "Construct_List")) [x]) [y])
+      (Name_expression_0 (Name l "Empty_List"))
   parse :: Parser' t -> (Location_0 -> Location_1) -> String -> Err t
   parse a b c =
     let
@@ -246,8 +248,6 @@ module Tree where
   parse_char_alg_pattern = Char_alg_pat <$> parse_char
   parse_char_expression :: Parser' Expression_0
   parse_char_expression = Char_expression_0 <$> parse_char
-  parse_char_type :: Parser' Type_0
-  parse_char_type = Char_type_0 <$> parse_char
   parse_class :: Parser' Class_0
   parse_class =
     (
@@ -263,7 +263,10 @@ module Tree where
   parse_comma :: Parser' ()
   parse_comma = parse_token Comma_token
   parse_comp_expr :: Parser' Expression_0
+{-
   parse_comp_expr = parse_list_expr <+> parse_let_expression <+> parse_match_expression <+> parse_function <+> parse_op_expr
+-}
+  parse_comp_expr = parse_let_expression <+> parse_match_expression <+> parse_function <+> parse_op_expr
   parse_constraint :: Parser' Constraint_0
   parse_constraint = Constraint_0 <$> parse_name' <*> parse_kinds' <*> parse_name'
   parse_constraints :: Parser' [Constraint_0]
@@ -271,7 +274,7 @@ module Tree where
   parse_curlies :: Parser' t -> Parser' t
   parse_curlies a = parse_brackets Left_curly_token a Right_curly_token
   parse_data :: Parser' Data_0
-  parse_data = Data_0 <& parse_token Data_token <*> parse_name <*> parse_kind_vars <*> parse_kinds <* parse_eq <*> parse_data_br
+  parse_data = Data_0 <& parse_token Data_token <*> parse_name <*> parse_kinds <* parse_eq <*> parse_data_br
   parse_data_br :: Parser' Data_br_0
   parse_data_br = parse_algebraic <+> parse_branch <+> parse_struct
   parse_data_case :: Parser' Data_case_0
@@ -296,15 +299,18 @@ module Tree where
     parse_blank_alg_pattern <+> parse_char_alg_pattern <+> parse_int_alg_pattern <+> parse_name_alg_pattern
   parse_elementary_expression :: Parser' Expression_0
   parse_elementary_expression =
+{-
     (
       parse_char_expression <+>
       parse_int_expression <+>
       (\x -> Name_expression_0 (Name x "Empty_List") Nothing []) <& parse_name_4 "List" <+>
       parse_name_expression)
+-}
+    parse_char_expression <+> parse_int_expression <+> parse_list_expr <+> parse_name_expression
   parse_elementary_pat :: Parser' Pat
   parse_elementary_pat = parse_blank_pat <+> parse_name_pat
   parse_elementary_type :: Parser' Type_0
-  parse_elementary_type = parse_char_type <+> parse_int_type <+> parse_name_type <+> (int_to_nat_type_0 <&> parse_int')
+  parse_elementary_type = parse_name_type <+> (int_to_nat_type_0 <&> parse_int')
   parse_eq :: Parser' ()
   parse_eq = parse_operator "="
   parse_error :: (Location_0 -> Location_1) -> Location_0 -> Err t
@@ -349,8 +355,6 @@ module Tree where
   parse_int_alg_pattern = Int_alg_pat <$> parse_int
   parse_int_expression :: Parser' Expression_0
   parse_int_expression = Int_expression_0 <$> parse_int
-  parse_int_type :: Parser' Type_0
-  parse_int_type = Int_type_0 <$ parse_operator "!" <*> parse_int
   parse_let_expression :: Parser' Expression_0
   parse_let_expression =
     (
@@ -376,7 +380,10 @@ module Tree where
       1 -> (:) <$> p <*> parse_many (parse_comma *> p)
       _ -> (:) <$> p <* parse_comma <*> parse_list (i - 1) p
   parse_list_expr :: Parser' Expression_0
+{-
   parse_list_expr = mk_list <& parse_name_4 "List" <*> parse_round (parse_list 1 parse_expression')
+-}
+  parse_list_expr = mk_list <&> parse_sq (parse_list 1 parse_expression')
   parse_load :: Parser' Name
   parse_load = parse_name_3 Load_token ((flip (++) ".awf" <$> parse_name) <* parse_operator "." <* parse_name_4 "awf")
   parse_location :: Parser' Location_0
@@ -417,12 +424,15 @@ module Tree where
           (False, True) -> return (Name_alg_pat (Name a (b : c)))
           (True, _) -> return (Application_alg_pat (Name a (b : c)) []))
   parse_name_expression :: Parser' Expression_0
+{-
   parse_name_expression =
     (
       Name_expression_0 <$>
       parse_name' <*>
       parse_optional' (Just <$> parse_curlies parse_type) <*>
       parse_optional' (parse_brackets Left_square_token (parse_list 1 parse_type) Right_square_token))
+-}
+  parse_name_expression = Name_expression_0 <$> parse_name'
   parse_name_kind :: Parser' Kind_0
   parse_name_kind = Name_kind_0 <$> parse_name'
   parse_name_pat :: Parser' Pat
@@ -464,7 +474,7 @@ module Tree where
       Opdecl_0 <&
       parse_token Opdecl_token <*>
       parse_op_0 <*>
-      parse_name' <*>
+      parse_name <*>
       parse_int <*>
       (Lft <$ parse_name_4 "Left" <+> Rght <$ parse_name_4 "Right"))
   parse_operator :: String -> Parser' ()
