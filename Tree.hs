@@ -395,7 +395,8 @@ module Tree where
     (
       Match_expression_0 <&
       parse_token Match_token <*>
-      parse_expression' <*>
+      parse_expression' <*
+      parse_token Of_token <*>
       parse_curlies (parse_list 0 (parse_arrow' ((,) <$> parse_alg_pattern))))
   parse_method :: Parser' Method
   parse_method = Method <$> parse_name' <*> parse_kinds <*> parse_constraints <* parse_colon <*> parse_type

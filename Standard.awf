@@ -1,144 +1,133 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
-Data Bool = Algebraic {False, True}
-Class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
+data Bool = algebraic {False, True}
+class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
   ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
-Class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f :: k -> l -> m}(
+class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f :: k -> l -> m}(
   bimap[t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
-Class Container{f :: Star -> Star}(
+class Container{f :: Star -> Star}(
   empty[t :: Star] :: f t,
   filter[t :: Star] :: (t -> Bool) -> f t -> f t,
   size[t :: Star] :: f t -> Int)
-Class Field{t :: Star}<Ring>(inverse :: t -> Maybe t)
-Class Finite{t :: Star}<Ord>(list :: List t)
-Class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
-Class Monad{f :: Star -> Star}<Applicative>(bind[t :: Star, u :: Star] :: f t -> (t -> f u) -> f u)
-Operator * multiply 7 Left
-Operator + add 6 Left
-Operator ++ concat 5 Right
-Operator - minus 6 Left
-Operator . compose 9 Right
-Operator : ConstructList 5 Right
-Operator <$> fmap 4 Left
-Operator <*> ap 4 Left
-Operator >>= bind 1 Left
-Instance Applicative{Either _}(x <*> y = Match x {Left z -> Left z, Right f -> f <$> y}, return = Right)
-Instance Applicative{Arrow{{Star}} _}((f <*> g) x = f x (g x), return x _ = x)
-Instance Applicative{List}(
-  x <*> y = Match x {EmptyList -> List, f : z -> (f <$> y) ++ (z <*> y)},
-  return x = List (x))
-Instance Applicative{Maybe}(x <*> y = Match x {Nothing -> Nothing, Just f -> f . y}, return = Just)
-Instance Bifunctor[[Star, Star, Star]]{Either}(bimap f g x = Match x {Left y -> Left (f y), Right y -> Right (g y)})
-Instance Bifunctor[[Star, Star, Star]]{Pair}(bimap f g (Mk_Pair x y) = Mk_Pair (f x) (g y))
-Instance Container{List}(
+class Field{t :: Star}<Ring>(inverse :: t -> Maybe t)
+class Finite{t :: Star}<Ord>(list :: List t)
+class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
+class Monad{f :: Star -> Star}<Applicative>(bind[t :: Star, u :: Star] :: f t -> (t -> f u) -> f u)
+operator * multiply 7 Left
+operator + add 6 Left
+operator ++ concat 5 Right
+operator - minus 6 Left
+operator . compose 9 Right
+operator : ConstructList 5 Right
+operator <$> fmap 4 Left
+operator <*> ap 4 Left
+operator >>= bind 1 Left
+instance Applicative{Either _}(x <*> y = case x of {Left z -> Left z, Right f -> f <$> y}, return = Right)
+instance Applicative{Arrow{{Star}} _}((f <*> g) x = f x (g x), return x _ = x)
+instance Applicative{List}(x <*> y = case x of {EmptyList -> List, f : z -> (f <$> y) ++ (z <*> y)}, return x = [x])
+instance Applicative{Maybe}(x <*> y = case x of {Nothing -> Nothing, Just f -> f . y}, return = Just)
+instance Bifunctor[[Star, Star, Star]]{Either}(bimap f g x = case x of {Left y -> Left (f y), Right y -> Right (g y)})
+instance Bifunctor[[Star, Star, Star]]{Pair}(bimap f g (Mk_Pair x y) = Mk_Pair (f x) (g y))
+instance Container{List}(
   empty = List,
-  filter f x = Match x {EmptyList -> List, y : z -> Let a = Filter f z In Match f y {False -> a, True -> y : a}},
-  size x = Match x {EmptyList -> 0, _ : y -> 1 + size y})
-Instance Container{Maybe}(
+  filter f x = case x of {EmptyList -> List, y : z -> let a = filter f z in case f y of {False -> a, True -> y : a}},
+  size x = case x of {EmptyList -> 0, _ : y -> 1 + size y})
+instance Container{Maybe}(
   empty = Nothing,
-  filter f x = bind x (y -> Match f y {False -> Nothing, True -> x}),
-  size x = Match x {Nothing -> 0, _ -> 1})
-Def Convert'[f :: Star -> Star, t :: Star]<Applicative f, Ring t>(x :: Int) :: f t = Lift (Convert x)
-Def equal[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {EQ -> True, _ -> False}
-Instance Field{Bool}(inverse x = Match x {False -> Nothing, True -> Just True})
-Instance Field{Int}(inverse x = Match x {-1 -> Just -1, 1 -> Just 1, _ -> Nothing})
-Instance Field{Pair t u}<Field t, Field u>(inverse (Mk_Pair x y) = Mk_Pair <$> Inverse x <*> Inverse y)
-Instance Finite{Bool}(list = List (False, True))
-Instance Finite{Either t u}<Finite t, Finite u>(list = Left . list ++ Right . list)
-Instance Finite{Ordering}(list = List (LT,  EQ,  GT))
-Instance Finite{Pair t u}<Finite t, Finite u>(list = Zip Mk_Pair list list)
-Instance Finite{Maybe T}<Finite T>(list = Nothing : Just <$> list)
-Instance[[k]]<<Cat k>> Functor[[k, Star]]{Arrow{{k}} _}(fmap = compose)
-Instance Functor[[Star, Star]]{Either _}(fmap = right)
-Instance Functor[[Star, Star]]{List}(fmap f x = Match x {EmptyList -> List, y : z -> f y : f <$> z})
-Instance Functor[[Star, Star]]{Maybe}(fmap f x = Match x {Nothing -> Nothing, Just y -> Just (f y)})
-Instance Functor[[Star, Star]]{Pair _}(fmap = right)
-Def Interleave[t :: Star](x :: List t, y :: List (List t)) :: List t =
-  Match y {EmptyList -> List, z : a -> Concat z (Flatten (Concat x . a))}
-Def Max[t :: Star]<Ord t>(x :: t, y :: t) :: t = Match compare x y {LT -> y, _ -> x}
-Def Min[t :: Star]<Ord t>(x :: t, y :: t) :: t = Match compare x y {LT -> x, _ -> y}
-Def Minus[t :: Star]<Ring t>(x :: t, y :: t) :: t = x + Negate y
-Instance Monad{Either _}(bind x f = Match x {Left y -> Left y, Right y -> f y})
-Instance Monad{Arrow{{Star}} _}(bind f g x = g (f x) x)
-Instance Monad{List}(bind x f = Match x {EmptyList -> List, y : z -> Concat (f y) (z >>= f)})
-Instance Monad{Maybe}(bind x f = Match x {Nothing -> Nothing, Just y -> f y})
-Def Multiply'[F :: Star -> Star, T :: Star]<Applicative F, Ring T> :: F T -> F T -> F T = Zip Multiply
-Def Negate'[F :: Star -> Star, T :: Star]<Functor[[Star, Star]] F, Ring T> :: F T -> F T = fmap Negate
-Instance Ord{Bool}(
-  compare x y = Match x {False -> Match y {False -> EQ, True -> LT}, True -> Match y {False -> GT, True -> EQ}})
-Instance Ord{Either t u}<Ord t, Ord u>(
+  filter f x = bind x (y -> case f y of {False -> Nothing, True -> x}),
+  size x = case x of {Nothing -> 0, _ -> 1})
+instance Field{Bool}(inverse x = case x of {False -> Nothing, True -> Just True})
+instance Field{Int}(inverse x = case x of {-1 -> Just -1, 1 -> Just 1, _ -> Nothing})
+instance Field{Pair t u}<Field t, Field u>(inverse (Mk_Pair x y) = Mk_Pair <$> Inverse x <*> Inverse y)
+instance Finite{Bool}(list = [False, True])
+instance Finite{Either t u}<Finite t, Finite u>(list = Left . list ++ Right . list)
+instance Finite{Ordering}(list = [LT,  EQ,  GT])
+instance Finite{Pair t u}<Finite t, Finite u>(list = Zip Mk_Pair list list)
+instance Finite{Maybe T}<Finite T>(list = Nothing : Just <$> list)
+instance[[k]]<<Cat k>> Functor[[k, Star]]{Arrow{{k}} _}(fmap = compose)
+instance Functor[[Star, Star]]{Either _}(fmap = right)
+instance Functor[[Star, Star]]{List}(fmap f x = case x of {EmptyList -> List, y : z -> f y : f <$> z})
+instance Functor[[Star, Star]]{Maybe}(fmap f x = case x of {Nothing -> Nothing, Just y -> Just (f y)})
+instance Functor[[Star, Star]]{Pair _}(fmap = right)
+def Interleave[t :: Star](x :: List t, y :: List (List t)) :: List t =
+  case y of {EmptyList -> List, z : a -> Concat z (Flatten (Concat x . a))}
+def Max[t :: Star]<Ord t>(x :: t, y :: t) :: t = case compare x y of {LT -> y, _ -> x}
+def Min[t :: Star]<Ord t>(x :: t, y :: t) :: t = case compare x y of {LT -> x, _ -> y}
+def Minus[t :: Star]<Ring t>(x :: t, y :: t) :: t = x + Negate y
+instance Monad{Either _}(bind x f = case x of {Left y -> Left y, Right y -> f y})
+instance Monad{Arrow{{Star}} _}(bind f g x = g (f x) x)
+instance Monad{List}(bind x f = case x of {EmptyList -> List, y : z -> Concat (f y) (z >>= f)})
+instance Monad{Maybe}(bind x f = case x of {Nothing -> Nothing, Just y -> f y})
+def Multiply'[F :: Star -> Star, T :: Star]<Applicative F, Ring T> :: F T -> F T -> F T = Zip Multiply
+def Negate'[F :: Star -> Star, T :: Star]<Functor[[Star, Star]] F, Ring T> :: F T -> F T = fmap Negate
+instance Ord{Bool}(
+  compare x y = case x of {False -> case y of {False -> EQ, True -> LT}, True -> case y of {False -> GT, True -> EQ}})
+instance Ord{Either t u}<Ord t, Ord u>(
   compare x y =
-    Match x {
-      Left z -> Match y {Left w -> compare z w, Right _ -> LT},
-      Right z -> Match y {Left _ -> GT, Right w -> compare z w}})
-Instance Ord{List T}<Ord T>(
+    case x of {
+      Left z -> case y of {Left w -> compare z w, Right _ -> LT},
+      Right z -> case y of {Left _ -> GT, Right w -> compare z w}})
+instance Ord{List T}<Ord T>(
   compare x y =
-    Match x {
-      EmptyList -> Match y {EmptyList -> EQ, _ -> LT},
-      z : a -> Match y {Empty_List -> GT, b : c -> compare (Mk_Pair z a) (Mk_Pair b c)}})
-Instance Ord{Maybe t}<Ord t>(
+    case x of {
+      EmptyList -> case y of {EmptyList -> EQ, _ -> LT},
+      z : a -> case y of {Empty_List -> GT, b : c -> compare (Mk_Pair z a) (Mk_Pair b c)}})
+instance Ord{Maybe t}<Ord t>(
   compare x y =
-    Match x {Nothing -> Match y {Nothing -> EQ, Just _ -> LT}, Just z -> Match y {Nothing -> GT, Just w -> compare z w}})
-Instance Ord{Ordering}(
+    case x of {Nothing -> case y of {Nothing -> EQ, Just _ -> LT}, Just z -> case y of {Nothing -> GT, Just w -> compare z w}})
+instance Ord{Ordering}(
   compare x y =
-    Match x {
-      LT -> Match y {LT -> EQ, _ -> LT},
-      EQ -> Match y {LT -> GT, EQ -> EQ, GT -> LT},
-      GT -> Match y {GT -> EQ, _ -> GT}})
-Instance Ord{Pair t u}<Ord t, Ord u>(
-  compare (Mk_Pair x y) (Mk_Pair z a) = Match compare x z {LT -> LT, EQ -> compare y a, GT -> GT})
-Instance Ring{Bool}(add = notEqual, convert x = equal (unwrap (div x 2)) 1, multiply = min, negate = id)
-Instance Ring{Pair t u}<Ring t, Ring u>(
+    case x of {
+      LT -> case y of {LT -> EQ, _ -> LT},
+      EQ -> case y of {LT -> GT, EQ -> EQ, GT -> LT},
+      GT -> case y of {GT -> EQ, _ -> GT}})
+instance Ord{Pair t u}<Ord t, Ord u>(
+  compare (Mk_Pair x y) (Mk_Pair z a) = case compare x z of {LT -> LT, EQ -> compare y a, GT -> GT})
+instance Ring{Bool}(add = notEqual, convert x = equal (unwrap (div x 2)) 1, multiply = min, negate = id)
+instance Ring{Pair t u}<Ring t, Ring u>(
   Mk_Pair x y + Mk_Pair z a = Mk_Pair (x + z) (y + a),
   convert x = Mk_Pair (convert x) (convert x),
   Mk_Pair x y * Mk_Pair z a = Mk_Pair (x * z) (y * a),
   negate (Mk_Pair x y) = Mk_Pair (negate x) (negate y))
-Instance Writeable{Bool}(
-  Write_Brackets x = Mk_Pair (Match x {False -> List ("F", "a", "l", "s", "e"), True -> List ("T", "r", "u", "e")}) 0)
-Instance Writeable{Char}(
-  Write_Brackets c =
-    Mk_Pair (Match c {Newline -> List ("N", "e", "w", "l", "i", "n", "e"), _ -> List (""", c, """)}) False)
-Instance Writeable{Either t u}<Writeable t, Writeable u>(
+instance Writeable{Bool}(
+  Write_Brackets x = Mk_Pair (case x of {False -> ["F", "a", "l", "s", "e"], True -> ["T", "r", "u", "e"]}) 0)
+instance Writeable{Char}(
+  Write_Brackets c = Mk_Pair (case c of {Newline -> ["N", "e", "w", "l", "i", "n", "e"], _ -> [""", c, """]}) 0)
+instance Writeable{Either t u}<Writeable t, Writeable u>(
   Write_Brackets x =
     Mk_Pair
-      (Match x {
-        Left y -> Concat (List ("L", "e", "f", "t")) (Brackets y),
-        Right y -> Concat (List ("R", "i", "g", "h", "t")) (Brackets y)})
+      (case x of {
+        Left y -> Concat ["L", "e", "f", "t"] (Brackets y),
+        Right y -> Concat ["R", "i", "g", "h", "t"] (Brackets y)})
       True)
-Instance Writeable{List t}<Writeable t>(
+instance Writeable{List t}<Writeable t>(Write_Brackets x = Mk_Pair (["["] ++ Interleave [",", " "] (Write . x) ++ ["]"]) 1)
+instance Writeable{Maybe t}<Writeable t>(
   Write_Brackets x =
-    Match x {
-      EmptyList -> Mk_Pair (List ("L", "i", "s", "t")) 0,
-      y : z ->
-        Mk_Pair
-          (Concat (List ("L", "i", "s", "t", " ", "(")) (Concat (Interleave (List (",", " ")) (Write . x)) (Lift ")")))
-          1})
-Instance Writeable{Maybe t}<Writeable t>(
-  Write_Brackets x =
-    Match x {
-      Nothing -> Mk_Pair (List ("N", "o", "t", "h", "i", "n", "g")) False,
-      Just y -> Mk_Pair (Concat (List ("W", "r", "a", "p", " ")) (Brackets y)) True})
-Instance Writeable{Ordering}(
-  Write_Brackets x = Mk_Pair (Match x {LT -> List ("L", "T"), EQ -> List ("E", "Q"), GT -> List ("G", "T")}) False)
-Instance Writeable{Pair t u}<Writeable t, Writeable u>(
-  Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' (List ("P", "a", "i", "r")) (List (Brackets x, Brackets y))) True)
-Def add'[f :: Star -> Star, t :: Star]<Applicative f, Ring t>(x :: f t, y :: f t) :: f t = add <$> x <*> y
-Def brackets[t :: Star]<Writeable t>(x :: t) :: List Char =
-  Let Mk_Pair y z = Write_Brackets x In Match z {False -> y, True -> Lift "(" ++ y ++ Lift ")"}
-Def concat[t :: Star](x :: List t, y :: List t) :: List t = Match x {EmptyList -> y, z : a -> z : a ++ y}
-Def flatten[F :: Star -> Star, T :: Star]<Monad F>(x :: F (F T)) :: F T = bind x id
-Def fromJust[t :: Star](x :: Maybe t) :: t = Match x {Nothing -> undefined, Just y -> y}
-Def greater[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {GT -> True, _ -> False}
-Def greaterOrEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {LT -> False, _ -> True}
-Def identity[t :: Star]<Ring t> :: t = convert 1
-Def isIdentity[t :: Star]<Ord t, Ring t> :: t -> Bool = equal identity
-Def isZr[t :: Star]<Ord t, Ring t> :: t -> Bool = equal zr
-Def left[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor f>(g :: t -> u) :: f t v -> f u v = bimap g id
-Def less[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {LT -> True, _ -> False}
-Def lessOrEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {GT -> False, _ -> True}
-Def not(x :: Bool) :: Bool = Match x {False -> true, true -> False}
-Def notEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = Match compare x y {EQ -> False, _ -> true}
-Def right[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor f> :: (t -> u) -> f v t -> f v u = bimap id
-Def write[t :: Star]<Writeable t>(x :: t) :: List Char = First (writeBrackets x)
-Def write'(x :: List Char, y :: List (List Char)) :: List Char = Interleave (Lift " ") (x : y)
-Def zr[t :: Star]<Ring t> :: t = convert 0
+    case x of {
+      Nothing -> Mk_Pair ["N", "o", "t", "h", "i", "n", "g"] False,
+      Just y -> Mk_Pair (["J", "u", "s", "t", " "] ++ Brackets y) True})
+instance Writeable{Ordering}(Write_Brackets x = Mk_Pair (case x of {LT -> ["L", "T"], EQ -> ["E", "Q"], GT -> ["G", "T"]}) 0)
+instance Writeable{Pair t u}<Writeable t, Writeable u>(
+  Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' ["M", "k", "_", "P", "a", "i", "r"] [Brackets x, Brackets y]) True)
+def add'[f :: Star -> Star, t :: Star]<Applicative f, Ring t>(x :: f t, y :: f t) :: f t = add <$> x <*> y
+def brackets[t :: Star]<Writeable t>(x :: t) :: List Char =
+  let Mk_Pair y z = Write_Brackets x in case z of {False -> y, True -> ["("] ++ y ++ [")"]}
+def concat[t :: Star](x :: List t, y :: List t) :: List t = case x of {EmptyList -> y, z : a -> z : a ++ y}
+def convert'[f :: Star -> Star, t :: Star]<Applicative f, Ring t>(x :: Int) :: f t = lift (convert x)
+def equal[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {EQ -> True, _ -> False}
+def flatten[F :: Star -> Star, T :: Star]<Monad F>(x :: F (F T)) :: F T = bind x id
+def fromJust[t :: Star](x :: Maybe t) :: t = case x of {Nothing -> undefined, Just y -> y}
+def greater[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {GT -> True, _ -> False}
+def greaterOrEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {LT -> False, _ -> True}
+def identity[t :: Star]<Ring t> :: t = convert 1
+def isIdentity[t :: Star]<Ord t, Ring t> :: t -> Bool = equal identity
+def isZr[t :: Star]<Ord t, Ring t> :: t -> Bool = equal zr
+def left[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor f>(g :: t -> u) :: f t v -> f u v = bimap g id
+def less[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {LT -> True, _ -> False}
+def lessOrEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {GT -> False, _ -> True}
+def not(x :: Bool) :: Bool = case x of {False -> true, true -> False}
+def notEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {EQ -> False, _ -> true}
+def right[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor f> :: (t -> u) -> f v t -> f v u = bimap id
+def write[t :: Star]<Writeable t>(x :: t) :: List Char = First (writeBrackets x)
+def write'(x :: List Char, y :: List (List Char)) :: List Char = Interleave [" "] (x : y)
+def zr[t :: Star]<Ring t> :: t = convert 0
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````

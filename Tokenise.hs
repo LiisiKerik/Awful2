@@ -47,6 +47,7 @@ module Tokenise where
     Load_token |
     Match_token |
     Name_token String |
+    Of_token |
     Opdecl_token |
     Operator_token String |
     Right_curly_token |
@@ -262,19 +263,20 @@ module Tokenise where
   word_token a =
     case a of
       "_" -> Blank_token
-      "Algebraic" -> Algebraic_token
-      "Branch" -> Branch_token
       "Cat" -> Cat_token
-      "Class" -> Class_token
-      "Data" -> Data_token
-      "Def" -> Def_token
-      "In" -> In_token
-      "Instance" -> Instance_token
-      "Let" -> Let_token
-      "Load" -> Load_token
-      "Match" -> Match_token
       "Newline" -> Char_token '\n'
-      "Operator" -> Opdecl_token
-      "Struct" -> Struct_token
+      "algebraic" -> Algebraic_token
+      "branch" -> Branch_token
+      "case" -> Match_token
+      "class" -> Class_token
+      "data" -> Data_token
+      "def" -> Def_token
+      "in" -> In_token
+      "instance" -> Instance_token
+      "let" -> Let_token
+      "load" -> Load_token
+      "of" -> Of_token
+      "operator" -> Opdecl_token
+      "struct" -> Struct_token
       _ -> Name_token a
 --------------------------------------------------------------------------------------------------------------------------------
