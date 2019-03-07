@@ -255,7 +255,7 @@ module Tree where
       parse_name'' Class_token <*>
       parse_kind_vars <*>
       parse_cat_constrs <*>
-      parse_curlies ((,) <$> parse_pattern' <* parse_colon <*> parse_kind) <*>
+      parse_curlies ((,) <$> parse_name' <* parse_colon <*> parse_kind) <*>
       (Just <$ parse_operator "<" <*> ((,) <$> parse_name' <*> parse_kinds') <* parse_operator ">" <+> pure Nothing) <*>
       parse_optional parse_round parse_method)
   parse_colon :: Parser' ()
@@ -499,8 +499,6 @@ module Tree where
           parse_pat_and_type)))
   parse_pattern_1 :: Parser' Pattern_1
   parse_pattern_1 = Blank_pattern_1 <$ parse_token Blank_token <+> Name_pattern_1 <$> parse_name'
-  parse_pattern' :: Parser' Name
-  parse_pattern' = Name <&> ("_" <$ parse_token Blank_token <+> parse_name)
   parse_round :: Parser' t -> Parser' t
   parse_round a = parse_brackets Left_round_token a Right_round_token
   parse_some :: Parser' t -> Parser' [t]

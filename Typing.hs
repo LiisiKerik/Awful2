@@ -562,6 +562,7 @@ module Typing where
   hkinds =
     Data.Map.fromList
       [
+        ("Arrow", Arrow_kind (Arrow_kind Star_kind)),
         ("Either", Arrow_kind (Arrow_kind Star_kind)),
         ("List", Arrow_kind Star_kind),
         ("Maybe", Arrow_kind Star_kind),
