@@ -81,7 +81,7 @@ module Typing where
       [[String]]
         deriving Show
   data Eqtn = Kind_eq Kind_1 Kind_1 | Type_eq Type_1 Type_1 deriving Show
-  data Eqtns = Eqtns (Set String, Set String) [Kind_1] [Eqtn] [(String, (Name, Type_1))] deriving Show
+  data Eqtns = Eqtns (Set String, Set String) [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
   data Expression_2 =
     Add_Int_0_expression_2 |
     Add_Int_1_expression_2 Integer |
@@ -1040,93 +1040,93 @@ module Typing where
               True -> solve_type_eqs_2 a e k
   solvek' ::
     (
-      (String -> Eqtn -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       Eqtn ->
-      ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvek' h b c d eq (x, m, (w, a)) =
+      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+  solvek' h b c d eq (y, x, m, (w, a)) =
     case Data.Set.member b w of
       False -> h "Kind" eq
-      True -> solvek_rep h b c d (x, m, (w, a))
+      True -> solvek_rep h b c d (y, x, m, (w, a))
   solvek_rep ::
     (
-      (String -> Eqtn -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
-      ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvek_rep a c d e (x, f, (w, k)) =
+      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+  solvek_rep a c d e (y, x, f, (w, k)) =
     let
       m = kindrep c d
     in
-      solvesys a (krep_eq m <$> e) (second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
+      solvesys a (krep_eq m <$> e) (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
   solvesys ::
     (
-      (String -> Eqtn -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       [Eqtn] ->
-      ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys m b (a', t, (w, u)) =
+      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+  solvesys m b (a2, a', t, (w, u)) =
     case b of
-      [] -> Right (a', t, (w, u))
+      [] -> Right (a2, a', t, (w, u))
       eq : g ->
         case eq of
           Kind_eq c d ->
             case (c, d) of
-              (Application_kind_1 e f, Application_kind_1 h i) -> solvesys m (Kind_eq e h : Kind_eq f i : g) (a', t, (w, u))
+              (Application_kind_1 e f, Application_kind_1 h i) -> solvesys m (Kind_eq e h : Kind_eq f i : g) (a2, a', t, (w, u))
               (Name_kind_1 e, Name_kind_1 f) ->
                 case e == f of
                   False ->
                     case (Data.Set.member e w, Data.Set.member f w) of
                       (False, False) -> m "Kind" eq
-                      (True, _) -> solvek_rep m e d g (a', t, (w, u))
-                      (_, True) -> solvek_rep m f c g (a', t, (w, u))
-                  True -> solvesys m g (a', t, (w, u))
-              (Name_kind_1 e, _) -> solvek' m e d g eq (a', t, (w, u))
-              (_, Name_kind_1 e) -> solvek' m e c g eq (a', t, (w, u))
+                      (True, _) -> solvek_rep m e d g (a2, a', t, (w, u))
+                      (_, True) -> solvek_rep m f c g (a2, a', t, (w, u))
+                  True -> solvesys m g (a2, a', t, (w, u))
+              (Name_kind_1 e, _) -> solvek' m e d g eq (a2, a', t, (w, u))
+              (_, Name_kind_1 e) -> solvek' m e c g eq (a2, a', t, (w, u))
           Type_eq c d ->
             case (c, d) of
-              (Application_type_1 e f, Application_type_1 h i) -> solvesys m (Type_eq e h : Type_eq f i : g) (a', t, (w, u))
+              (Application_type_1 e f, Application_type_1 h i) -> solvesys m (Type_eq e h : Type_eq f i : g) (a2, a', t, (w, u))
               (Name_type_1 e e0 e1, Name_type_1 f f0 f1) ->
                 case e == f of
                   False ->
                     case (Data.Set.member e u, Data.Set.member f u) of
                       (False, False) -> m "Type" eq
-                      (True, _) -> solvesys_rep m e d g (a', t, (w, u))
-                      (_, True) -> solvesys_rep m f c g (a', t, (w, u))
-                  True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g) (a', t, (w, u))
-              (Name_type_1 e _ _, _) -> solvesys' m e d g eq (a', t, (w, u))
-              (_, Name_type_1 e _ _) -> solvesys' m e c g eq (a', t, (w, u))
+                      (True, _) -> solvesys_rep m e d g (a2, a', t, (w, u))
+                      (_, True) -> solvesys_rep m f c g (a2, a', t, (w, u))
+                  True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g) (a2, a', t, (w, u))
+              (Name_type_1 e _ _, _) -> solvesys' m e d g eq (a2, a', t, (w, u))
+              (_, Name_type_1 e _ _) -> solvesys' m e c g eq (a2, a', t, (w, u))
   solvesys' ::
     (
-      (String -> Eqtn -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Type_1 ->
       [Eqtn] ->
       Eqtn ->
-      ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys' h b c d eq (x, m, (w, a)) =
+      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+  solvesys' h b c d eq (y, x, m, (w, a)) =
     case Data.Set.member b a of
       False -> h "Type" eq
-      True -> solvesys_rep h b c d (x, m, (w, a))
+      True -> solvesys_rep h b c d (y, x, m, (w, a))
   solvesys_rep ::
     (
-      (String -> Eqtn -> Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Type_1 ->
       [Eqtn] ->
-      ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys_rep a c d e (x, f, (w, k)) =
+      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+  solvesys_rep a c d e (y, x, f, (w, k)) =
     let
       m = sysrep' c d
     in
-      solvesys a (rep_eq m <$> e) (second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
+      solvesys a (rep_eq m <$> e) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
     case (x, y) of
@@ -1305,10 +1305,10 @@ module Typing where
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
       Err ((Alg_pat_2, Typedexpr), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
-  type_case a c d (Eqtns e y' p q) f (g, h) i j k =
+  type_case a c d (Eqtns e p y' q) f (g, h) i j k =
     (
       get_pattern_type c a (d, e, p, f) g (ntype (show i)) >>=
-      \((m, n, s, t), (o, y)) -> (\(u, v, w, r0) -> ((o, u), v, w, r0, y)) <$> type_expression a c m (Eqtns n y' s q) t h j k)
+      \((m, n, s, t), (o, y)) -> (\(u, v, w, r0) -> ((o, u), v, w, r0, y)) <$> type_expression a c m (Eqtns n s y' q) t h j k)
   type_cases ::
     (
       Map' Constructor ->
@@ -2187,7 +2187,7 @@ module Typing where
     in
       (
         type_expression c a (0, w) (Eqtns (Data.Set.empty, Data.Set.empty) [] [] []) e f h b >>=
-        \(g, (Eqtns i q8 j x), _, x3) ->
+        \(g, (Eqtns i j q8 x), _, x3) ->
           (
             solvesys
               (\w2 -> \eq ->
@@ -2199,8 +2199,8 @@ module Typing where
                 in
                   Left (w2 ++ " mismatch between " ++ y ++ " and " ++ p ++ n))
               j
-              (x, g, i) >>=
-            \(y, p, (k2, k')) ->
+              (q8, x, g, i) >>=
+            \(q9, y, p, (k2, k')) ->
               case Data.Set.null k2 of
                 False -> Left ("Unresolved kind variables" ++ n)
                 True ->
@@ -2209,7 +2209,7 @@ module Typing where
                     True ->
                       (
                         addargs w' p <$
-                        traverse_ (check_cat (a l3) a3) q8 <*
+                        traverse_ (check_cat (a l3) a3) q9 <*
                         slv
                           m
                           y
@@ -2238,10 +2238,6 @@ module Typing where
       (Location_1 "input")
       (c, e)
       (Application_expression_1
-{-
-        (Name_expression_1 (Name (Location_0 0 0) "First") Nothing [])
-        (Application_expression_1 (Name_expression_1 (Name (Location_0 0 0) "Write_Brackets") Nothing []) f))
--}
         (Name_expression_1 (Name (Location_0 0 0) "First"))
         (Application_expression_1 (Name_expression_1 (Name (Location_0 0 0) "Write_Brackets")) f))
       g
@@ -2261,7 +2257,7 @@ module Typing where
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
       Err (Typedexpr, Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
-  type_expression v r (o', o) (Eqtns (f4, f) mi h c') d b e (r7, m8) =
+  type_expression v r (o', o) (Eqtns (f4, f) h mi c') d b e (r7, m8) =
     case b of
       Application_expression_1 c g ->
         (
@@ -2269,7 +2265,7 @@ module Typing where
             v
             r
             (o', o + 1)
-            (Eqtns (f4, Data.Set.insert (show o) f) mi h c')
+            (Eqtns (f4, Data.Set.insert (show o) f) h mi c')
             d
             c
             (function_type (ntype (show o)) e)
@@ -2278,7 +2274,7 @@ module Typing where
             (
               (\(l, m, q, e') -> (Application_texpr i l, m, q, d7 ++ e')) <$>
               type_expression v r p j d g (ntype (show o)) (r7, m8)))
-      Char_expression_1 c -> Right (Char_texpr c, Eqtns (f4, f) mi (Type_eq e char_type : h) c', (o', o), [])
+      Char_expression_1 c -> Right (Char_texpr c, Eqtns (f4, f) (Type_eq e char_type : h) mi c', (o', o), [])
       Function_expression_1 c g ->
         (
           type_pat r v c (ntype (show o)) d (o', o + 1) (f4, Data.Set.insert (show o) f) h >>=
@@ -2291,91 +2287,19 @@ module Typing where
                 (c2, c6 + 1)
                 (Eqtns
                   (f5, Data.Set.insert (show c6) d6)
-                  mi
                   (Type_eq e (function_type (ntype (show o)) (ntype (show c6))) : f6)
+                  mi
                   c')
                 b6
                 g
                 (ntype (show c6))
                 (r7, m8)))
-      Int_expression_1 c -> Right (Int_texpr c, Eqtns (f4, f) mi (Type_eq e int_type : h) c', (o', o), [])
+      Int_expression_1 c -> Right (Int_texpr c, Eqtns (f4, f) (Type_eq e int_type : h) mi c', (o', o), [])
       Match_expression_1 a7 c g ->
         (
-          type_expression v r (o', o + 1) (Eqtns (f4, Data.Set.insert (show o) f) mi h c') d c (ntype (show o)) (r7, m8) >>=
+          type_expression v r (o', o + 1) (Eqtns (f4, Data.Set.insert (show o) f) h mi c') d c (ntype (show o)) (r7, m8) >>=
           \(k, m, n, n2) ->
             (\(q, u, x, n3, n4) -> (Match_texpr k q, u, x, n2 ++ [(a7, n4)] ++ n3)) <$> type_cases v r n m d g o e (r7, m8))
-{-
-        Name_expression_1 (Name a7 c) g k ->
-          let
-            e5 a' = Left ("Too " ++ a' ++ " type arguments for variable " ++ c ++ x' a7)
-          in
-            und_err
-              c
-              d
-              "variable"
-              (r a7)
-              (\(Type_2 m2 i3 m3 i x0 a' j) ->
-                let
-                  a8 = maybeToList m2 ++ i3
-                  o9 = o' + fromIntegral (length a8)
-                  f6 = show <$> [o' .. o9 - 1]
-                  d1 = Data.Map.fromList (zip a8 (Name_kind_1 <$> f6))
-                  i4 = second (repkinds d1) <$> i
-                  (f0, p, kl) = typevars_0 i4 (o, Data.Map.empty, f)
-                  x7 = (\(Constraint_1 a0 _ b0) -> (a0, (Name a7 c, p ! b0))) <$> a'
-                  g7 k2 e4 =
-                    (
-                      k2,
-                      Eqtns
-                        (Data.Set.union f4 (Data.Set.fromList f6), kl)
-                        ((Name_kind_1 <$> m3) ++ mi)
-                        (e4 ++ [(e, repl' p (repkinds_type d1 j))] ++ h)
-                        (x7 ++ c'),
-                      (o9, f0),
-                      [])
-                in
-                  case (g, x0) of
-                    (Nothing, Nothing) ->
-                      (
-                        g7 (Name_texpr_1 c (second snd <$> x7)) <$>
-                        case k of
-                          [] -> Right []
-                          _ ->
-                            case compare (length k) (length i4) of
-                              LT -> e5 "few"
-                              EQ ->
-                                (
-                                  zip (ntype <$> show <$> [o ..]) <$>
-                                  traverse (\(m9, m6) -> type_typ r r7 m8 m9 m6 _) (zip (snd <$> i4) k))
-                              GT -> e5 "many")
-                    (Nothing, Just (Constraint_1 y0 _ _)) ->
-                      (
-                        g7 (Name_texpr_0 c y0 (Name_type_1 (show o) Nothing [])) <$>
-                        case k of
-                          [] -> Right []
-                          _ ->
-                            case compare (length k) (length (tail i4)) of
-                              LT -> e5 "few"
-                              EQ ->
-                                (
-                                  zip (ntype <$> show <$> [o + 1 ..]) <$>
-                                  traverse (\(m9, m6) -> type_typ r r7 m8 m9 m6 _) (zip (snd <$> tail i4) k))
-                              GT -> e5 "many")
-                    (Just _, Nothing) -> Left ("Invalid class argument for variable " ++ c ++ x' a7)
-                    (Just t3, Just (Constraint_1 y0 _ _)) ->
-                      (
-                        g7 (Name_texpr_0 c y0 (Name_type_1 (show o) Nothing [])) <$>
-                        case k of
-                          [] -> (\g0 -> [(ntype (show o), g0)]) <$> type_typ r r7 m8 (snd (head i4)) t3 _
-                          _ ->
-                            case compare (length k) (length (tail i4)) of
-                              LT -> e5 "few"
-                              EQ ->
-                                (
-                                  zip (ntype <$> show <$> [o ..]) <$>
-                                  traverse (\(m9, m6) -> type_typ r r7 m8 m9 m6 _) (zip (snd <$> i4) (t3 : k)))
-                              GT -> e5 "many"))
--}
       Name_expression_1 (Name a7 c) ->
         und_err
           c
@@ -2398,8 +2322,8 @@ module Typing where
                     Just (Constraint_1 y0 _ _) -> Name_texpr_0 c y0 (Name_type_1 (show o) Nothing []),
                   Eqtns
                     (Data.Set.union f4 (Data.Set.fromList f6), kl)
-                    ((Name_kind_1 <$> m3) ++ mi)
                     ([Type_eq e (repl' p (repkinds_type d1 j))] ++ h)
+                    ((Name_kind_1 <$> m3) ++ mi)
                     (x7 ++ c'),
                   (o9, f0),
                   []))
