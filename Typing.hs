@@ -778,6 +778,16 @@ module Typing where
   next_type = Application_type_1 (ntype "Next")
   ntype :: String -> Type_1
   ntype a = Name_type_1 a Nothing []
+  occ_check :: String -> Type_1 -> Bool
+  occ_check a b =
+    case b of
+      Application_type_1 c d -> occ_check a c || occ_check a d
+      Name_type_1 c _ _ -> a == c
+  occ_k :: String -> Kind_1 -> Bool
+  occ_k a b =
+    case b of
+      Application_kind_1 c d -> occ_k a c || occ_k a d
+      Name_kind_1 c -> a == c
   occ_kind :: String -> Kind_1 -> Bool
   occ_kind a b =
     case b of
@@ -1041,29 +1051,33 @@ module Typing where
   solvek' ::
     (
       (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       Eqtn ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvek' h b c d eq (y, x, m, (w, a)) =
+  solvek' m3 h b c d eq (y, x, m, (w, a)) =
     case Data.Set.member b w of
-      False -> h "Kind" eq
-      True -> solvek_rep h b c d (y, x, m, (w, a))
+      False -> h
+      True -> solvek_rep m3 h b c d (y, x, m, (w, a))
   solvek_rep ::
     (
       (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvek_rep a c d e (y, x, f, (w, k)) =
+  solvek_rep m3 a c d e (y, x, f, (w, k)) =
     let
       m = kindrep c d
     in
-      solvesys a (krep_eq m <$> e) (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
+      case occ_k c d of
+        False -> solvesys m3 (krep_eq m <$> e) (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
+        True -> a
   solvesys ::
     (
       (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
@@ -1076,57 +1090,68 @@ module Typing where
       eq : g ->
         case eq of
           Kind_eq c d ->
-            case (c, d) of
-              (Application_kind_1 e f, Application_kind_1 h i) -> solvesys m (Kind_eq e h : Kind_eq f i : g) (a2, a', t, (w, u))
-              (Name_kind_1 e, Name_kind_1 f) ->
-                case e == f of
-                  False ->
-                    case (Data.Set.member e w, Data.Set.member f w) of
-                      (False, False) -> m "Kind" eq
-                      (True, _) -> solvek_rep m e d g (a2, a', t, (w, u))
-                      (_, True) -> solvek_rep m f c g (a2, a', t, (w, u))
-                  True -> solvesys m g (a2, a', t, (w, u))
-              (Name_kind_1 e, _) -> solvek' m e d g eq (a2, a', t, (w, u))
-              (_, Name_kind_1 e) -> solvek' m e c g eq (a2, a', t, (w, u))
+            let
+              e3 = m "Kind" eq
+            in
+              case (c, d) of
+                (Application_kind_1 e f, Application_kind_1 h i) ->
+                  solvesys m (Kind_eq e h : Kind_eq f i : g) (a2, a', t, (w, u))
+                (Name_kind_1 e, Name_kind_1 f) ->
+                  case e == f of
+                    False ->
+                      case (Data.Set.member e w, Data.Set.member f w) of
+                        (False, False) -> e3
+                        (True, _) -> solvek_rep m e3 e d g (a2, a', t, (w, u))
+                        (_, True) -> solvek_rep m e3 f c g (a2, a', t, (w, u))
+                    True -> solvesys m g (a2, a', t, (w, u))
+                (Name_kind_1 e, _) -> solvek' m e3 e d g eq (a2, a', t, (w, u))
+                (_, Name_kind_1 e) -> solvek' m e3 e c g eq (a2, a', t, (w, u))
           Type_eq c d ->
-            case (c, d) of
-              (Application_type_1 e f, Application_type_1 h i) -> solvesys m (Type_eq e h : Type_eq f i : g) (a2, a', t, (w, u))
-              (Name_type_1 e e0 e1, Name_type_1 f f0 f1) ->
-                case e == f of
-                  False ->
-                    case (Data.Set.member e u, Data.Set.member f u) of
-                      (False, False) -> m "Type" eq
-                      (True, _) -> solvesys_rep m e d g (a2, a', t, (w, u))
-                      (_, True) -> solvesys_rep m f c g (a2, a', t, (w, u))
-                  True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g) (a2, a', t, (w, u))
-              (Name_type_1 e _ _, _) -> solvesys' m e d g eq (a2, a', t, (w, u))
-              (_, Name_type_1 e _ _) -> solvesys' m e c g eq (a2, a', t, (w, u))
+            let
+              e3 = m "Type" eq
+            in
+              case (c, d) of
+                (Application_type_1 e f, Application_type_1 h i) ->
+                  solvesys m (Type_eq e h : Type_eq f i : g) (a2, a', t, (w, u))
+                (Name_type_1 e e0 e1, Name_type_1 f f0 f1) ->
+                  case e == f of
+                    False ->
+                      case (Data.Set.member e u, Data.Set.member f u) of
+                        (False, False) -> e3
+                        (True, _) -> solvesys_rep m e3 e d g (a2, a', t, (w, u))
+                        (_, True) -> solvesys_rep m e3 f c g (a2, a', t, (w, u))
+                    True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g) (a2, a', t, (w, u))
+                (Name_type_1 e _ _, _) -> solvesys' m e3 e d g (a2, a', t, (w, u))
+                (_, Name_type_1 e _ _) -> solvesys' m e3 e c g (a2, a', t, (w, u))
   solvesys' ::
     (
       (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       String ->
       Type_1 ->
       [Eqtn] ->
-      Eqtn ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys' h b c d eq (y, x, m, (w, a)) =
+  solvesys' m3 h b c d (y, x, m, (w, a)) =
     case Data.Set.member b a of
-      False -> h "Type" eq
-      True -> solvesys_rep h b c d (y, x, m, (w, a))
+      False -> h
+      True -> solvesys_rep m3 h b c d (y, x, m, (w, a))
   solvesys_rep ::
     (
       (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       String ->
       Type_1 ->
       [Eqtn] ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
       Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys_rep a c d e (y, x, f, (w, k)) =
+  solvesys_rep m3 a c d e (y, x, f, (w, k)) =
     let
       m = sysrep' c d
     in
-      solvesys a (rep_eq m <$> e) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
+      case occ_check c d of
+        False -> solvesys m3 (rep_eq m <$> e) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
+        True -> a
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
     case (x, y) of
