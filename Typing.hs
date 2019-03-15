@@ -1,6 +1,4 @@
 {-
-todo: make a function writing operator/function. For printing stuff like "Complex (Fraction 0 1) (Fraction 1 1)"
-Let f = Crash, x = f f In 0 -- tüüpimine läheb lõpmatusse tsüklisse sest puudub occur check
 What happens with unary minus and binary minus during parsing?
 Jaskelioff "Modular Monad Transformers" - saada need naited toole Awfulis
 Lugeda tyybiperede kohta
@@ -493,26 +491,23 @@ module Typing where
   find_and_delete a b = (\c -> (c, Data.Map.delete b a)) <$> Data.Map.lookup b a
   function_type :: Type_1 -> Type_1 -> Type_1
   function_type a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just (Name_kind_1 "Star")) []) a)
-  gather_all_types :: (Ord u, Monad f) => (t -> Map u v -> f (Map u v)) -> [t] -> Map u v -> f (Map u v)
+  gather_all_types :: Ord u => (t -> Map u v -> Map u v) -> [t] -> Map u v -> Map u v
   gather_all_types a b c =
     case b of
-      [] -> return c
-      d : e -> gather_all_types a e c >>= a d
-  gather_fields :: Set String -> [(String, Type_8)] -> Map' Location_0 -> Maybe (Map' Location_0)
+      [] -> c
+      d : e -> a d (gather_all_types a e c)
+  gather_fields :: Set String -> [(String, Type_8)] -> Map' Location_0 -> Map' Location_0
   gather_fields b a = gather_types b (snd <$> a)
-  gather_form :: Set String -> Form_1 -> Map' Location_0 -> Maybe (Map' Location_0)
+  gather_form :: Set String -> Form_1 -> Map' Location_0 -> Map' Location_0
   gather_form b (Form_1 _ a) = gather_types b a
-  gather_forms :: Set String -> [Form_1] -> Map' Location_0 -> Maybe (Map' Location_0)
+  gather_forms :: Set String -> [Form_1] -> Map' Location_0 -> Map' Location_0
   gather_forms a = gather_all_types (gather_form a)
-  gather_type :: Set String -> Type_5 -> Map' Location_0 -> Maybe (Map' Location_0)
+  gather_type :: Set String -> Type_5 -> Map' Location_0 -> Map' Location_0
   gather_type f b c =
     case b of
-      Application_type_5 d e -> gather_type f e c >>= gather_type f d
-      Name_type_5 (Name a d) m e ->
-        case (m, e) of
-          (Nothing, []) -> Just (if Data.Set.member d f then c else Data.Map.insert d a c)
-          _ -> Nothing
-  gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Maybe (Map' Location_0)
+      Application_type_5 d e -> gather_type f d (gather_type f e c)
+      Name_type_5 (Name a d) -> if Data.Set.member d f then c else Data.Map.insert d a c
+  gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Map' Location_0
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
   get_pattern_type ::
     (
@@ -753,13 +748,10 @@ module Typing where
       a
       (case promotable b (Data.Set.fromList [a]) of
         Just e ->
-          case
-            (case c of
-              Algebraic_data_2 f -> gather_forms e f Data.Map.empty
-              Branching_data_2 _ _ _ -> Nothing
-              Struct_data_2 _ f -> gather_fields e f Data.Map.empty) of
-                Just f -> Right f
-                Nothing -> Left False
+          case c of
+            Algebraic_data_2 f -> Right (gather_forms e f Data.Map.empty)
+            Branching_data_2 _ _ _ -> Left False
+            Struct_data_2 _ f -> Right (gather_fields e f Data.Map.empty)
         Nothing -> Left False)
   make_eqs :: [Data_2] -> Map' (Either Bool (Map' Location_0), Status) -> Map' (Either Bool (Map' Location_0), Status)
   make_eqs a b =
@@ -2127,9 +2119,9 @@ module Typing where
       Map' Polykind ->
       Map' Kind ->
       Kind_1 ->
-      (Set String, [(Kind_1, Kind_1)]) ->
-      Err (Integer, (Set String, [(Kind_1, Kind_1)]), Type_1))
-  type_eqs m i a d e k (s, f) =
+      (Set String, [(Kind_1, Kind_1)], [Kind_1]) ->
+      Err (Integer, (Set String, [(Kind_1, Kind_1)], [Kind_1]), Type_1))
+  type_eqs m i a d e k (s, f, u4) =
     case a of
       Application_type_5 b c ->
         (
@@ -2140,10 +2132,10 @@ module Typing where
             d
             e
             (Application_kind_1 (Application_kind_1 (Name_kind_1 "Arrow") (Name_kind_1 (show i))) k)
-            (Data.Set.insert (show i) s, f) >>=
+            (Data.Set.insert (show i) s, f, u4) >>=
           \(i', f', b') ->
             (\(i2, f2, c') -> (i2, f2, Application_type_1 b' c')) <$> type_eqs m i' c d e (Name_kind_1 (show i)) f')
-      Name_type_5 (Name b c) h g ->
+      Name_type_5 (Name b c) ->
         und_err
           c
           d
@@ -2155,44 +2147,16 @@ module Typing where
               p = i + fromIntegral (length o)
               q = show <$> [i .. p - 1]
               x = Name_kind_1 <$> q
-              t u =
-                Right
-                  (
-                    p,
-                    (Data.Set.union s (Data.Set.fromList q), u ++ [(k, kindrep' (Data.Map.fromList (zip o x)) n)] ++ f),
-                    case j of
-                      Nothing -> Name_type_1 c Nothing x
-                      Just _ -> Name_type_1 c (Just (head x)) (tail x))
+              (m1, n1) =
+                case j of
+                  Nothing -> ([], Name_type_1 c Nothing x)
+                  Just _ -> ([head x], Name_type_1 c (Just (head x)) (tail x))
             in
-              case (j, h) of
-                (Nothing, Nothing) ->
-                  case g of
-                    [] -> t []
-                    _ ->
-                      case compare (length g) (length l) of
-                        LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
-                        EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip x v)
-                        GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))
-                (Nothing, Just _) -> Left ("Illegal ad hoc kind argument for " ++ c ++ location' (m b))
-                (Just _, Nothing) ->
-                  case g of
-                    [] -> t []
-                    _ ->
-                      case compare (length g) (length l) of
-                        LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
-                        EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip (tail x) v)
-                        GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))
-                (Just _, Just s') ->
-                  (
-                    type_kind_7 m e Star_kind s' >>=
-                    \u -> 
-                      case g of
-                        [] -> t [(head x, u)]
-                        _ ->
-                          case compare (length g) (length l) of
-                            LT -> Left ("Too few kind arguments for type " ++ c ++ location' (m b))
-                            EQ -> traverse (type_kind_7 m e Star_kind) g >>= \v -> t (zip x (u : v))
-                            GT -> Left ("Too many kind arguments for type " ++ c ++ location' (m b))))
+              Right
+                (
+                  p,
+                  (Data.Set.union s (Data.Set.fromList q), [(k, kindrep' (Data.Map.fromList (zip o x)) n)] ++ f, m1 ++ u4),
+                  n1))
   type_expr ::
     String ->
     Type_1 ->
@@ -2903,18 +2867,12 @@ module Typing where
       _ -> ([], f, g, h, i)
   type_typ :: (Location_0 -> Location_1) -> Map' Polykind -> Map' Kind -> Kind_1 -> Type_8 -> Map' Cat_4 -> Err Type_1
   type_typ a d e f (Type_8 b c) j =
-    type_eqs a 0 c d e f (Data.Set.empty, []) >>= \(_, (g, h), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i)
+    type_eqs a 0 c d e f (Data.Set.empty, [], []) >>= \(_, (g, h, t), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i)
   type_types :: (Location_0 -> Location_1) -> [Type_8] -> Map' Polykind -> Map' Kind -> Map' Cat_4 -> Err [Type_1]
   type_types f a b g h =
     case a of
       [] -> Right []
       c : d -> type_typ f b g star_kind c h >>= \e -> (:) e <$> type_types f d b g h
-  type_types' ::
-    (Location_0 -> Location_1) -> (Map' Kind, Map' Polykind) -> [(String, Type_8)] -> Map' Cat_4 -> Err [(String, Type_1)]
-  type_types' a (b, c) d i =
-    case d of
-      [] -> Right []
-      (e, f) : g -> type_typ a c b star_kind f i >>= \h -> (:) (e, h) <$> type_types' a (b, c) g i
   types :: Map' Type_2
   types =
     Data.Map.fromList

@@ -3,10 +3,13 @@
 \usepackage{array}
 \usepackage{color}
 \usepackage[T1]{fontenc}
+\usepackage[showframe]{geometry}
 \usepackage{longtable}
 \author{}
 \date{}
+\frenchspacing
 \newcolumntype{L}{>{$}l<{$}}
+\newcommand\kood[1]{\text{\color{red}\texttt{#1}}}
 \newcommand\nurksulud[1]{\langle\text{#1}\rangle}
 \title{Awful}
 \begin{document}
@@ -14,84 +17,36 @@
 
   \section*{Abstract Syntax}
 
-    This section does not specify the concrete syntax and does not deal with the details of syntactic sugar, including lists and operators.
-%  data Alg_pat =
-%    Application_alg_pat Name [Alg_pat] |
-%    Blank_alg_pat |
-%    Char_alg_pat Char |
-%    Int_alg_pat Integer |
-%    Name_alg_pat Name
-%  data Brnch_0 = Brnch_0 Name [Name] Name [(Name, Type)]
-%  data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method]
-%  data Constraint_0 = Constraint_0 Name [Kind_0] Name
-%  data Def_0 =
-%    Basic_def_0 Name KT0 [Constraint_0] [(Pat, Type)] Type Expression_0 |
-%    Instance_def_0
-%      [Name]
-%      [Name]
-%      Name
-%      [Kind_0]
-%      (Name, Maybe Kind_0, [Kind_0], [Pattern_1])
-%      [Constraint_0]
-%      [(Pat, Expression_0)]
-%  data Expression_0 =
-%    Application_expression_0 Expression_0 [Expression_0] |
-%    Char_expression_0 Char |
-%    Function_expression_0 Pat Expression_0 |
-%    Int_expression_0 Integer |
-%    Let_expression_0 (Pat, Expression_0) Expression_0 |
-%    Match_expression_0 Expression_0 [(Alg_pat, Expression_0)] |
-%    Name_expression_0 Name (Maybe Type) [Type]
-%  data Form_0 = Form_0 Name [Type]
-%  data KT0 = KT0 [Name] [Name] [(Name, Kind_0)]
-%  data Method = Method Name [(Name, Kind_0)] [Constraint_0] Type
-%  data Pat = Application_pat Pat [Pat] | Blank_pat | Constr_pat Name | Name_pat Name | Op_pat Pat [(Name, Pat)]
-%  data Pattern_1 = Blank_pattern_1 | Name_pattern_1 Name
-%  data Type = Application_type_0 Type [Type] | Char_type_0 Char | Int_type_0 Integer | Name_type_0 Name (Maybe Kind_0) [Kind_0]
     \begin{longtable}{LLL}
-        \nurksulud{module}         & ::= & \nurksulud{import}^*\nurksulud{data}^*\nurksulud{class}^*(\nurksulud{definition}\mid\nurksulud{instance})^* \\
-        \nurksulud{import}         & ::= & \nurksulud{name}                                                                                            \\
-        \nurksulud{data}           & ::= & \nurksulud{name}\nurksulud{type variables}\nurksulud{data branch}                                           \\
-        \nurksulud{type variables} & ::= & \nurksulud{type variable}^*                                                                                 \\
-        \nurksulud{type variable}  & ::= & \nurksulud{name}\nurksulud{kind}                                                                            \\
-        \nurksulud{kind}           & ::= & \nurksulud{name}\mid\nurksulud{kind}\nurksulud{kind}                                                        \\
-        \nurksulud{data branch}    & ::= & \nurksulud{struct}\mid\nurksulud{algebraic}\mid\nurksulud{branching}                                        \\
-        \nurksulud{struct}         & ::= & \nurksulud{name}(\nurksulud{name}\nurksulud{type})^*                                                        \\
-        \nurksulud{type}           & ::= & \nurksulud{name}\nurksulud{kind arguments}\mid\nurksulud{type}\nurksulud{type}                              \\
-        \nurksulud{kind arguments} & ::= & \nurksulud{kind}?\nurksulud{kind}^*                                                                         \\
-        \nurksulud{algebraic}      & ::= & (\nurksulud{name}\nurksulud{type}^*)^*                                                                      \\
-        \nurksulud{branching}      & ::= & \nurksulud{name}(\nurksulud{name}\nurksulud{name}^*\nurksulud{data branch})^*                               \\
-        \nurksulud{class}          & ::= & \nurksulud{name}{\color{red}\verb!{!}\tau{\color{red}\verb!}!}({\color{red}\verb!<!}x{\color{red}\verb!>!})?({\color{red}\verb!(!}M({\color{red}\verb!,!} M)^*{\color{red}\verb!)!})? \\
-        Meetod M & ::= & x t k {\color{red}\verb!:!} T \\
-        Kitsendused k & ::= & ({\color{red}\verb!<!}\kappa({\color{red}\verb!,!} \kappa)^*{\color{red}\verb!>!})? \\
-        Kitsendus \kappa & ::= & x x \\
-        Definitsioon F & ::= & {\color{red}\verb!Def!} x t k \phi {\color{red}\verb!:!} T {\color{red}\verb!=!} E \\
-        Avaldis E & ::= & E_1\mid E_0                                                           \\
-        Mitteatomaarne avaldis E_1 & ::= & \Lambda_1\mid\alpha\mid\lambda\mid\mu\mid\Psi\mid m                   \\
-        Atomaarne avaldis E_0 & ::= & \Lambda_0\mid\nu\mid c\mid i                                         \\
-        Sulgudes avaldis E_p & ::= & {\color{red}\verb!(!}E_1{\color{red}\verb!)!} \mid E_0 \\
-        Muutujanimi \nu & ::= & x({\color{red}\verb!{!}T{\color{red}\verb!}!})?({\color{red}\verb![!}T({\color{red}\verb!,!}T)^*{\color{red}\verb!]!})? \\
-        Funktsiooni rakendamine \alpha & ::= & E_p E_p E_p^* \\
-        Lambda \lambda & ::= & x {\color{red}\verb!->!} E \\
-        Mustrisobitus \mu & ::= & {\color{red}\verb!Match!} E {\color{red}\verb!{!}(M_a\mid M_c\mid M_i\mid M_m){\color{red}\verb!}!} \\
-        M_a & ::= & \mu_a({\color{red}\verb!,!} \mu_a)^*\delta? \\
-        \mu_a & ::= & x x^* {\color{red}\verb!->!} E \\
-        Vaikevalik \delta & ::= & {\color{red}\verb!,!} {\color{red}\verb!Default ->!} E \\
-        M_c & ::= & \mu_a({\color{red}\verb!,!} \mu_c)^*\delta \\
-        \mu_c & ::= & c {\color{red}\verb!->!} E \\
-        M_i & ::= & \mu_a({\color{red}\verb!,!} \mu_i)^*\delta \\
-        \mu_i & ::= & i {\color{red}\verb!->!} E \\
-        M_m & ::= & \mu_a({\color{red}\verb!,!} \mu_i)^*\delta? \\
-        \mu_m & ::= & m {\color{red}\verb!->!} E \\
-        Let-avaldis \Psi & ::= & {\color{red}\verb!Let!} \psi({\color{red}\verb!,!}\psi)^* {\color{red}\verb!In!} E \\
-        Lokaalne definitsioon \psi & ::= & x x^* {\color{red}\verb!=!} E \\
-        Tühi list \Lambda_0 & ::= & {\color{red}\verb!List!}                                                                                          \\
-        Mittetühi list \Lambda_1 & ::= & {\color{red}\verb!List!} {\color{red}\verb!(!}E({\color{red}\verb!,!}E)^*{\color{red}\verb!)!} \\
-        Esindaja I & ::= & {\color{red}\verb!Instance!} x{\color{red}\verb!{!}T_n x^*{\color{red}\verb!}!}k({\color{red}\verb!(!}m({\color{red}\verb!,!} m)^*{\color{red}\verb!)!})? \\
-        Meetodi teostus m & ::= & x x^* {\color{red}\verb!=!} E
+        \nurksulud{module} & ::= & \nurksulud{import}^*\nurksulud{data}^*\nurksulud{class}^*(\nurksulud{definition}\mid\nurksulud{instance})^* \\
+        \nurksulud{import} & ::= & \kood{load }\nurksulud{name}\kood{.awf} \\
+        \nurksulud{data} & ::= & \kood{data }\nurksulud{name}\nurksulud{type variables}\kood{ = }\nurksulud{data branch} \\
+        \nurksulud{type variables} & ::= & \kood{[}\nurksulud{type variable}^*\kood{]} \\
+        \nurksulud{type variable} & ::= & \nurksulud{name}\kood{ : }\nurksulud{kind} \\
+        \nurksulud{kind} & ::= & \nurksulud{kind}\kood{ }\nurksulud{kind}\mid\nurksulud{name} \\
+        \nurksulud{data branch} & ::= & \nurksulud{struct}\mid\nurksulud{algebraic}\mid\nurksulud{branching} \\
+        \nurksulud{struct} & ::= & \kood{struct }\nurksulud{name}\kood{(}(\nurksulud{name}\kood{ : }\nurksulud{type})^*\kood{)} \\
+        \nurksulud{type} & ::= & \nurksulud{type}\kood{ }\nurksulud{type}\mid\nurksulud{name} \\
+        \nurksulud{algebraic} & ::= & \kood{algebraic \{}(\nurksulud{name}\kood{ }\nurksulud{type}^*)^*\kood{\}} \\
+        \nurksulud{branching} & ::= & \kood{branch }\nurksulud{name}\kood{ \{}(\nurksulud{name}\kood{ }\nurksulud{name}^*\kood{ -> }\nurksulud{data branch})^*\kood{\}} \\
+        \nurksulud{class} & ::= & \kood{class }\nurksulud{name}\kood{\{}\nurksulud{type variable}\kood{\}}(\kood{<}\nurksulud{constraint}\kood{>})?\kood{(}\nurksulud{method signature}^*\kood{)} \\
+        \nurksulud{constraint} & ::= & \nurksulud{name}\kood{ }\nurksulud{name} \\
+        \nurksulud{method signature} & ::= & \nurksulud{name}\nurksulud{type variables}\nurksulud{constraints}\kood{ : }\nurksulud{type} \\
+        \nurksulud{constraints} & ::= & \kood{<}\nurksulud{constraint}^*\kood{>} \\
+        \nurksulud{definition} & ::= & \kood{def }\nurksulud{name}\nurksulud{type variables}\kood{ : }\nurksulud{type}\kood{ = }\nurksulud{term} \\
+        \nurksulud{term} & ::= & \nurksulud{application}\mid\nurksulud{char}\mid\nurksulud{abstraction}\mid\nurksulud{int}\mid\nurksulud{case}\mid\nurksulud{name} \\
+        \nurksulud{application} & ::= & \nurksulud{term}\kood{ }\nurksulud{term} \\
+        \nurksulud{abstraction} & ::= & \nurksulud{struct pattern}\kood{ -> }\nurksulud{term} \\
+        \nurksulud{struct pattern} & ::= & \nurksulud{name}\kood{ }\nurksulud{struct pattern}^*\mid\kood{\_}\mid\nurksulud{name} \\
+        \nurksulud{case} & ::= & \kood{case }\nurksulud{term}\kood{ of \{}(\nurksulud{algebraic pattern}\kood{ -> }\nurksulud{term})^*\kood{\}} \\
+        \nurksulud{algebraic pattern} & ::= & \nurksulud{name}\kood{ }\nurksulud{algebraic pattern}^*\mid\kood{\_}\mid\nurksulud{char}\mid\nurksulud{int}\mid\nurksulud{name} \\
+        \nurksulud{instance} & ::= & \kood{instance }\nurksulud{name}\kood{\{}\nurksulud{instance type}\kood{\}}\nurksulud{constraint}^*\kood{(}\nurksulud{method implementation}^*\kood{)} \\
+        \nurksulud{instance type} & ::= & \nurksulud{name}\kood{ }\nurksulud{simple pattern}^* \\
+        \nurksulud{simple pattern} & ::= & \kood{\_}\mid\nurksulud{name} \\
+        \nurksulud{method implementation} & ::= & \nurksulud{name}\kood{ = }\nurksulud{term} 
     \end{longtable}
 
-  \section*{Type system}
+  \section*{Type System}
 
     
 \end{document}

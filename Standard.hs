@@ -36,7 +36,6 @@ module Standard where
     Int_expression_9 Integer |
     Let_expression_9 Pat_2 Expression_9 Expression_9 |
     Match_expression_9 Location_0 Expression_9 [(Alg_pat_7, Expression_9)] |
-    -- Name_expression_9 Name (Maybe Type_8) [Type_8]
     Name_expression_9 Name
       deriving Show
   data Form_6 = Form_6 Name [Type_8] deriving Show
@@ -48,7 +47,7 @@ module Standard where
   data Status = New | Old deriving (Eq, Show)
   data Tree_2 = Tree_2 [Data_6] [Cat_1] [Class_7] [Name] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
-  data Type_5 = Application_type_5 Type_5 Type_5 | Name_type_5 Name (Maybe Kind_0) [Kind_0] deriving Show
+  data Type_5 = Application_type_5 Type_5 Type_5 | Name_type_5 Name deriving Show
   data Type_8 = Type_8 Location_0 Type_5 deriving Show
   gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Name])
   gather_ops a b c =
@@ -126,11 +125,7 @@ module Standard where
         (
           (\q -> \h -> \(Type_8 i j, k) ->
             (
-              Type_8
-                i
-                (Application_type_5
-                  (Application_type_5 (Name_type_5 (Name l "Arrow") (Just (Name_kind_0 (Name l "Star"))) []) h)
-                  j),
+              Type_8 i (Application_type_5 (Application_type_5 (Name_type_5 (Name l "Arrow")) h) j),
               Function_expression_9 q k)) <$>
           std_pat a m e <*>
           std_type' a f <*>
@@ -253,7 +248,7 @@ module Standard where
   std_type' e b =
     case b of
       Application_type_0 c d -> Prelude.foldl Application_type_5 <$> std_type' e c <*> traverse (std_type' e) d
-      Name_type_0 a c d -> Right (Name_type_5 a c d)
+      Name_type_0 a -> Right (Name_type_5 a)
   und_err :: String -> Map' t -> String -> Location_1 -> (t -> Err u) -> Err u
   und_err a b c d f =
     case Data.Map.lookup a b of
