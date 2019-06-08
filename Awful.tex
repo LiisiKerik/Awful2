@@ -33,14 +33,14 @@
         \nurksulud{constraint} & ::= & \nurksulud{name}\kood{ }\nurksulud{name} \\
         \nurksulud{method signature} & ::= & \nurksulud{name}\nurksulud{type variables}\nurksulud{constraints}\kood{ : }\nurksulud{type} \\
         \nurksulud{constraints} & ::= & \kood{<}\nurksulud{constraint}^*\kood{>} \\
-        \nurksulud{definition} & ::= & \kood{def }\nurksulud{name}\nurksulud{type variables}\kood{ : }\nurksulud{type}\kood{ = }\nurksulud{term} \\
+        \nurksulud{definition} & ::= & \kood{def }\nurksulud{name}\nurksulud{type variables}\nurksulud{constraints}\kood{ : }\nurksulud{type}\kood{ = }\nurksulud{term} \\
         \nurksulud{term} & ::= & \nurksulud{application}\mid\nurksulud{char}\mid\nurksulud{abstraction}\mid\nurksulud{int}\mid\nurksulud{case}\mid\nurksulud{name} \\
         \nurksulud{application} & ::= & \nurksulud{term}\kood{ }\nurksulud{term} \\
         \nurksulud{abstraction} & ::= & \nurksulud{struct pattern}\kood{ -> }\nurksulud{term} \\
         \nurksulud{struct pattern} & ::= & \nurksulud{name}\kood{ }\nurksulud{struct pattern}^*\mid\kood{\_}\mid\nurksulud{name} \\
         \nurksulud{case} & ::= & \kood{case }\nurksulud{term}\kood{ of \{}(\nurksulud{algebraic pattern}\kood{ -> }\nurksulud{term})^*\kood{\}} \\
         \nurksulud{algebraic pattern} & ::= & \nurksulud{name}\kood{ }\nurksulud{algebraic pattern}^*\mid\kood{\_}\mid\nurksulud{char}\mid\nurksulud{int}\mid\nurksulud{name} \\
-        \nurksulud{instance} & ::= & \kood{instance }\nurksulud{name}\kood{\{}\nurksulud{instance type}\kood{\}}\nurksulud{constraint}^*\kood{(}\nurksulud{method implementation}^*\kood{)} \\
+        \nurksulud{instance} & ::= & \kood{instance }\nurksulud{name}\kood{\{}\nurksulud{instance type}\kood{\}}\nurksulud{constraints}\kood{(}\nurksulud{method implementation}^*\kood{)} \\
         \nurksulud{instance type} & ::= & \nurksulud{name}\kood{ }\nurksulud{simple pattern}^* \\
         \nurksulud{simple pattern} & ::= & \kood{\_}\mid\nurksulud{name} \\
         \nurksulud{method implementation} & ::= & \nurksulud{name}\kood{ = }\nurksulud{term} 

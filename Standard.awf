@@ -10,8 +10,27 @@ class Container{f :: Star -> Star}(
   size[t :: Star] :: f t -> Int)
 class Field{t :: Star}<Ring>(inverse :: t -> Maybe t)
 class Finite{t :: Star}<Ord>(list :: List t)
+class Functor{f :: Star -> Star}(fmap [t :: Star, u :: Star] :: (t -> u) -> f t -> f u)
 class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
 class Monad{f :: Star -> Star}<Applicative>(bind[t :: Star, u :: Star] :: f t -> (t -> f u) -> f u)
+
+TODO:
+
+
+
+f t :: k
+f u :: k
+t -> f u :: k -> k
+f t -> f u :: k -> k
+(t -> f u) -> f t -> f u :: (k -> k) -> k -> k
+
+class Monad[[k]] <<Cat k>> {f :: k -> k} <Functor f> (bind [t :: k, u :: k] :: (t -> f u) -> f t -> f u)
+
+
+defineerida join kaudu?
+
+class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor f> (join [t :: k] :: f (f t) -> f t)
+
 operator * multiply 7 Left
 operator + add 6 Left
 operator ++ concat 5 Right

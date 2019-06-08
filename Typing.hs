@@ -114,13 +114,14 @@ module Typing where
       (Map' Bool)
       (Map' Class_4)
       (Map' Class_5)
-      (Map' (Map' [[String]]))
+      (Map' (Map' Inst))
       (Map' ([String], [String], Kind_1))
       (Map' Prom_alg)
       (Map' Cat_4)
       (Map' PConstructor)
         deriving Show
   data Form_2 = Form_2 String [Type_1] deriving Show
+  data Inst = Inst [Kind_1] [[String]] deriving Show
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
   data Kind = Arrow_kind Kind | Star_kind deriving (Eq, Show)
   data Kind_1 = Application_kind_1 Kind_1 Kind_1 | Name_kind_1 String deriving (Eq, Show)
@@ -590,13 +591,13 @@ module Typing where
         (Data.Map.singleton "Star" (Cat_4 [] []))
         pconstrs,
       Data.Map.empty)
-  instances :: Map' (Map' [[String]])
+  instances :: Map' (Map' Inst)
   instances =
     Data.Map.fromList
       [
-        ("Ord", Data.Map.fromList [("Char", []), ("Int", [])]),
-        ("Ring", Data.Map.fromList [("Int", [])]),
-        ("Writeable", Data.Map.fromList [("Int", [])])]
+        ("Ord", Data.Map.fromList [("Char", Inst [] []), ("Int", Inst [] [])]),
+        ("Ring", Data.Map.fromList [("Int", Inst [] [])]),
+        ("Writeable", Data.Map.fromList [("Int", Inst [] [])])]
   int_to_nat_type :: Integer -> Type_1
   int_to_nat_type x =
     case x of
@@ -935,7 +936,7 @@ module Typing where
           True -> b
   show_char :: Char -> String
   show_char c = show [c]
-  slv :: Map' (Map' [[String]]) -> [(String, (Name, Type_1))] -> (Name -> String -> String -> String) -> Err ()
+  slv :: Map' (Map' Inst) -> [(String, (Name, Type_1))] -> (Name -> String -> String -> String) -> Err ()
   slv a b h =
     case b of
       [] -> Right ()
@@ -952,7 +953,7 @@ module Typing where
             Nothing -> i
   slv_constrs ::
     (
-      Map' (Map' [[String]]) ->
+      Map' (Map' Inst) ->
       [(String, (Name, Type_1))] ->
       (Name -> String -> String -> String) ->
       [Type_1] ->
@@ -1405,7 +1406,7 @@ module Typing where
         Map' PConstructor,
         Map' Polykind,
         Map' ([String], Map' [(String, Nat)]),
-        Map' (Map' [[String]]),
+        Map' (Map' Inst),
         Map' Cat_4,
         Map' Constructor,
         Map' Type_2) ->
@@ -1459,7 +1460,7 @@ module Typing where
         Map' PConstructor,
         Map' Polykind,
         Map' ([String], Map' [(String, Nat)]),
-        Map' (Map' [[String]]),
+        Map' (Map' Inst),
         Map' Cat_4,
         Map' Constructor,
         Map' Type_2) ->
@@ -1724,7 +1725,7 @@ module Typing where
                 (fromSet (return Nothing) (Data.Set.fromList t3))
                 h)
           Nothing -> Left ("Undefined type variable " ++ e ++ location' (Location_1 j d)))
-  type_constraint_1 :: Constraint_1 -> Map' (Map' [[String]]) -> Map' Class_4 -> Map' (Map' [[String]])
+  type_constraint_1 :: Constraint_1 -> Map' (Map' Inst) -> Map' Class_4 -> Map' (Map' Inst)
   type_constraint_1 (Constraint_1 c m e) a b =
     let
       d =
@@ -1761,7 +1762,7 @@ module Typing where
               join (Data.Map.elems (join <$> Data.Map.elems <$> g)),
               l (\(i, j) -> (,) i <$> ((!) u <$> j)))
       b : c -> type_constraint_0 g b (f, t) h >>= \d -> type_constraints_0 d c (f, t, u) h
-  type_constraints_1 :: [Constraint_1] -> Map' (Map' [[String]]) -> Map' Class_4 -> Map' (Map' [[String]])
+  type_constraints_1 :: [Constraint_1] -> Map' (Map' Inst) -> Map' Class_4 -> Map' (Map' Inst)
   type_constraints_1 a e d =
     case a of
       [] -> e
@@ -1930,8 +1931,8 @@ module Typing where
       Map' Class_4 ->
       Map' Class_5 ->
       Map' Cat_4 ->
-      (Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)])) ->
-      Err (Def_4, Map' (Type_2, Status), (Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)]))))
+      (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)])) ->
+      Err (Def_4, Map' (Type_2, Status), (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)]))))
   type_def_1 l x a b c k k2 w4 (t', u3) =
     case a of
       Basic_def_3 f d e e' g i ->
@@ -2006,23 +2007,24 @@ module Typing where
                                                 c,
                                                 (
                                                   (case Data.Map.lookup m t' of
-                                                    Just _ -> adjust (ins_new n r') m
-                                                    Nothing -> Data.Map.insert m (Data.Map.singleton n (r', New)))
+                                                    Just _ -> adjust (ins_new n r') (Inst _ m)
+                                                    Nothing -> Data.Map.insert m (Data.Map.singleton n (Inst _ r', New)))
                                                       t',
                                                   adjust (second (Data.Map.insert n o3)) m u3))) <$>
                                             type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d)))))))))
   type_def_2 ::
-    (Location_0 -> Location_1) ->
-    Def_4 ->
-    (Map' Constructor, Map' Type_2) ->
-    Map' Expression_2 ->
-    Map' (Map' [[String]]) ->
-    Map' Polykind ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    Map' Class_4 ->
-    Map' Kind ->
-    Map' Cat_4 ->
-    Err (Map' Expression_2)
+    (
+      (Location_0 -> Location_1) ->
+      Def_4 ->
+      (Map' Constructor, Map' Type_2) ->
+      Map' Expression_2 ->
+      Map' (Map' Inst) ->
+      Map' Polykind ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      Map' Class_4 ->
+      Map' Kind ->
+      Map' Cat_4 ->
+      Err (Map' Expression_2))
   type_def_2 j a d c m n t' u0 v2 f1 =
     case a of
       Basic_def_4 r e (KT2 b0 g3 b) x h i y' ->
@@ -2071,7 +2073,7 @@ module Typing where
                 case Data.Map.lookup q m of
                   Just t ->
                     case Data.Map.lookup e t of
-                      Just u ->
+                      Just (Inst u4 u) ->
                         case constr_check u0 (fst <$> e0) u r' of
                           Just r0 -> s' ("it requires " ++ r0 ++ " due to constraints on " ++ q ++ " " ++ e)
                           Nothing -> r
@@ -2088,8 +2090,8 @@ module Typing where
       Map' Class_4 ->
       Map' Class_5 ->
       Map' Cat_4 ->
-      (Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)])) ->
-      Err ([Def_4], Types, (Map' (Map' ([[String]], Status)), Map' ([String], Map' [(String, Nat)]))))
+      (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)])) ->
+      Err ([Def_4], Types, (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)]))))
   type_defs_1 h x a b c y y0 v u =
     case a of
       [] -> Right ([], c, u)
@@ -2100,7 +2102,7 @@ module Typing where
     [Def_4] ->
     (Map' Constructor, Map' Type_2) ->
     Map' Expression_2 ->
-    Map' (Map' [[String]]) ->
+    Map' (Map' Inst) ->
     Map' Polykind ->
     Map' ([String], Map' [(String, Nat)]) ->
     Map' Class_4 ->
@@ -2158,18 +2160,19 @@ module Typing where
                   (Data.Set.union s (Data.Set.fromList q), [(k, kindrep' (Data.Map.fromList (zip o x)) n)] ++ f, m1 ++ u4),
                   n1))
   type_expr ::
-    String ->
-    Type_1 ->
-    (Location_0 -> Location_1) ->
-    (Map' Constructor, Map' Type_2) ->
-    Expression_1 ->
-    Map' (Map' [[String]]) ->
-    Integer ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    (Map' Polykind, Map' Kind) ->
-    Map' Cat_4 ->
-    Location_0 ->
-    Err Expression_2
+    (
+      String ->
+      Type_1 ->
+      (Location_0 -> Location_1) ->
+      (Map' Constructor, Map' Type_2) ->
+      Expression_1 ->
+      Map' (Map' Inst) ->
+      Integer ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      (Map' Polykind, Map' Kind) ->
+      Map' Cat_4 ->
+      Location_0 ->
+      Err Expression_2)
   type_expr k h a (c, e) f m w w' b a3 l3 =
     let
       n = " in " ++ k
@@ -2214,12 +2217,13 @@ module Typing where
                               ".")) <*
                         pats a ((\(Constructor _ _ _ _ e') -> e') <$> c) x3)))
   type_expr' ::
-    (Map' Polykind, Map' Constructor, Map' Type_2, Map' Kind) ->
-    Expression_1 ->
-    Map' (Map' [[String]]) ->
-    Map' ([String], Map' [(String, Nat)]) ->
-    Map' Cat_4 ->
-    Err Expression_2
+    (
+      (Map' Polykind, Map' Constructor, Map' Type_2, Map' Kind) ->
+      Expression_1 ->
+      Map' (Map' Inst) ->
+      Map' ([String], Map' [(String, Nat)]) ->
+      Map' Cat_4 ->
+      Err Expression_2)
   type_expr' (b, c, e, i) f g h c3 =
     type_expr
       "input."
@@ -2321,7 +2325,7 @@ module Typing where
       (Name -> String) ->
       (Location_0 -> Location_1) ->
       (Map' Constructor, Map' Type_2) ->
-      Map' (Map' [[String]]) ->
+      Map' (Map' Inst) ->
       [(Name, Expression_1, [(String, Kind_1)], [Constraint_1], Type_1)] ->
       (Map' Expression_2) ->
       String ->
