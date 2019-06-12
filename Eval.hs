@@ -183,7 +183,7 @@ module Eval where
     (Map' Constructor, Map' Type_2) ->
     Map' Expression_2 ->
     String ->
-    Map' (Map' [[String]]) ->
+    Map' (Map' Inst) ->
     Map' ([String], Map' [(String, Nat)]) ->
     Map' Kind ->
     Map' Op ->

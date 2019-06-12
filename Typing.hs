@@ -948,7 +948,7 @@ module Typing where
           case Data.Map.lookup c a of
             Just x ->
               case Data.Map.lookup f x of
-                Just j -> slv_constrs a e h g j y
+                Just (Inst m j) -> slv_constrs a e h g j y
                 Nothing -> i
             Nothing -> i
   slv_constrs ::
@@ -1733,7 +1733,7 @@ module Typing where
           c
           (Data.Map.insert
             e
-            []
+            (Inst [] [])
             (case Data.Map.lookup c a of
               Just l -> l
               Nothing -> Data.Map.empty))
@@ -1964,7 +1964,7 @@ module Typing where
                 \(w5, _) ->
                   (
                     ziphelp (Location_1 l) x4 m e Data.Map.empty d2 k3 >>=
-                    \(_, g9) ->
+                    \(g2, g9) ->
                       (
                         check_cats (Location_1 l d) w5 g9 k9 *>
                         und_err
@@ -2006,10 +2006,9 @@ module Typing where
                                                 Instance_4 d m (fst <$> w0) o n q' p' w s' o1 o2 r',
                                                 c,
                                                 (
-                                                  (case Data.Map.lookup m t' of
-                                                    Just _ -> adjust (ins_new n r') (Inst _ m)
-                                                    Nothing -> Data.Map.insert m (Data.Map.singleton n (Inst _ r', New)))
-                                                      t',
+                                                  case Data.Map.lookup m t' of
+                                                    Nothing -> Data.Map.insert m (Data.Map.singleton n (Inst g2 r', New)) t'
+                                                    Just _ -> adjust (ins_new n (Inst g2 r')) m t',
                                                   adjust (second (Data.Map.insert n o3)) m u3))) <$>
                                             type_cls_0 n (repkinds_method g9 <$> q) s' g (Location_1 l) m d)))))))))
   type_def_2 ::
