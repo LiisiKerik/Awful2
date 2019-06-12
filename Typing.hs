@@ -258,6 +258,11 @@ module Typing where
             False -> Right ()
             True -> check_cat a b e) *>
           check_cats' a b g d)
+  check_cats_2 :: Location_1 -> Map' Cat_4 -> [Kind_1] -> Err ()
+  check_cats_2 a b c =
+    case c of
+      [] -> Right ()
+      d : e -> check_cat a b d *> check_cats_2 a b e
   check_kind :: String -> String -> Map' (Either Polykind Kind_1) -> Type_1 -> Err Kind_1
   check_kind j c a b =
     let
@@ -2870,7 +2875,9 @@ module Typing where
       _ -> ([], f, g, h, i)
   type_typ :: (Location_0 -> Location_1) -> Map' Polykind -> Map' Kind -> Kind_1 -> Type_8 -> Map' Cat_4 -> Err Type_1
   type_typ a d e f (Type_8 b c) j =
-    type_eqs a 0 c d e f (Data.Set.empty, [], []) >>= \(_, (g, h, t), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i)
+    (
+      type_eqs a 0 c d e f (Data.Set.empty, [], []) >>=
+      \(_, (g, h, t), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i) <* check_cats_2 (a b) j t)
   type_types :: (Location_0 -> Location_1) -> [Type_8] -> Map' Polykind -> Map' Kind -> Map' Cat_4 -> Err [Type_1]
   type_types f a b g h =
     case a of
