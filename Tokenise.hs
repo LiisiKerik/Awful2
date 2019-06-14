@@ -271,10 +271,10 @@ module Tokenise where
       "class" -> Class_token
       "data" -> Data_token
       "def" -> Def_token
+      "import" -> Load_token
       "in" -> In_token
       "instance" -> Instance_token
       "let" -> Let_token
-      "load" -> Load_token
       "of" -> Of_token
       "operator" -> Opdecl_token
       "struct" -> Struct_token

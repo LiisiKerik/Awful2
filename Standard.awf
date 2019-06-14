@@ -1,4 +1,9 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+operator . Compose 9 Right
+````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+
+
+~/
 data Bool = algebraic {False, True}
 class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
   ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
@@ -149,4 +154,4 @@ def right[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor 
 def write[t :: Star]<Writeable t>(x :: t) :: List Char = First (writeBrackets x)
 def write'(x :: List Char, y :: List (List Char)) :: List Char = Interleave [" "] (x : y)
 def zr[t :: Star]<Ring t> :: t = convert 0
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+/~

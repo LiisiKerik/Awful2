@@ -20,7 +20,7 @@ module Tree where
       Location_0
       (Name, [Name])
       [Name]
-      ((Location_0, Pat), (Location_0, Pat), Data_br_0, [Pat], Expression_0, [Pat], Expression_0)
+      ((Location_0, Pat), (Location_0, Pat), Data_br_0, (Pat, Expression_0), (Pat, Expression_0))
         deriving Show
   data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name [Kind_0] Name deriving Show
@@ -211,22 +211,16 @@ module Tree where
       parse_cat_constrs <*>
       parse_round
         (
-          (,,,,,,) <$>
+          (,,,,) <$>
           ((,) <&> parse_pat) <*
           parse_arrow <*>
           ((,) <&> parse_pat) <*
           parse_eq <*>
           parse_data_br <*
-          parse_comma <*
-          parse_name_4 "Compose" <*>
-          parse_many parse_br_pat <*
-          parse_eq <*>
-          parse_expression' <*
-          parse_comma <*
-          parse_name_4 "Id" <*>
-          parse_many parse_br_pat <*
-          parse_eq <*>
-          parse_expression'))
+          parse_comma <*>
+          parse_method_impl <*
+          parse_comma <*>
+          parse_method_impl))
   parse_cat_constr :: Parser' Name
   parse_cat_constr = parse_token Cat_token *> parse_name'
   parse_cat_constrs :: Parser' [Name]
@@ -323,7 +317,7 @@ module Tree where
           parse_optional (parse_sq <$> parse_sq) parse_kind <*>
           parse_many parse_pattern_1) <*>
       parse_constraints <*>
-      parse_optional parse_round ((,) <$> parse_pat <* parse_eq <*> parse_expression'))
+      parse_optional parse_round parse_method_impl)
   parse_int :: Parser' Integer
   parse_int =
     parse_int' <+> (negate <$ parse_operator "-" <*> parse_int' >>= \x -> if x == 0 then empty_parser else return x)
@@ -387,6 +381,8 @@ module Tree where
         case a of
           Name_token b -> Just b
           _ -> Nothing)
+  parse_method_impl :: Parser' (Pat, Expression_0)
+  parse_method_impl = (,) <$> parse_pat <* parse_eq <*> parse_expression'
   parse_name' :: Parser' Name
   parse_name' = Name <&> parse_name
   parse_name'' :: Token_0 -> Parser' Name

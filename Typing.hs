@@ -49,9 +49,9 @@ module Typing where
   data Brnch_3 = Brnch_3 String [(String, Kind_1)] String [(String, Type_8)] deriving Show
   data Cat_4 = Cat_4 [String] [String] deriving Show
   data Cat_5 =
-    Cat_5 Location_0 (String, [String]) [Name] ((Location_0, Pat'), (Location_0, Pat'), Data_br_2, Expression_1, Expression_1)
+    Cat_5 Location_0 (String, [String]) [String] ((Location_0, Pat'), (Location_0, Pat'), Data_br_2, Expression_1, Expression_1)
       deriving Show
-  data Cat_6 = Cat_6 Location_0 (String, [String]) [Name] (TPat, TPat, Expression_1, Expression_1) deriving Show
+  data Cat_6 = Cat_6 Location_0 (String, [String]) [String] (TPat, TPat, Expression_1, Expression_1) deriving Show
   data Class_3 = Class_3 String [String] [String] (String, Kind_1) (Maybe (Name, [Kind_1])) [Method_3] deriving Show
   data Class_4 = Class_4 [String] [String] (String, Kind_1) (Maybe (String, [Kind_1])) [Method_4] deriving Show
   data Class_5 = Class_5 [String] [String] Kind_1 (Maybe (String, [Kind_1])) [String] deriving Show
@@ -1375,7 +1375,7 @@ module Typing where
           EQ ->
             (
               type_cat_constrs (a, Data.Set.fromList d) (fst <$> j, n) >>=
-              \(_, s) -> Right (ins_new p (Cat_4 d s) j, Cat_5 b (p, d) n e))
+              \(_, s) -> Right (ins_new p (Cat_4 d s) j, Cat_5 b (p, d) s e))
           GT -> Left ("Kind constructor " ++ p ++ location (a c) ++ " has been given too many arguments."))
   type_cat_1 ::
     (
@@ -1423,7 +1423,18 @@ module Typing where
       x = Prelude.foldl Application_kind_1 (Name_kind_1 p) (Name_kind_1 <$> d)
       y = Data.Map.union o (Data.Map.fromList ((\y' -> (y', Star_kind)) <$> d))
       s' m7 fj u1 n2 =
-        type_expr (m7 ++ " " ++ p ++ location' (a b)) fj a (k7, l) u1 z' n2 m' (type_tpat_2 t f x (type_tpat_2 t e x u), y) j b
+        type_expr
+          (m7 ++ " " ++ p ++ location' (a b))
+          fj
+          a
+          (k7, l)
+          u1
+          z'
+          n2
+          m'
+          (type_tpat_2 t f x (type_tpat_2 t e x u), y)
+          (Prelude.foldl (\m3 -> \t5 -> Data.Map.insert t5 (Cat_4 [] []) m3) j n)
+          b
     in
       (
         (\j7 -> \j8 -> Data.Map.insert ("Id " ++ p) j7 (Data.Map.insert ("Compose " ++ p) j8 m)) <$>
@@ -1527,7 +1538,7 @@ module Typing where
                               case g' of
                                 Just (Name _ t0, _) -> Data.Map.insert b t0 x2
                                 Nothing -> x2))) <$>
-                      type_methods_0 a e (Data.Map.insert c (pkind h) j) i2 e7)))))
+                      type_methods_0 a e (Data.Map.insert c (pkind h) j) i2 m9)))))
   type_class_1 ::
     (
       String ->

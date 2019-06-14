@@ -1,4 +1,11 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+import Standard.awf
+Cat {{Pair K L}} <<Cat K, Cat L>> (
+  Mk_Pair T U -> Mk_Pair V W = algebraic {Pair_Arrow (T -> V) (U -> W)},
+  Pair_Arrow f g . Pair_Arrow h i = Pair_Arrow (f . h) (g . i),
+  Id = Pair_Arrow Id Id)
+````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+~/
 Data Opp[T : Star] = Algebraic {Mk_Opp T}
 Cat{{Either K L}}<<Cat K, Cat L>>(
   T -> U =
@@ -18,15 +25,6 @@ Cat{{Opp K}}<<Cat K>>(
   Mk_Opp T -> Mk_Opp U = Algebraic {Opp_Arrow (U -> T)},
   Opp_Arrow f . Opp_Arrow g = Opp_Arrow (g . f),
   Id = Opp_Arrow Id)
-Cat{{Pair K L}}<<Cat K, Cat L>>(
-  Mk_Pair T U -> Mk_Pair V W = Algebraic {Pair_Arrow (T -> V) (U -> W)},
-  Pair_Arrow f g . Pair_Arrow h i = Pair_Arrow (f . h) (g . i),
-  Id = Pair_Arrow Id Id)
-
-
 Data Unit = Struct Mk_Unit
-
 Cat {{Unit}} (Unit -> Unit = Struct Unit_Arrow, Unit_Arrow . Unit_Arrow = Unit_Arrow, Id = Unit_Arrow)
-
-
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+/~

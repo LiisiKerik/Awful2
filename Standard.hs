@@ -49,6 +49,14 @@ module Standard where
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
   data Type_5 = Application_type_5 Type_5 Type_5 | Name_type_5 Name deriving Show
   data Type_8 = Type_8 Location_0 Type_5 deriving Show
+  check_cat_m :: (Location_0 -> Location_1) -> Map' Op -> String -> (Pat, Expression_0) -> Err Expression_9
+  check_cat_m f g a b =
+    (
+      std_inst f g b >>=
+      \(Name e c, d) ->
+        case a == c of
+          False -> Left ("Expected method " ++ a ++ location (f e) ++ ", found " ++ c ++ "instead.")
+          True -> Right d)
   gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Name])
   gather_ops a b c =
     case c of
@@ -147,21 +155,14 @@ module Standard where
       Name_alg_pat d -> Right (Name_alg_pat_7 d)
       Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
   std_cat :: (Location_0 -> Location_1) -> Map' Op -> Cat_0 -> Err Cat_1
-  std_cat a b (Cat_0 c d q ((a1, e), (a2, f), g, h, i, j, k)) =
+  std_cat a b (Cat_0 c d q ((a1, e), (a2, f), g, h, i)) =
     (
-      (\v -> \w -> \l -> \o -> \m -> \p -> \n ->
-        Cat_1
-          c
-          d
-          q
-          ((a1, v), (a2, w), l, Prelude.foldr Function_expression_9 m o, Prelude.foldr Function_expression_9 n p)) <$>
+      (\v -> \w -> \l -> \m -> \n -> Cat_1 c d q ((a1, v), (a2, w), l, m, n)) <$>
       std_pat a b e <*>
       std_pat a b f <*>
       std_dat_br a g <*>
-      traverse (std_pat a b) h <*>
-      std_expr a b i <*>
-      traverse (std_pat a b) j <*>
-      std_expr a b k)
+      check_cat_m a b "Compose" h <*>
+      check_cat_m a b "Id" i)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
