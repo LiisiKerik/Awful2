@@ -14,10 +14,10 @@ module Naming where
     Name_alg_pat_1 String
       deriving Show
   data Cat_2 =
-    Cat_2 Location_0 (Name, [Name]) [Name] ((Location_0, Pat_2), (Location_0, Pat_2), Data_br_1, Expression_9, Expression_9)
+    Cat_2 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_1, Expression_9, Expression_9)
       deriving Show
   data Cat_3 =
-    Cat_3 Location_0 (Name, [String]) [Name] ((Location_0, Pat'), (Location_0, Pat'), Data_br_2, Expression_1, Expression_1)
+    Cat_3 Location_0 (Name, [String]) [Name] ((Location_0, Patn'), (Location_0, Patn'), Data_br_2, Expression_1, Expression_1)
       deriving Show
   data Class_1 = Class_1 String [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method_1] deriving Show
   data Class_2 = Class_2 String [String] [Name] (String, Kind_0) (Maybe (Name, [Kind_0])) [Method_2] deriving Show
@@ -78,6 +78,7 @@ module Naming where
   data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Pat' = Application_pat' Name [Pat'] | Blank_pat' | Name_pat' String deriving Show
+  data Patn' = Application_patn' Name [Patn'] | Name_patn' String deriving Show
   data Pattern_0 = Blank_pattern_0 | Name_pattern_0 String deriving Show
   data Tree_4 = Tree_4 [Data_1] [Cat_2] [Class_1] [Def_2] deriving Show
   data Tree_5 = Tree_5 [Data_2] [Cat_3] [Class_2] [Def_3] deriving Show
@@ -168,7 +169,7 @@ module Naming where
       \(m, n) ->
         (
           (\(o, p, q) -> \r -> \s -> Cat_3 e (f, m) m2 ((v, o), (w, p), q, r, s)) <$>
-          (naming_pat a h n >>= \(o, p) -> naming_pat a i o >>= \(q, r) -> (\s -> (p, r, s)) <$> naming_data_br_2 a j q) <*>
+          (naming_patn a h n >>= \(o, p) -> naming_patn a i o >>= \(q, r) -> (\s -> (p, r, s)) <$> naming_data_br_2 a j q) <*>
           naming_expression a k n <*>
           naming_expression a l n))
   naming_cats_0 :: String -> ((Locations, Locations), [Cat_1]) -> Err ((Locations, Locations), [Cat_2])
@@ -193,7 +194,7 @@ module Naming where
       [] -> Right []
       d : e -> naming_class_1 a d c >>= \g -> (:) g <$> naming_classes_1 a e c
   naming_data_1 :: String -> Data_6 -> Locations -> Err (Locations, Data_1)
-  naming_data_1 a (Data_6 b c d e) g = naming_name a (Name b c) g >>= \(h, _) -> second (Data_1 c d) <$> naming_data_br_1 a e h
+  naming_data_1 a (Data_6 b d e) g = naming_name a b g >>= \(h, c) -> second (Data_1 c d) <$> naming_data_br_1 a e h
   naming_data_2 :: String -> Data_1 -> Locations -> Err Data_2
   naming_data_2 a (Data_1 b h d) e = naming_arguments naming_name a h e >>= \(f, g) -> Data_2 b g <$> naming_data_br_2 a d f
   naming_data_br_1 :: String -> Data_br_6 -> Locations -> Err (Locations, Data_br_1)
@@ -346,6 +347,16 @@ module Naming where
       Application_pat_2 b e -> second (Application_pat' b) <$> naming_pats a e d
       Blank_pat_2 -> Right (d, Blank_pat')
       Name_pat_2 (Name b e) -> second Name_pat' <$> naming_name a (Name b e) d
+  naming_patn :: String -> Patn -> Locations -> Err (Locations, Patn')
+  naming_patn a c d =
+    case c of
+      Application_patn b e -> second (Application_patn' b) <$> naming_patns a e d
+      Name_patn (Name b e) -> second Name_patn' <$> naming_name a (Name b e) d
+  naming_patns :: String -> [Patn] -> Locations -> Err (Locations, [Patn'])
+  naming_patns a b d =
+    case b of
+      [] -> Right (d, [])
+      e : f -> naming_patn a e d >>= \(g, h) -> second ((:) h) <$> naming_patns a f g
   naming_pats :: String -> [Pat_2] -> Locations -> Err (Locations, [Pat'])
   naming_pats a b d =
     case b of

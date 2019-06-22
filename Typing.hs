@@ -49,8 +49,12 @@ module Typing where
   data Brnch_3 = Brnch_3 String [(String, Kind_1)] String [(String, Type_8)] deriving Show
   data Cat_4 = Cat_4 [String] [String] deriving Show
   data Cat_5 =
-    Cat_5 Location_0 (String, [String]) [String] ((Location_0, Pat'), (Location_0, Pat'), Data_br_2, Expression_1, Expression_1)
-      deriving Show
+    Cat_5
+      Location_0
+      (String, [String])
+      [String]
+      ((Location_0, Patn'), (Location_0, Patn'), Data_br_2, Expression_1, Expression_1)
+        deriving Show
   data Cat_6 = Cat_6 Location_0 (String, [String]) [String] (TPat, TPat, Expression_1, Expression_1) deriving Show
   data Class_3 = Class_3 String [String] [String] (String, Kind_1) (Maybe (Name, [Kind_1])) [Method_3] deriving Show
   data Class_4 = Class_4 [String] [String] (String, Kind_1) (Maybe (String, [Kind_1])) [Method_4] deriving Show
@@ -2771,7 +2775,7 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       Map' PConstructor ->
-      Pat' ->
+      Patn' ->
       Kind_1 ->
       Map' Kind_1 ->
       Integer ->
@@ -2781,7 +2785,7 @@ module Typing where
       Err ((TPat, Type_1), Map' Kind_1, Integer, Set String, [(Kind_1, Kind_1)], Integer))
   type_tpat k h b c d l n o d2 =
     case b of
-      Application_pat' (Name g e) f ->
+      Application_patn' (Name g e) f ->
         und_err
         e
         h
@@ -2806,17 +2810,12 @@ module Typing where
                       a3)) <$>
                   type_tpats k h f (repkinds q <$> j) d p r ((c, repkinds q m) : o) (Name g e) d2)
             _ -> Left ("Constructor " ++ e ++ location (k g) ++ " is not a struct constructor."))
-      Blank_pat' ->
-        let
-          a8 = "blank " ++ show d2
-        in
-          Right ((Name_tpat a8, ntype a8), Data.Map.insert a8 c d, l, n, o, d2 + 1)
-      Name_pat' e -> Right ((Name_tpat e, ntype e), Data.Map.insert e c d, l, n, o, d2)
+      Name_patn' e -> Right ((Name_tpat e, ntype e), Data.Map.insert e c d, l, n, o, d2)
   type_tpat' ::
     (
       (Location_0 -> Location_1) ->
       Map' PConstructor ->
-      (Location_0, Pat') ->
+      (Location_0, Patn') ->
       Kind_1 ->
       Map' Polykind ->
       Err ((TPat, Type_1), Map' Polykind, Map' Kind_1))
@@ -2855,7 +2854,7 @@ module Typing where
     (
       (Location_0 -> Location_1) ->
       Map' PConstructor ->
-      [Pat'] ->
+      [Patn'] ->
       [Kind_1] ->
       Map' Kind_1 ->
       Integer ->

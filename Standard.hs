@@ -9,7 +9,7 @@ module Standard where
     Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
       deriving Show
   data Cat_1 =
-    Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Pat_2), (Location_0, Pat_2), Data_br_6, Expression_9, Expression_9)
+    Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_6, Expression_9, Expression_9)
       deriving Show
   data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method_9] deriving Show
   data Def_1 =
@@ -24,7 +24,7 @@ module Standard where
       [Constraint_0]
       [(Name, Expression_9)]
         deriving Show
-  data Data_6 = Data_6 Location_0 String [(Name, Kind_0)] Data_br_6 deriving Show
+  data Data_6 = Data_6 Name [(Name, Kind_0)] Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
@@ -155,18 +155,16 @@ module Standard where
       Name_alg_pat d -> Right (Name_alg_pat_7 d)
       Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
   std_cat :: (Location_0 -> Location_1) -> Map' Op -> Cat_0 -> Err Cat_1
-  std_cat a b (Cat_0 c d q ((a1, e), (a2, f), g, h, i)) =
+  std_cat a b (Cat_0 c d q (e, f, g, h, i)) =
     (
-      (\v -> \w -> \l -> \m -> \n -> Cat_1 c d q ((a1, v), (a2, w), l, m, n)) <$>
-      std_pat a b e <*>
-      std_pat a b f <*>
+      (\l -> \m -> \n -> Cat_1 c d q (e, f, l, m, n)) <$>
       std_dat_br a g <*>
       check_cat_m a b "Compose" h <*>
       check_cat_m a b "Id" i)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
-  std_dat a (Data_0 b c d e) = Data_6 b c d <$> std_dat_br a e
+  std_dat a (Data_0 b d e) = Data_6 b d <$> std_dat_br a e
   std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
   std_dat_br a b =
     case b of
@@ -188,13 +186,11 @@ module Standard where
           std_expr a f d)
       Match_expression_0 c d e ->
         Match_expression_9 c <$> std_expr a f d <*> traverse (\(g, h) -> (,) <$> std_apat a f g <*> std_expr a f h) e
-      --Name_expression_0 c d e -> Name_expression_9 c <$> traverse (std_type a) d <*> traverse (std_type a) e
       Name_expression_0 c -> Right (Name_expression_9 c)
       Op_expression_0 c d ->
         shunting_yard
           a
           "operator"
-          --(std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e Nothing []) g))
           (std_expr a f, \e -> \g -> Application_expression_9 (Application_expression_9 (Name_expression_9 e) g))
           f
           []
