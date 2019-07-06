@@ -29,6 +29,7 @@ module Typing where
   import Control.Monad
   import Data.Bifunctor
   import Data.Foldable
+  import Data.Functor
   import Data.List
   import Data.Map
   import Data.Maybe
@@ -245,7 +246,7 @@ module Typing where
       (c, d) = kind_string b []
     in
       case Data.Map.lookup c a of
-        Nothing -> Left ("Kind " ++ c ++ " should have an instance of Cat because of something going on" ++ location' g)
+        Nothing -> Left ("Kind " ++ c ++ " should be an instance of Cat because of something going on" ++ location' g)
         Just (Cat_4 e f) -> check_cats' g a (zip d e) (Data.Set.fromList f)
   check_cats :: Location_1 -> Map' Cat_4 -> Map' Kind_1 -> [String] -> Err ()
   check_cats f e a b =
@@ -1009,7 +1010,8 @@ module Typing where
               Left i -> Right i
               Right i -> solve_eq_help h (d : a) b (Data.Map.union f (solve_diff i a)))
       Nothing -> Right True
-  solve_type_eqs :: Location_1 -> Set String -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1) -> Err (Map' Kind_1, Type_1)
+  solve_type_eqs ::
+    Location_1 -> Set String -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1, [Kind_1]) -> Err (Map' Kind_1, Type_1, [Kind_1])
   solve_type_eqs j a b k =
     case b of
       [] -> Right k
@@ -1026,7 +1028,14 @@ module Typing where
                   True -> type_reps j a f (Name_kind_1 g) e k
               True -> solve_type_eqs j a e k
   solve_type_eqs' ::
-    Location_1 -> Set String -> String -> Kind_1 -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1) -> Err (Map' Kind_1, Type_1)
+    (
+      Location_1 ->
+      Set String ->
+      String ->
+      Kind_1 ->
+      [(Kind_1, Kind_1)] ->
+      (Map' Kind_1, Type_1, [Kind_1]) ->
+      Err (Map' Kind_1, Type_1, [Kind_1]))
   solve_type_eqs' e a b c d k =
     case Data.Set.member b a of
       False -> kind_err e
@@ -2759,12 +2768,19 @@ module Typing where
       Application_type_1 d e -> Application_type_1 (type_rep a d) (type_rep a e)
       Name_type_1 d e f -> Name_type_1 d (a <$> e) (a <$> f)
   type_reps ::
-    Location_1 -> Set String -> String -> Kind_1 -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1) -> Err (Map' Kind_1, Type_1)
-  type_reps e a b c d (k, l) =
+    (
+      Location_1 ->
+      Set String ->
+      String ->
+      Kind_1 ->
+      [(Kind_1, Kind_1)] ->
+      (Map' Kind_1, Type_1, [Kind_1]) ->
+      Err (Map' Kind_1, Type_1, [Kind_1]))
+  type_reps e a b c d (k, l, u) =
     let
       f = kindrep b c
     in
-      solve_type_eqs e (Data.Set.delete b a) (bimap f f <$> d) (f <$> k, type_rep f l)
+      solve_type_eqs e (Data.Set.delete b a) (bimap f f <$> d) (f <$> k, type_rep f l, f <$> u)
   type_reps_2 :: Set String -> String -> Kind_1 -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1) -> (Map' Kind_1, Type_1)
   type_reps_2 a b c d (k, l) =
     let
@@ -2823,7 +2839,7 @@ module Typing where
     (
       type_tpat a b c d Data.Map.empty 0 Data.Set.empty [] 0 >>=
       \((f, u2), g, _, i, j, _) ->
-        (\(h, m1) -> ((f, m1), Data.Map.union e (pkind <$> h), h)) <$> solve_type_eqs (a l) i j (g, u2))
+        (\(h, m1, []) -> ((f, m1), Data.Map.union e (pkind <$> h), h)) <$> solve_type_eqs (a l) i j (g, u2, []))
   type_tpat_2 :: Map' PConstructor -> TPat -> Kind_1 -> Map' Polykind -> Map' Polykind
   type_tpat_2 b c d e =
     let
@@ -2904,7 +2920,7 @@ module Typing where
   type_typ a d e f (Type_8 b c) j =
     (
       type_eqs a 0 c d e f (Data.Set.empty, [], []) >>=
-      \(_, (g, h, t), i) -> snd <$> solve_type_eqs (a b) g h (Data.Map.empty, i) <* check_cats_2 (a b) j t)
+      \(_, (g, h, t), i) -> solve_type_eqs (a b) g h (Data.Map.empty, i, t) >>= \(_, y, m) -> check_cats_2 (a b) j m $> y)
   type_types :: (Location_0 -> Location_1) -> [Type_8] -> Map' Polykind -> Map' Kind -> Map' Cat_4 -> Err [Type_1]
   type_types f a b g h =
     case a of
