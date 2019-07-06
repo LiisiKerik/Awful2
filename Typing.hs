@@ -1014,7 +1014,10 @@ module Typing where
     Location_1 -> Set String -> [(Kind_1, Kind_1)] -> (Map' Kind_1, Type_1, [Kind_1]) -> Err (Map' Kind_1, Type_1, [Kind_1])
   solve_type_eqs j a b k =
     case b of
-      [] -> Right k
+      [] ->
+        case Data.Set.null a of
+          False -> Left ("Unresolved kind variables " ++ location' j)
+          True -> Right k
       d : e ->
         case d of
           (Application_kind_1 f g, Application_kind_1 h i) -> solve_type_eqs j a ((f, h) : (g, i) : e) k
@@ -1414,7 +1417,17 @@ module Typing where
                   type_data_br_1 (a, f7, a3) g m >>=
                   \(d3, k8) ->
                     (
-                      type_data_br_2 (Location_1 a) (arrow_type x e4 e5) k8 t3 y (k, l) (d, [(v, x), (a1, x)]) "Arrow" f7 j >>=
+                      type_data_br_2
+                        (Location_1 a)
+                        (arrow_type x e4 e5)
+                        k8
+                        t3
+                        y
+                        (k, l)
+                        (d, [(v, x), (a1, x)])
+                        "Arrow"
+                        f7
+                        (Data.Map.union j (Data.Map.fromList ((\k4 -> (k4, Cat_4 [] [])) <$> n))) >>=
                       \(k7, f0) -> Right ((k7, f0, d3), Cat_6 b (p, d) n (v, a1, h, i))))))
   type_cat_2 ::
     (
