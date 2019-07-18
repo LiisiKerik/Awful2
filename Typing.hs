@@ -53,22 +53,22 @@ module Typing where
   context_union (File i j d a x e q t g o z w', t0) (File k l h c y m r u n p p2 a', t2) =
     (
       File
-        (Data.Map.union i k)
-        (Data.Map.union j l)
-        (Data.Map.union d h)
-        (Data.Map.union a c)
-        (Data.Map.union x y)
-        (Data.Map.union e m)
-        (Data.Map.union q r)
-        (unionWith Data.Map.union t u)
-        (Data.Map.union g n)
-        (Data.Map.union o p)
-        (Data.Map.union z p2)
-        (Data.Map.union w' a'),
-      Data.Map.union t0 t2)
+        (union i k)
+        (union j l)
+        (union d h)
+        (union a c)
+        (union x y)
+        (union e m)
+        (union q r)
+        (unionWith union t u)
+        (union g n)
+        (union o p)
+        (union z p2)
+        (union w' a'),
+      union t0 t2)
   defs :: Map' Expression_2
   defs =
-    Data.Map.fromList
+    fromList
       [
         (
           "Compose Star",
@@ -131,12 +131,12 @@ module Typing where
         instances
         classes_2
         prom_algs
-        (Data.Map.singleton "Star" (Cat_4 [] []))
+        (singleton "Star" (Cat_4 [] []))
         pconstrs,
-      Data.Map.empty)
+      empty)
   locations :: Locations
   locations =
-    Data.Map.fromList
+    fromList
       (
         (\x -> (x, Language)) <$>
         [
@@ -222,7 +222,7 @@ module Typing where
       (Location_0 0 0)
   types :: Map' Type_2
   types =
-    Data.Map.fromList
+    fromList
       [
         (
           "compose",
