@@ -3,6 +3,7 @@
 module Eval where
   import Data.Map
   import Datas
+  import Defs
   import Naming
   import Standard
   import Tokenise

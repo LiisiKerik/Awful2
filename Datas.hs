@@ -78,6 +78,8 @@ module Datas where
   arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "Arrow") a)
   arrow_type :: Kind_1 -> Type_1 -> Type_1 -> Type_1
   arrow_type k a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just k) []) a)
+  char_type :: Type_1
+  char_type = ntype "Char"
   check_cat :: Location_1 -> Map' Cat_4 -> Kind_1 -> Err ()
   check_cat g a b =
     let
@@ -101,6 +103,62 @@ module Datas where
     case c of
       [] -> Right ()
       d : e -> check_cat a b d *> check_cats_2 a b e
+  comparison_kind :: Kind_1
+  comparison_kind = Name_kind_1 "Ordering"
+  comparison_type :: Type_1
+  comparison_type = ntype "Ordering"
+  constructors :: Map' Constructor
+  constructors =
+    Data.Map.fromList
+      [
+        (
+          "ConstructList",
+          Constructor
+            []
+            [(Name_tpat "T", star_kind)]
+            [ntype "T", list_type (ntype "T")]
+            (list_type (ntype "T"))
+            [("ConstructList", 2), ("EmptyList", 0)]),
+        ("EQ", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        (
+          "EmptyList",
+          Constructor [] [(Name_tpat "T", star_kind)] [] (list_type (ntype "T")) [("ConstructList", 2), ("EmptyList", 0)]),
+        ("GT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        (
+          "Just",
+          Constructor [] [(Name_tpat "T", star_kind)] [ntype "T"] (maybe_type (ntype "T")) [("Just", 1), ("Nothing", 0)]),
+        ("LT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        (
+          "Left",
+          Constructor
+            []
+            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
+            [ntype "T"]
+            (either_type (ntype "T") (ntype "U"))
+            [("Left", 1), ("Right", 1)]),
+        (
+          "Mk_Pair",
+          Constructor
+            []
+            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
+            [ntype "T", ntype "U"]
+            (pair_type (ntype "T") (ntype "U"))
+            [("Mk_Pair", 2)]),
+        ("Next", Constructor [] [] [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
+        ("Nothing", Constructor [] [(Name_tpat "T", star_kind)] [] (maybe_type (ntype "T")) [("Just", 1), ("Nothing", 0)]),
+        (
+          "Right",
+          Constructor
+            []
+            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
+            [ntype "U"]
+            (either_type (ntype "T") (ntype "U"))
+            [("Left", 1), ("Right", 1)]),
+        ("Zero", Constructor [] [] [] (ntype "Nat") [("Next", 1), ("Zero", 0)])]
+  either_kind :: Kind_1 -> Kind_1 -> Kind_1
+  either_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "Either") x)
+  either_type :: Type_1 -> Type_1 -> Type_1
+  either_type x = Application_type_1 (Application_type_1 (ntype "Either") x)
   function_type :: Type_1 -> Type_1 -> Type_1
   function_type a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just (Name_kind_1 "Star")) []) a)
   gather_all_types :: Ord u => (t -> Map u v -> Map u v) -> [t] -> Map u v -> Map u v
@@ -121,6 +179,20 @@ module Datas where
       Name_type_5 (Name a d) -> if Data.Set.member d f then c else Data.Map.insert d a c
   gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Map' Location_0
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
+  hkinds :: Map' Kind
+  hkinds =
+    Data.Map.fromList
+      [
+        ("Arrow", Arrow_kind (Arrow_kind Star_kind)),
+        ("Either", Arrow_kind (Arrow_kind Star_kind)),
+        ("List", Arrow_kind Star_kind),
+        ("Maybe", Arrow_kind Star_kind),
+        ("Nat", Star_kind),
+        ("Ordering", Star_kind),
+        ("Pair", Arrow_kind (Arrow_kind Star_kind)),
+        ("Star", Star_kind)]
+  int_type :: Type_1
+  int_type = ntype "Int"
   kind_err :: Location_1 -> Err t
   kind_err a = Left ("Kind mismatch" ++ location' a)
   kind_string :: Kind_1 -> [Kind_1] -> (String, [Kind_1])
@@ -150,6 +222,41 @@ module Datas where
           case Data.Map.lookup d a of
             Nothing -> b
             Just e -> e
+  kinds :: Map' Polykind
+  kinds =
+    Data.Map.fromList
+      [
+        ("Arrow", Polykind (Just "K") [] (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "K") (Name_kind_1 "Star")))),
+        ("Char", pkind star_kind),
+        (
+          "ConstructList",
+          Polykind
+            Nothing
+            ["K"]
+            (arrow_kind (Name_kind_1 "K") (arrow_kind (list_kind (Name_kind_1 "K")) (list_kind (Name_kind_1 "K"))))),
+        ("EQ", pkind comparison_kind),
+        ("Either", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
+        ("EmptyList", Polykind Nothing ["K"] (list_kind (Name_kind_1 "K"))),
+        ("GT", pkind comparison_kind),
+        ("Int", pkind star_kind),
+        ("Just", Polykind Nothing ["K"] (arrow_kind (Name_kind_1 "K") (maybe_kind (Name_kind_1 "K")))),
+        ("LT", pkind comparison_kind),
+        ("Left", Polykind Nothing ["K", "L"] (arrow_kind (Name_kind_1 "K") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
+        ("List", pkind (arrow_kind star_kind star_kind)),
+        ("Maybe", pkind (arrow_kind star_kind star_kind)),
+        (
+          "Mk_Pair",
+          Polykind
+            Nothing
+            ["K", "L"]
+            (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "L") (pair_kind (Name_kind_1 "K") (Name_kind_1 "L"))))),
+        ("Nat", pkind star_kind),
+        ("Next", pkind (arrow_kind nat_kind nat_kind)),
+        ("Nothing", Polykind Nothing ["K"] (maybe_kind (Name_kind_1 "K"))),
+        ("Ordering", pkind star_kind),
+        ("Pair", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
+        ("Right", Polykind Nothing ["K", "L"] (arrow_kind (Name_kind_1 "L") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
+        ("Zero", pkind nat_kind)]
   kvars :: [String] -> (Integer, Map' Kind_1, Set String) -> ((Integer, Map' Kind_1, Set String), [String])
   kvars a (b, c, d) =
     let
@@ -157,6 +264,10 @@ module Datas where
       e = show <$> [b .. f - 1]
     in
       ((f, Data.Map.union c (Data.Map.fromList (zip a (Name_kind_1 <$> e))), Data.Set.union d (Data.Set.fromList e)), e)
+  list_kind :: Kind_1 -> Kind_1
+  list_kind = Application_kind_1 (Name_kind_1 "List")
+  list_type :: Type_1 -> Type_1
+  list_type = Application_type_1 (ntype "List")
   make_eq :: Data_2 -> Map' (Either Bool (Map' Location_0), Status) -> Map' (Either Bool (Map' Location_0), Status)
   make_eq (Data_2 a b c) =
     ins_new
@@ -173,6 +284,14 @@ module Datas where
     case a of
       [] -> b
       c : d -> make_eqs d (make_eq c b)
+  maybe_kind :: Kind_1 -> Kind_1
+  maybe_kind = Application_kind_1 (Name_kind_1 "Maybe")
+  maybe_type :: Type_1 -> Type_1
+  maybe_type = Application_type_1 (ntype "Maybe")
+  nat_kind :: Kind_1
+  nat_kind = Name_kind_1 "Nat"
+  nat_type :: Type_1
+  nat_type = ntype "Nat"
   ntype :: String -> Type_1
   ntype a = Name_type_1 a Nothing []
   occ_kind :: String -> Kind_1 -> Bool
@@ -180,8 +299,33 @@ module Datas where
     case b of
       Application_kind_1 c d -> occ_kind a c || occ_kind a d
       Name_kind_1 c -> c == a
+  pair_kind :: Kind_1 -> Kind_1 -> Kind_1
+  pair_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "Pair") x)
+  pair_type :: Type_1 -> Type_1 -> Type_1
+  pair_type x = Application_type_1 (Application_type_1 (ntype "Pair") x)
+  pconstrs :: Map' PConstructor
+  pconstrs =
+    (
+      (\(Constructor _ a b c d) -> PConstructor ((\(Name_tpat e, _) -> e) <$> a) (prom_type <$> b) (prom_type c) d) <$>
+      constructors)
   pkind :: Kind_1 -> Polykind
   pkind = Polykind Nothing []
+  prom_algs :: Map' Prom_alg
+  prom_algs =
+    Data.Map.fromList
+      [
+        ("Either", Prom_alg ["K", "L"] (Data.Map.fromList [("Left", [Name_kind_1 "K"]), ("Right", [Name_kind_1 "L"])])),
+        (
+          "List",
+          Prom_alg
+            ["K"]
+            (Data.Map.fromList
+              [
+                ("ConstructList", [Name_kind_1 "K", Application_kind_1 (Name_kind_1 "List") (Name_kind_1 "K")]),
+                ("EmptyList", [])])),
+        ("Maybe", Prom_alg ["K"] (Data.Map.fromList [("Just", [Name_kind_1 "K"]), ("Nothing", [])])),
+        ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])])),
+        ("Ordering", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])]))]
   prom_type :: Type_1 -> Kind_1
   prom_type a =
     case a of
@@ -200,6 +344,19 @@ module Datas where
     case a of
       Name_kind_0 (Name _ "Star") -> True
       _ -> False
+  promotables :: Map' Bool
+  promotables =
+    Data.Map.fromList
+      [
+        ("Arrow", False),
+        ("Char", False),
+        ("Either", True),
+        ("Int", False),
+        ("List", True),
+        ("Maybe", True),
+        ("Nat", True),
+        ("Ordering", True),
+        ("Pair", True)]
   repkinds :: Map' Kind_1 -> Kind_1 -> Kind_1
   repkinds a b =
     case b of
@@ -294,6 +451,12 @@ module Datas where
       case c of
         Application_type_1 d e -> Application_type_1 (f d) (f e)
         Name_type_1 d _ _ -> if d == a then b else c
+  type_alg :: [t] -> String -> Expression_2
+  type_alg a b =
+    let
+      c = show <$> [0 .. length a - 1]
+    in
+      Prelude.foldr Function_expression_2 (Algebraic_expression_2 b (Name_expression_2 <$> c)) (Name_pat_1 <$> c)
   type_branching_0 ::
     (
       (String, Map' Kind_1, Map' Prom_alg, String) ->
