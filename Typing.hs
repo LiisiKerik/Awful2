@@ -71,17 +71,6 @@ module Typing where
     fromList
       [
         (
-          "Compose Star",
-          Function_expression_2
-            (Name_pat_1 "f")
-            (Function_expression_2
-              (Name_pat_1 "g")
-              (Function_expression_2
-                (Name_pat_1 "x")
-                (Application_expression_2
-                  (Name_expression_2 "f")
-                  (Application_expression_2 (Name_expression_2 "g") (Name_expression_2 "x")))))),
-        (
           "ConstructList",
           Function_expression_2
             (Name_pat_1 "x")
@@ -92,7 +81,6 @@ module Typing where
         ("EmptyList", Algebraic_expression_2 "EmptyList" []),
         ("First", Field_expression_2 0),
         ("GT", Algebraic_expression_2 "GT" []),
-        ("Id Star", Function_expression_2 (Name_pat_1 "x") (Name_expression_2 "x")),
         ("Just", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Just" [Name_expression_2 "x"])),
         ("LT", Algebraic_expression_2 "LT" []),
         ("Left", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Left" [Name_expression_2 "x"])),
@@ -113,8 +101,20 @@ module Typing where
         ("add Int", Add_Int_0_expression_2),
         ("compare Char", Compare_Char_0_expression_2),
         ("compare Int", Compare_Int_0_expression_2),
+        (
+          "compose Star",
+          Function_expression_2
+            (Name_pat_1 "f")
+            (Function_expression_2
+              (Name_pat_1 "g")
+              (Function_expression_2
+                (Name_pat_1 "x")
+                (Application_expression_2
+                  (Name_expression_2 "f")
+                  (Application_expression_2 (Name_expression_2 "g") (Name_expression_2 "x")))))),
         ("convert Int", Convert_Int_expression_2),
         ("div", Div_0_expression_2),
+        ("id Star", Function_expression_2 (Name_pat_1 "x") (Name_expression_2 "x")),
         ("multiply Int", Multiply_Int_0_expression_2),
         ("negate Int", Negate_Int_expression_2)]
   init_type_context :: (File, Map' Op)

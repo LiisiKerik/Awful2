@@ -137,13 +137,13 @@ module Datas where
             (either_type (ntype "T") (ntype "U"))
             [("Left", 1), ("Right", 1)]),
         (
-          "Mk_Pair",
+          "MkPair",
           Constructor
             []
             [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
             [ntype "T", ntype "U"]
             (pair_type (ntype "T") (ntype "U"))
-            [("Mk_Pair", 2)]),
+            [("MkPair", 2)]),
         ("Next", Constructor [] [] [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
         ("Nothing", Constructor [] [(Name_tpat "T", star_kind)] [] (maybe_type (ntype "T")) [("Just", 1), ("Nothing", 0)]),
         (
@@ -245,7 +245,7 @@ module Datas where
         ("List", pkind (arrow_kind star_kind star_kind)),
         ("Maybe", pkind (arrow_kind star_kind star_kind)),
         (
-          "Mk_Pair",
+          "MkPair",
           Polykind
             Nothing
             ["K", "L"]

@@ -55,7 +55,7 @@ module Standard where
       std_inst f g b >>=
       \(Name e c, d) ->
         case a == c of
-          False -> Left ("Expected method " ++ a ++ location (f e) ++ ", found " ++ c ++ "instead.")
+          False -> Left ("Expected method " ++ a ++ location (f e) ++ ", found " ++ c ++ " instead.")
           True -> Right d)
   gather_ops :: (Location_0 -> Location_1) -> Map' (Op, Status) -> [Opdecl_0] -> (Map' (Op, Status), [Name])
   gather_ops a b c =
@@ -159,8 +159,8 @@ module Standard where
     (
       (\l -> \m -> \n -> Cat_1 c d q (e, f, l, m, n)) <$>
       std_dat_br a g <*>
-      check_cat_m a b "Compose" h <*>
-      check_cat_m a b "Id" i)
+      check_cat_m a b "compose" h <*>
+      check_cat_m a b "id" i)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
   std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6

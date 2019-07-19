@@ -138,9 +138,9 @@ init' =
     defs,
     fromList
       [
-        ("Ord", (["Compare"], fromList [("Char", []), ("Int", [])])),
-        ("Ring", (["Add", "Convert", "Multiply", "Negate"], fromList [("Int", [])])),
-        ("Writeable", (["Write_Brackets"], fromList [("Int", [])]))])
+        ("Ord", (["compare"], fromList [("Char", []), ("Int", [])])),
+        ("Ring", (["add", "convert", "multiply", "negate"], fromList [("Int", [])])),
+        ("Writeable", (["writeBrackets"], fromList [("Int", [])]))])
 main :: IO ()
 main = do
   args <- getArgs

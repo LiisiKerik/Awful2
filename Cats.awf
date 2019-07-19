@@ -1,7 +1,7 @@
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 import Standard.awf
 Cat {{Pair k l}} <<Cat k, Cat l>> (
-  MkPair t u -> Mk_Pair v w = algebraic {PairArrow (t -> v) (u -> w)},
+  MkPair t u -> MkPair v w = algebraic {PairArrow (t -> v) (u -> w)},
   PairArrow f g . PairArrow h i = PairArrow (f . h) (g . i),
   id = PairArrow id id)
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
