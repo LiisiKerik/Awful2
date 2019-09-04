@@ -21,7 +21,7 @@ Cat{{Either K L}}<<Cat K, Cat L>>(
         Match Mk_Pair f g {Mk_Pair (Right_Arrow h) (Right_Arrow i) -> Right_Arrow (h . i)},
       _ -> Match Mk_Pair f g {}},
   Id[T] = Branch T {Left _ -> Left_Arrow Id, Right _ -> Right_Arrow Id})
-Cat{{Opp K}}<<Cat K>>(
+Cat{{Opp K}} <<Cat K>> (
   Mk_Opp T -> Mk_Opp U = Algebraic {Opp_Arrow (U -> T)},
   Opp_Arrow f . Opp_Arrow g = Opp_Arrow (g . f),
   Id = Opp_Arrow Id)
