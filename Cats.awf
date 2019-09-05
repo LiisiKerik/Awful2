@@ -25,6 +25,6 @@ Cat{{Opp K}} <<Cat K>> (
   Mk_Opp T -> Mk_Opp U = Algebraic {Opp_Arrow (U -> T)},
   Opp_Arrow f . Opp_Arrow g = Opp_Arrow (g . f),
   Id = Opp_Arrow Id)
-Data Unit = Struct Mk_Unit
-Cat {{Unit}} (Unit -> Unit = Struct Unit_Arrow, Unit_Arrow . Unit_Arrow = Unit_Arrow, Id = Unit_Arrow)
+Data Unit = Struct MkUnit
+Cat {{Unit}} (Unit -> Unit = Struct UnitArrow, UnitArrow . UnitArrow = UnitArrow, id = UnitArrow)
 /~
