@@ -199,18 +199,18 @@ module Typing where
       \(v, n') -> naming f n' b >>= \(d, e) -> (\(h, i, n) -> (d, (h, v), i, n)) <$> typing f e (c, g, w))
   type_expr' ::
     (
-      (Map' Polykind, Map' Constructor, Map' Type_2, Map' Kind) ->
+      (Map' Polykind, Map' PConstructor, Map' Constructor, Map' Type_2, Map' Kind) ->
       Expression_1 ->
       Map' (Map' Inst) ->
       Map' ([String], Map' [(String, Nat)]) ->
       Map' Cat_4 ->
       Err Expression_2)
-  type_expr' (b, c, e, i) f g h c3 =
+  type_expr' (b, x, c, e, i) f g h c3 =
     type_expr
       "input."
       (list_type char_type)
       (Location_1 "input")
-      (c, e)
+      (x, c, e)
       (Application_expression_1
         (Name_expression_1 (Name (Location_0 0 0) "First"))
         (Application_expression_1 (Name_expression_1 (Name (Location_0 0 0) "Write_Brackets")) f))
@@ -399,5 +399,5 @@ module Typing where
                   File (rem_old f') (rem_old m') w' (rem_old u) z (rem_old q') (rem_old u') x' (rem_old t') c' (rem_old i') e',
                   b0,
                   y')) <$>
-              type_defs a (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m') (f, p') (r', n, o', s'))))
+              type_defs a (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', e') (f, p') (r', n, o', s'))))
 --------------------------------------------------------------------------------------------------------------------------------
