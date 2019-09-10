@@ -845,7 +845,7 @@ module Defs where
           \a0 ->
             (
               (\b0 -> (rem_old w', rem_old' x', b0, y')) <$>
-              type_defs_2 (Location_1 a) v' (f2, m', fst <$> w') a0 ((<$>) fst <$> x') f' y' q' u i')))
+              type_defs_2 (Location_1 a) v' (f2, m', fst <$> w') a0 (fmap fst <$> x') f' y' q' u i')))
   type_defs_1 ::
     (
       String ->

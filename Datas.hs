@@ -781,7 +781,7 @@ module Datas where
             Map' Bool,
             Map' Prom_alg,
             Map' (Cat_4, Status),
-            Map' PConstructor,
+            Map' (PConstructor, Status),
             Map' Expression_2),
           [Cat_6]))
   type_datas a (b, c) (g, h, i, j, k, p, q, r, s) =
@@ -799,8 +799,7 @@ module Datas where
                   \(k', l') ->
                     (
                       type_cats_1 (a, fst <$> u, fst <$> e', fst <$> f', fst <$> c', fst <$> i') j' (k', l', g') >>=
-                      \((m', n', o'), p') ->
-                        Right ((f', m', n', u, unsafe_left <$> rem_old z, rem_old c', i', rem_old e', o'), p'))))))
+                      \((m', n', o'), p') -> Right ((f', m', n', u, unsafe_left <$> rem_old z, rem_old c', i', e', o'), p'))))))
   type_datas_1 ::
     (
       String ->

@@ -20,7 +20,6 @@ promote constructor operators (two type ops - for pair and either - and also pro
 improve cat syntax
 viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
 in naming module: check name patterns and turn some into constructors without arguments
-allow passing kind arguments to kind-polymorphic expressions: id{{Star}} etc.
 reserve double colon for type specification; when single colon is promoted to type level it will cause a parsing conflict!
 -}
 --------------------------------------------------------------------------------------------------------------------------------
@@ -396,8 +395,24 @@ module Typing where
             (
               (\(w', x', b0, y') ->
                 (
-                  File (rem_old f') (rem_old m') w' (rem_old u) z (rem_old q') (rem_old u') x' (rem_old t') c' (rem_old i') e',
+                  File
+                    (rem_old f')
+                    (rem_old m')
+                    w'
+                    (rem_old u)
+                    z
+                    (rem_old q')
+                    (rem_old u')
+                    x'
+                    (rem_old t')
+                    c'
+                    (rem_old i')
+                    (rem_old e'),
                   b0,
                   y')) <$>
-              type_defs a (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', e') (f, p') (r', n, o', s'))))
+              type_defs
+                a
+                (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e')
+                (f, p')
+                (r', n, o', s'))))
 --------------------------------------------------------------------------------------------------------------------------------
