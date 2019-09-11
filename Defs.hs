@@ -220,8 +220,24 @@ module Defs where
   new_typevar e (a, b) d =
     let
       c = show a
+      (f, g) = kind_string d []
+      h = ((a + 1, Data.Set.insert c b), ntype c)
     in
-      ((a + 1, Data.Set.insert c b), ntype c)
+      case Data.Map.lookup f e of
+        Nothing -> h
+        Just (Prom_alg m i) ->
+          case Data.Map.toList i of
+            [(k, l)] -> second (Prelude.foldl Application_type_1 (ntype k)) (new_typevars e (a, b) l)
+            _ -> h
+  new_typevars :: Map' Prom_alg -> (Integer, Set String) -> [Kind_1] -> ((Integer, Set String), [Type_1])
+  new_typevars a b c =
+    case c of
+      [] -> (b, [])
+      d : e ->
+        let
+          (f, g) = new_typevar a b d
+        in
+          second ((:) g) (new_typevars a f e)
   occ_check :: String -> Type_1 -> Bool
   occ_check a b =
     case b of
