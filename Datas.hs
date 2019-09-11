@@ -314,19 +314,19 @@ module Datas where
   prom_algs =
     Data.Map.fromList
       [
-        ("Either", Prom_alg ["k", "l"] (Data.Map.fromList [("Left", [Name_kind_1 "k"]), ("Right", [Name_kind_1 "l"])])),
+        ("Either", Prom_alg ["t", "u"] (Data.Map.fromList [("Left", [Name_kind_1 "t"]), ("Right", [Name_kind_1 "u"])])),
         (
           "List",
           Prom_alg
-            ["k"]
+            ["t"]
             (Data.Map.fromList
               [
-                ("ConstructList", [Name_kind_1 "k", Application_kind_1 (Name_kind_1 "List") (Name_kind_1 "k")]),
+                ("ConstructList", [Name_kind_1 "t", Application_kind_1 (Name_kind_1 "List") (Name_kind_1 "t")]),
                 ("EmptyList", [])])),
-        ("Maybe", Prom_alg ["k"] (Data.Map.fromList [("Just", [Name_kind_1 "k"]), ("Nothing", [])])),
+        ("Maybe", Prom_alg ["t"] (Data.Map.fromList [("Just", [Name_kind_1 "t"]), ("Nothing", [])])),
         ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])])),
         ("Ordering", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])])),
-        ("Pair", Prom_alg ["k", "l"] (Data.Map.fromList [("MkPair", [Name_kind_1 "k", Name_kind_1 "l"])]))]
+        ("Pair", Prom_alg ["t", "u"] (Data.Map.fromList [("MkPair", [Name_kind_1 "t", Name_kind_1 "u"])]))]
   prom_type :: Type_1 -> Kind_1
   prom_type a =
     case a of
