@@ -227,7 +227,10 @@ module Defs where
         Nothing -> h
         Just (Prom_alg m i) ->
           case assocs i of
-            [(k, l)] -> second (Prelude.foldl Application_type_1 (ntype k)) (new_typevars e (a, b) l)
+            [(k, l)] ->
+              second
+                (Prelude.foldl Application_type_1 (ntype k))
+                (new_typevars e (a, b) (kindrep' (Data.Map.fromList (zip m g)) <$> l))
             _ -> h
   new_typevars :: Map' Prom_alg -> (Integer, Set String) -> [Kind_1] -> ((Integer, Set String), [Type_1])
   new_typevars a b c =
