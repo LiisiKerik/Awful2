@@ -31,7 +31,6 @@ module Typing where
   import Naming
   import Standard
   import Tokenise
-  import Trace
   import Tree
   data File =
     File
@@ -208,7 +207,7 @@ module Typing where
     type_expr
       "input."
       (list_type char_type)
-      (Location_1 "input")
+      "input"
       (j2, x, c, e)
       (Application_expression_1
         (Name_expression_1 (Name (Location_0 0 0) "First"))
