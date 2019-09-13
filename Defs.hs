@@ -229,7 +229,7 @@ module Defs where
           case assocs i of
             [(k, l)] ->
               second
-                (Prelude.foldl Application_type_1 (ntype k))
+                (Prelude.foldl Application_type_1 (Name_type_1 k Nothing g))
                 (new_typevars e (a, b) (kindrep' (Data.Map.fromList (zip m g)) <$> l))
             _ -> h
   new_typevars :: Map' Prom_alg -> (Integer, Set String) -> [Kind_1] -> ((Integer, Set String), [Type_1])
@@ -566,7 +566,7 @@ module Defs where
   type_cat_2 (a, o, u, m', z', j, f7, k7, l, f4) (Cat_6 b (p, d) n (h, i)) m =
     let
       f3 = Prelude.foldl Application_kind_1 (Name_kind_1 p) (Name_kind_1 <$> d)
-      x a1 a2 = arrow_type f3 a1 a2
+      x = arrow_type f3
       y = Data.Map.union o (Data.Map.fromList ((\y' -> (y', Star_kind)) <$> d))
       s' m7 fj u1 n7 =
         type_expr
@@ -925,7 +925,7 @@ module Defs where
     in
       (
         type_expression (a4, c4, c) a (0, w) (Eqtns (Data.Set.empty, Data.Set.empty) [] [] []) e f h b >>=
-        \(g, (Eqtns i j q8 x), _, x3) ->
+        \(g, Eqtns i j q8 x, _, x3) ->
           (
             solvesys
               (\w2 -> \eq ->

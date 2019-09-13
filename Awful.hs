@@ -143,6 +143,7 @@ init' =
         ("Writeable", (["writeBrackets"], fromList [("Int", [])]))])
 main :: IO ()
 main = do
+  writeFile "trace.txt" ""
   args <- getArgs
   case args of
     [] -> putStrLn "Missing command."

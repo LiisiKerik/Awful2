@@ -13,7 +13,6 @@ stringide syntaktiline suhkur
 piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair T U) L ->
 All Ord C, All c C <- klassimuutuja
 polütüüpsus
-check if things are put correctly into local or global context; (esp. classes and methods)
 promote field names?
 pattern match types with only one type constructor?
 promote constructor operators (two type ops - for pair and either - and also promotable data constructor operators)
@@ -32,6 +31,7 @@ module Typing where
   import Naming
   import Standard
   import Tokenise
+  import Trace
   import Tree
   data File =
     File
