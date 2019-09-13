@@ -205,13 +205,19 @@ module Defs where
         ("Ord", Data.Map.fromList [("Char", Inst [] []), ("Int", Inst [] [])]),
         ("Ring", Data.Map.fromList [("Int", Inst [] [])]),
         ("Writeable", Data.Map.fromList [("Int", Inst [] [])])]
-  kindvar :: String -> (Integer, Set String) -> (Integer, Set String)
-  kindvar _ (b, c) = (b + 1, Data.Set.insert (show b) c)
-  kindvars :: [String] -> (Integer, Set String) -> (Integer, Set String)
+  kindvar :: String -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
+  kindvar a (b, c, e) =
+    let
+      d = show b
+    in
+      (b + 1, Data.Set.insert d c, Data.Map.insert a (Name_kind_1 d) e)
+  kindvars :: [String] -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
   kindvars a b =
-    case a of
-      [] -> b
-      d : e -> kindvars e (kindvar d b)
+    trace
+      ("kindvars" ... a ... b)
+      (case a of
+        [] -> b
+        d : e -> kindvars e (kindvar d b))
   krep_eq :: (Kind_1 -> Kind_1) -> Eqtn -> Eqtn
   krep_eq a b =
     case b of
@@ -1203,13 +1209,15 @@ module Defs where
       (Integer, Map' Type_1, Set String) ->
       ((Integer, Map' Type_1, Set String), [Type_1]))
   typevar' f a b =
-    case a of
-      [] -> (b, [])
-      c : d ->
-        let
-          (e, g) = typevar f c b
-        in
-          second ((:) g) (typevar' f d e)
+    trace
+      ("typevar'" ... f ... a ... b)
+      (case a of
+        [] -> (b, [])
+        c : d ->
+          let
+            (e, g) = typevar f c b
+          in
+            second ((:) g) (typevar' f d e))
   typevars ::
     (
       (Map' Prom_alg, Map' PConstructor) ->
@@ -1217,11 +1225,13 @@ module Defs where
       ((Integer, Integer), Map' Type_1, (Set String, Set String)) ->
       ((Integer, Integer), Map' Type_1, (Set String, Set String)))
   typevars m (a, b) ((c, d), e, (f, g)) =
-    let
-      (h, i) = kindvars a (c, f)
-      ((j, k, l), _) = typevar' m b (d, e, g)
-    in
-      ((h, j), k, (i, l))
+    trace
+      ("typevars" ... m ... (a, b) ... ((c, d), e, (f, g)))
+      (let
+        (h, i, x) = kindvars a (c, f, Data.Map.empty)
+        ((j, k, l), _) = typevar' m (second (kindrep' x) <$> b) (d, e, g)
+      in
+        ((h, j), k, (i, l)))
   write_kind :: Kind_1 -> String
   write_kind a = fst (write_kind' a)
   write_kind' :: Kind_1 -> (String, Bool)
