@@ -590,9 +590,9 @@ module Defs where
           (u, y)
           (Prelude.foldl (\m3 -> \t5 -> Data.Map.insert t5 (Cat_4 [] []) m3) j n)
           b
-      a8 u3 = new_typevar f4 u3 f3
-      ((x0, y0), z0) = a8 (0, Data.Set.empty)
-      (w1, z1) = a8 (x0, y0)
+      a8 u3 = new_typevar f4 (u3, Data.Set.empty) f3
+      ((x0, _), z0) = a8 0
+      ((w1, _), z1) = a8 x0
       ((x2, _), z2) = a8 w1
     in
       (
