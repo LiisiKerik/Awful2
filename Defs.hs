@@ -326,12 +326,14 @@ module Defs where
       Name_type_1 c e d -> Name_type_1 c (repkinds a <$> e) (repkinds a <$> d)
   repl' :: Map' Type_1 -> Type_1 -> Type_1
   repl' a b =
-    case b of
-      Application_type_1 c d -> Application_type_1 (repl' a c) (repl' a d)
-      Name_type_1 c _ _ ->
-        case Data.Map.lookup c a of
-          Just d -> d
-          Nothing -> b
+    trace
+      ("repl'" .!. a .!. b)
+      (case b of
+        Application_type_1 c d -> Application_type_1 (repl' a c) (repl' a d)
+        Name_type_1 c _ _ ->
+          case Data.Map.lookup c a of
+            Just d -> d
+            Nothing -> b)
   skinds :: Kind_1 -> Kind_1 -> Map' Kind_1
   skinds a b =
     case (a, b) of
@@ -1162,21 +1164,23 @@ module Defs where
       Name ->
       Err ([Pat_1], Map' Type_2, (Integer, Integer), (Set String, Set String), [Eqtn]))
   type_pats a b d e f g h i (Name x y) =
-    let
-      z a' = Left ("Constructor " ++ y ++ location (Location_1 a x) ++ " has been given too " ++ a' ++ " arguments.")
-    in
-      case d of
-        [] ->
-          case e of
-            [] -> Right ([], f, g, h, i)
-            _ -> z "few"
-        j : k ->
-          case e of
-            [] -> z "many"
-            m : n ->
-              (
-                type_pat a b j m f g h i >>=
-                \(c, o, p, q, r) -> (\(s, t, u, v, w) -> (c : s, t, u, v, w)) <$> type_pats a b k n o p q r (Name x y))
+    trace
+      ("type_pats" ... a ... b ... d ... e .!. f ... g ... h ... i .!. (Name x y))
+      (let
+        z a' = Left ("Constructor " ++ y ++ location (Location_1 a x) ++ " has been given too " ++ a' ++ " arguments.")
+      in
+        case d of
+          [] ->
+            case e of
+              [] -> Right ([], f, g, h, i)
+              _ -> z "few"
+          j : k ->
+            case e of
+              [] -> z "many"
+              m : n ->
+                (
+                  type_pat a b j m f g h i >>=
+                  \(c, o, p, q, r) -> (\(s, t, u, v, w) -> (c : s, t, u, v, w)) <$> type_pats a b k n o p q r (Name x y)))
   typestring :: Type_1 -> [Type_1] -> (String, [Type_1])
   typestring a d =
     case a of
