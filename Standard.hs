@@ -5,9 +5,8 @@ module Standard where
   import Data.Map
   import Tokenise
   import Tree
-  data Alg_pat_7 =
-    Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Char_alg_pat_7 Char | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
-      deriving Show
+  data Alg_pat_7 = Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
+    deriving Show
   data Cat_1 =
     Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_6, Expression_9, Expression_9)
       deriving Show
@@ -31,7 +30,6 @@ module Standard where
   data Data_case_6 = Data_case_6 Name [Name] Data_br_6 deriving Show
   data Expression_9 =
     Application_expression_9 Expression_9 Expression_9 |
-    Char_expression_9 Char |
     Function_expression_9 Pat_2 Expression_9 |
     Int_expression_9 Integer |
     Let_expression_9 Pat_2 Expression_9 Expression_9 |
@@ -150,7 +148,6 @@ module Standard where
     case c of
       Application_alg_pat d f -> Application_alg_pat_7 d <$> traverse (std_apat a b) f
       Blank_alg_pat -> Right Blank_alg_pat_7
-      Char_alg_pat d -> Right (Char_alg_pat_7 d)
       Int_alg_pat d -> Right (Int_alg_pat_7 d)
       Name_alg_pat d -> Right (Name_alg_pat_7 d)
       Op_alg_pat d e -> shunting_yard a "operator" (std_apat a b, \f -> \g -> \h -> Application_alg_pat_7 f [g, h]) b [] d e
@@ -175,7 +172,6 @@ module Standard where
   std_expr a f b =
     case b of
       Application_expression_0 c d -> Prelude.foldl Application_expression_9 <$> std_expr a f c <*> traverse (std_expr a f) d
-      Char_expression_0 c -> Right (Char_expression_9 c)
       Function_expression_0 c d -> Function_expression_9 <$> std_pat a f c <*> std_expr a f d
       Int_expression_0 c -> Right (Int_expression_9 c)
       Let_expression_0 (c, e) d ->

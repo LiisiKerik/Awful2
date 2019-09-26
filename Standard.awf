@@ -1,6 +1,12 @@
 --------------------------------------------------------------------------------------------------------------------------------
-operator . compose 9 right
+infixl 7 * = times
+infixl 6 + = add
+infixr 9 . = compose
+data List [t :: Star] = algebraic {EmptyList, ConstructList t (List t)}
+data Maybe [t :: Star] = algebraic {Nothing, Just t}
+data Pair [t :: Star, u :: Star] = struct MkPair (fst :: t, snd :: u)
 data Unit = struct MkUnit
+def negate [t :: Star] <Ring t> (x :: t) :: t = convert -1 * x
 --------------------------------------------------------------------------------------------------------------------------------
 
 

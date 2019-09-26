@@ -9,7 +9,6 @@ module Tree where
   data Alg_pat =
     Application_alg_pat Name [Alg_pat] |
     Blank_alg_pat |
-    Char_alg_pat Char |
     Int_alg_pat Integer |
     Name_alg_pat Name |
     Op_alg_pat Alg_pat [(Name, Alg_pat)]
@@ -43,7 +42,6 @@ module Tree where
         deriving Show
   data Expression_0 =
     Application_expression_0 Expression_0 [Expression_0] |
-    Char_expression_0 Char |
     Function_expression_0 Pat Expression_0 |
     Int_expression_0 Integer |
     Let_expression_0 (Pat, Expression_0) Expression_0 |
@@ -235,17 +233,6 @@ module Tree where
   parse_cat_constr = parse_token Cat_token *> parse_low
   parse_cat_constrs :: Parser' [Name]
   parse_cat_constrs = parse_optional (\a -> parse_operator "<<" *> a <* parse_operator ">>") parse_cat_constr
-  parse_char :: Parser' Char
-  parse_char =
-    parse_elementary
-      (\a ->
-        case a of
-          Char_token b -> Just b
-          _ -> Nothing)
-  parse_char_alg_pattern :: Parser' Alg_pat
-  parse_char_alg_pattern = Char_alg_pat <$> parse_char
-  parse_char_expression :: Parser' Expression_0
-  parse_char_expression = Char_expression_0 <$> parse_char
   parse_class :: Parser' Class_0
   parse_class =
     (
@@ -293,12 +280,11 @@ module Tree where
   parse_elementary_alg_pattern =
     (
       parse_blank_alg_pattern <+>
-      parse_char_alg_pattern <+>
       parse_int_alg_pattern <+>
       (\a -> Application_alg_pat a []) <$> parse_cap <+>
       Name_alg_pat <$> parse_low)
   parse_elementary_expression :: Parser' Expression_0
-  parse_elementary_expression = parse_char_expression <+> parse_int_expression <+> parse_list_expr <+> parse_name_expression
+  parse_elementary_expression = parse_int_expression <+> parse_list_expr <+> parse_name_expression
   parse_elementary_pat :: Parser' Pat
   parse_elementary_pat = parse_blank_pat <+> Name_pat <$> parse_low <+> Constr_pat <$> parse_cap
   parse_elementary_patn :: Parser' Patn
@@ -436,12 +422,12 @@ module Tree where
   parse_opdecl :: Parser' Opdecl_0
   parse_opdecl =
     (
-      Opdecl_0 <&
-      parse_token Opdecl_token <*>
-      parse_op_0 <*>
-      parse_name <*>
+      (\a -> \b -> \c -> \d -> \e -> Opdecl_0 a d e c b) <&>
+      (Lft <$ parse_token Infixl_token <+> Rght <$ parse_token Infixr_token) <*>
       parse_int <*>
-      (Lft <$ parse_name_4 "left" <+> Rght <$ parse_name_4 "right"))
+      parse_op_0 <*
+      parse_eq <*>
+      parse_name)
   parse_operator :: String -> Parser' ()
   parse_operator x = parse_token (Operator_token x)
   parse_optional :: (Parser' [t] -> Parser' [t]) -> Parser' t -> Parser' [t]

@@ -4,7 +4,7 @@ Lugeda tyybiperede kohta
 Hargnevate andmetyypide eelised? Seosed tyybiperedega?
 Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 pattern matching in types
-generalise branching types to branch not only over promoted algebraics but over Star, Int and Char
+generalise branching types to branch not only over promoted algebraics but over Star and Int
 liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
 stringide syntaktiline suhkur
 piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair T U) L ->
@@ -62,35 +62,14 @@ module Typing where
   defs =
     fromList
       [
-        (
-          "ConstructList",
-          Function_expression_2
-            (Name_pat_1 "x")
-            (Function_expression_2
-              (Name_pat_1 "y")
-              (Algebraic_expression_2 "ConstructList" [Name_expression_2 "x", Name_expression_2 "y"]))),
         ("EQ", Algebraic_expression_2 "EQ" []),
-        ("EmptyList", Algebraic_expression_2 "EmptyList" []),
-        ("First", Field_expression_2 0),
         ("GT", Algebraic_expression_2 "GT" []),
-        ("Just", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Just" [Name_expression_2 "x"])),
         ("LT", Algebraic_expression_2 "LT" []),
         ("Left", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Left" [Name_expression_2 "x"])),
-        (
-          "Mk_Pair",
-          Function_expression_2
-            (Name_pat_1 "x")
-            (Function_expression_2
-              (Name_pat_1 "y")
-              (Algebraic_expression_2 "Mk_pair" [Name_expression_2 "x", Name_expression_2 "y"]))),
         ("Next", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Next" [Name_expression_2 "x"])),
-        ("Nothing", Algebraic_expression_2 "Nothing" []),
         ("Right", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Right" [Name_expression_2 "x"])),
-        ("Second", Field_expression_2 1),
-        ("Write_Brackets Int", Write_Brackets_Int_expression_2),
         ("Zero", Algebraic_expression_2 "Zero" []),
         ("add Int", Add_Int_0_expression_2),
-        ("compare Char", Compare_Char_0_expression_2),
         ("compare Int", Compare_Int_0_expression_2),
         (
           "compose Star",
@@ -107,8 +86,7 @@ module Typing where
         ("div", Div_0_expression_2),
         ("id Star", Function_expression_2 (Name_pat_1 "x") (Name_expression_2 "x")),
         ("mod", Mod_0_expression_2),
-        ("multiply Int", Multiply_Int_0_expression_2),
-        ("negate Int", Negate_Int_expression_2)]
+        ("times Int", Multiply_Int_0_expression_2)]
   init_type_context :: (File, Map' Op)
   init_type_context =
     (
@@ -133,42 +111,28 @@ module Typing where
         (\x -> (x, Language)) <$>
         [
           "Arrow",
-          "Char",
-          "ConstructList",
           "EQ",
           "Either",
-          "EmptyList",
           "GT",
           "Int",
-          "Just",
           "LT",
           "Left",
-          "List",
-          "Maybe",
-          "MkPair",
           "Nat",
           "Next",
-          "Nothing",
           "Ord",
           "Ordering",
-          "Pair",
           "Right",
           "Ring",
-          "Second",
           "Star",
-          "Write_Brackets",
-          "Writeable",
           "Zero",
           "add",
           "compare",
           "compose",
           "convert",
           "div",
-          "fst",
           "id",
           "mod",
-          "multiply",
-          "negate",
+          "times",
           "undefined"])
   standard_naming_typing ::
     (
@@ -198,24 +162,13 @@ module Typing where
       Map' Cat_4 ->
       Err Expression_2)
   type_expr' (b, x, c, e, i, j2) f g h c3 =
-    type_expr
-      "input."
-      (list_type char_type)
-      "input"
-      (j2, x, c, e)
-      (Application_expression_1
-        (Name_expression_1 (Name (Location_0 0 0) "First"))
-        (Application_expression_1 (Name_expression_1 (Name (Location_0 0 0) "Write_Brackets")) f))
-      g
-      0
-      h
-      (b, i)
-      c3
-      (Location_0 0 0)
+    type_expr "input." (ntype "0") "input" (j2, x, c, e) f g 1 h (b, i) c3 (Location_0 0 0)
   types :: Map' Type_2
   types =
     fromList
       [
+        ("EQ", Type_2 Nothing [] [] [] Nothing [] comparison_type),
+        ("GT", Type_2 Nothing [] [] [] Nothing [] comparison_type),
         (
           "compose",
           Type_2
@@ -231,29 +184,6 @@ module Typing where
                 (arrow_type (Name_kind_1 "K") (ntype "V") (ntype "T"))
                 (arrow_type (Name_kind_1 "K") (ntype "V") (ntype "U"))))),
         (
-          "ConstructList",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind)]
-            Nothing
-            []
-            (function_type (ntype "T") (function_type (list_type (ntype "T")) (list_type (ntype "T"))))),
-        ("EQ", Type_2 Nothing [] [] [] Nothing [] comparison_type),
-        ("EmptyList", Type_2 Nothing [] [] [(Name_tpat "T", star_kind)] Nothing [] (list_type (ntype "T"))),
-        (
-          "First",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            Nothing
-            []
-            (function_type (pair_type (ntype "T") (ntype "U")) (ntype "T"))),
-        ("GT", Type_2 Nothing [] [] [] Nothing [] comparison_type),
-        (
           "id",
           Type_2
             (Just "K")
@@ -263,9 +193,6 @@ module Typing where
             Nothing
             []
             (arrow_type (Name_kind_1 "K") (ntype "T") (ntype "T"))),
-        (
-          "Just",
-          Type_2 Nothing [] [] [(Name_tpat "T", star_kind)] Nothing [] (function_type (ntype "T") (maybe_type (ntype "T")))),
         (
           "Left",
           Type_2
@@ -277,19 +204,7 @@ module Typing where
             []
             (function_type (ntype "T") (either_type (ntype "T") (ntype "U")))),
         ("LT", Type_2 Nothing [] [] [] Nothing [] comparison_type),
-        (
-          "Mk_Pair",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            Nothing
-            []
-            (function_type (ntype "T") (function_type (ntype "U") (pair_type (ntype "T") (ntype "U"))))),
-        ("Mod", Type_2 Nothing [] [] [] Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
         ("Next", Type_2 Nothing [] [] [] Nothing [] (function_type nat_type nat_type)),
-        ("Nothing", Type_2 Nothing [] [] [(Name_tpat "T", star_kind)] Nothing [] (maybe_type (ntype "T"))),
         (
           "Right",
           Type_2
@@ -300,26 +215,6 @@ module Typing where
             Nothing
             []
             (function_type (ntype "U") (either_type (ntype "T") (ntype "U")))),
-        (
-          "Second",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            Nothing
-            []
-            (function_type (pair_type (ntype "T") (ntype "U")) (ntype "U"))),
-        (
-          "Write_Brackets",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind)]
-            (Just (Constraint_1 "Writeable" [] "T"))
-            [Constraint_1 "Writeable" [] "T"]
-            (function_type (ntype "T") (pair_type (list_type char_type) int_type))),
         ("Zero", Type_2 Nothing [] [] [] Nothing [] nat_type),
         (
           "add",
@@ -351,9 +246,10 @@ module Typing where
             (Just (Constraint_1 "Ring" [] "T"))
             [Constraint_1 "Ring" [] "T"]
             (function_type int_type (ntype "T"))),
-        ("div", Type_2 Nothing [] [] [] Nothing [] (function_type int_type (function_type int_type (maybe_type int_type)))),
+        ("div", Type_2 Nothing [] [] [] Nothing [] (function_type int_type (function_type int_type int_type))),
+        ("mod", Type_2 Nothing [] [] [] Nothing [] (function_type int_type (function_type int_type int_type))),
         (
-          "multiply",
+          "times",
           Type_2
             Nothing
             []
@@ -362,16 +258,6 @@ module Typing where
             (Just (Constraint_1 "Ring" [] "T"))
             [Constraint_1 "Ring" [] "T"]
             (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))),
-        (
-          "negate",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind)]
-            (Just (Constraint_1 "Ring" [] "T"))
-            [Constraint_1 "Ring" [] "T"]
-            (function_type (ntype "T") (ntype "T"))),
         ("undefined", Type_2 Nothing [] [] [(Name_tpat "T", star_kind)] Nothing [] (ntype "T"))]
   typing ::
     String ->

@@ -6,13 +6,8 @@ module Naming where
   import Standard
   import Tokenise
   import Tree
-  data Alg_pat_1 =
-    Application_alg_pat_1 Name [Alg_pat_1] |
-    Blank_alg_pat_1 |
-    Char_alg_pat_1 Char |
-    Int_alg_pat_1 Integer |
-    Name_alg_pat_1 String
-      deriving Show
+  data Alg_pat_1 = Application_alg_pat_1 Name [Alg_pat_1] | Blank_alg_pat_1 | Int_alg_pat_1 Integer | Name_alg_pat_1 String
+    deriving Show
   data Cat_2 =
     Cat_2 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_1, Expression_9, Expression_9)
       deriving Show
@@ -57,24 +52,14 @@ module Naming where
         deriving Show
   data Expression_1 =
     Application_expression_1 Expression_1 Expression_1 |
-    Char_expression_1 Char |
     Function_expression_1 Pat' Expression_1 |
     Int_expression_1 Integer |
     Match_expression_1 Location_0 Expression_1 [(Alg_pat_1, Expression_1)] |
-    -- Name_expression_1 Name (Maybe Type_8) [Type_8]
     Name_expression_1 Name
       deriving Show
   data Form_1 = Form_1 String [Type_8] deriving Show
   data KT1 = KT1 [String] [Name] [(String, Kind_0)] deriving Show
   type Locations = Map' Location'
-  data Match_Algebraic_1 = Match_Algebraic_1 Name [Pat'] Expression_1 deriving Show
-  data Match_char_1 = Match_char_1 Location_0 Char Expression_1 deriving Show
-  data Match_Int_1 = Match_Int_1 Location_0 Integer Expression_1 deriving Show
-  data Matches_1 =
-    Matches_Algebraic_1 [Match_Algebraic_1] (Maybe (Location_0, Expression_1)) |
-    Matches_char_1 [Match_char_1] Expression_1 |
-    Matches_Int_1 [Match_Int_1] Expression_1
-      deriving Show
   data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
   data Pat' = Application_pat' Name [Pat'] | Blank_pat' | Name_pat' String deriving Show
@@ -138,7 +123,6 @@ module Naming where
     case d of
       Application_alg_pat_7 g f -> second (Application_alg_pat_1 g) <$> naming_alg_pats a c f
       Blank_alg_pat_7 -> Right (c, Blank_alg_pat_1)
-      Char_alg_pat_7 e -> Right (c, Char_alg_pat_1 e)
       Int_alg_pat_7 e -> Right (c, Int_alg_pat_1 e)
       Name_alg_pat_7 b -> second Name_alg_pat_1 <$> naming_name a b c
   naming_args :: String -> [(Name, t)] -> Locations -> Err [(String, t)]
@@ -268,7 +252,6 @@ module Naming where
   naming_expression g a b =
     case a of
       Application_expression_9 c d -> Application_expression_1 <$> naming_expression g c b <*> naming_expression g d b
-      Char_expression_9 c -> Right (Char_expression_1 c)
       Function_expression_9 c d -> naming_pat g c b >>= \(e, f) -> Function_expression_1 f <$> naming_expression g d e
       Int_expression_9 c -> Right (Int_expression_1 c)
       Let_expression_9 c d e ->

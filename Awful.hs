@@ -130,20 +130,14 @@ init' =
       locations,
       (fromList ((\x -> (x, Language)) <$> ["->", "::", "="])),
       singleton "Star" Language,
-      fromList
-        [
-          ("Ord", fromList [("Char", Language), ("Int", Language)]),
-          ("Ring", fromList [("Int", Language)]),
-          ("Writeable", fromList [("Int", Language)])]),
+      fromList [("Ord", fromList [("Int", Language)]), ("Ring", fromList [("Int", Language)])]),
     defs,
     fromList
       [
-        ("Ord", (["compare"], fromList [("Char", []), ("Int", [])])),
-        ("Ring", (["add", "convert", "multiply", "negate"], fromList [("Int", [])])),
-        ("Writeable", (["writeBrackets"], fromList [("Int", [])]))])
+        ("Ord", (["compare"], fromList [("Int", [])])),
+        ("Ring", (["add", "convert", "multiply", "negate"], fromList [("Int", [])]))])
 main :: IO ()
 main = do
-  writeFile "Trace.txt" ""
   args <- getArgs
   case args of
     [] -> putStrLn "Missing command."

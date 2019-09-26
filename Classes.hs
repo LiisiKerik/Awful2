@@ -64,16 +64,7 @@ module Classes where
             [
               Method_4 "add" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T"))),
               Method_4 "convert" [] [] (function_type int_type (ntype "T")),
-              Method_4 "multiply" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T"))),
-              Method_4 "negate" [] [] (function_type (ntype "T") (ntype "T"))]),
-        (
-          "Writeable",
-          Class_4
-            []
-            []
-            ("T", star_kind)
-            Nothing
-            [Method_4 "Write_Brackets" [] [] (function_type (ntype "T") (pair_type (list_type char_type) int_type))])]
+              Method_4 "times" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))])]
   classes_1 :: Map' Class_5
   classes_1 = (\(Class_4 e f (_, a) b c) -> Class_5 e f a b ((\(Method_4 d _ _ _) -> d) <$> c)) <$> classes_0
   classes_2 :: Map' ([String], [String], Kind_1)

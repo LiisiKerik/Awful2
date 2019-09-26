@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Eval where
+  import Control.Monad
   import Data.Map
   import Datas
   import Defs
@@ -12,8 +13,11 @@ module Eval where
   eval :: Map' Expression_2 -> Expression_2 -> String
   eval a b =
     case eval' a b of
-      Just c -> tostr c
       Nothing -> "undefined"
+      Just c ->
+        case tostr c of
+          Nothing -> "The result is a function and is not printable."
+          Just (d, _) -> d
   eval' :: Map' Expression_2 -> Expression_2 -> Maybe Expression_2
   eval' a c =
     case c of
@@ -32,14 +36,6 @@ module Eval where
                   Add_Int_1_expression_2 k ->
                     case j of
                       Int_expression_2 n -> Just (Int_expression_2 (k + n))
-                      _ -> undefined
-                  Compare_Char_0_expression_2 ->
-                    case j of
-                      Char_expression_2 k -> Just (Compare_Char_1_expression_2 k)
-                      _ -> undefined
-                  Compare_Char_1_expression_2 k ->
-                    case j of
-                      Char_expression_2 l -> Just (Algebraic_expression_2 (show (compare k l)) [])
                       _ -> undefined
                   Compare_Int_0_expression_2 ->
                     case j of
@@ -87,15 +83,6 @@ module Eval where
                     case j of
                       Int_expression_2 l -> Just (Int_expression_2 (k * l))
                       _ -> undefined
-                  Negate_Int_expression_2 ->
-                    case j of
-                      Int_expression_2 k -> Just (Int_expression_2 (- k))
-                      _ -> undefined
-                  Write_Brackets_Int_expression_2 ->
-                    case j of
-                      Int_expression_2 k ->
-                        Just (pair_expression (list_expression (show k)) (Algebraic_expression_2 "False" []))
-                      _ -> undefined
                   _ -> undefined))
       Match_expression_2 b d -> eval' a b >>= \e -> eval' a (eval_match e d)
       Name_expression_2 d -> Data.Map.lookup d a >>= eval' a
@@ -115,10 +102,6 @@ module Eval where
         case d == f of
           False -> Nothing
           True -> eval_pats (zip e g) c
-      (Char_expression_2 d, Char_alg_pat_2 e) ->
-        case d == e of
-          False -> Nothing
-          True -> Just c
       (Int_expression_2 d, Int_alg_pat_2 e) ->
         case d == e of
           False -> Nothing
@@ -131,15 +114,8 @@ module Eval where
     case a of
       [] -> Just b
       (c, d) : e -> eval_pat c d b >>= eval_pats e
-  list_expression :: String -> Expression_2
-  list_expression =
-    Prelude.foldr
-      (\x -> \y -> Algebraic_expression_2 "ConstructList" [Char_expression_2 x, y])
-      (Algebraic_expression_2 "EmptyList" [])
   nothing_algebraic :: Expression_2
   nothing_algebraic = Algebraic_expression_2 "Nothing" []
-  pair_expression :: Expression_2 -> Expression_2 -> Expression_2
-  pair_expression x y = Algebraic_expression_2 "Mk_Pair" [x, y]
   subst_expr :: String -> Expression_2 -> Expression_2 -> Expression_2
   subst_expr a b c =
     let
@@ -198,12 +174,20 @@ module Eval where
         (
           std_expr (Location_1 "input") q e >>=
           \e' -> naming_expression "input" e' c >>= \j -> eval l <$> type_expr' (f, a', a, i, w, d2) j u v w'))
-  tostr :: Expression_2 -> String
+  tostr :: Expression_2 -> Maybe (String, Bool)
   tostr x =
     case x of
-      Algebraic_expression_2 "EmptyList" [] -> []
-      Algebraic_expression_2 "ConstructList" [Char_expression_2 y, z] -> y : tostr z
-      _ -> undefined
+      Algebraic_expression_2 a b -> (\c -> (a ++ join c, not (Prelude.null b))) <$> traverse tostr' b
+      Int_expression_2 a -> Just (show a, False)
+      _ -> Nothing
+  tostr' :: Expression_2 -> Maybe String
+  tostr' a =
+    (
+      (\(b, c) ->
+         case c of
+        False -> " " ++ b
+        True -> " (" ++ b ++ ")") <$>
+      tostr a)
   wrap_algebraic :: Expression_2 -> Expression_2
   wrap_algebraic x = Algebraic_expression_2 "Just" [x]
 --------------------------------------------------------------------------------------------------------------------------------

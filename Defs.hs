@@ -14,8 +14,7 @@ module Defs where
   import Standard
   import Tokenise
   import Tree
-  data Alg_pat_3 = Blank_alg_pat_3 | Char_alg_pat_3 Char | Int_alg_pat_3 Integer | Struct_alg_pat_3 String [Alg_pat_3]
-    deriving Show
+  data Alg_pat_3 = Blank_alg_pat_3 | Int_alg_pat_3 Integer | Struct_alg_pat_3 String [Alg_pat_3] deriving Show
   data Def_4 =
     Basic_def_4 Location_0 String KT2 [Constraint_1] Type_1 Expression_1 [String] |
     Instance_4
@@ -37,16 +36,10 @@ module Defs where
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
   data Inst = Inst [Kind_1] [[String]] deriving Show
   data Pattern_5 =
-    Blank_pattern_5 |
-    Char_blank_pattern_5 (Set Char) |
-    Char_pattern_5 Char |
-    Int_blank_pattern_5 (Set Integer) |
-    Int_pattern_5 Integer |
-    Struct_pattern_5 String [Pattern_5]
+    Blank_pattern_5 | Int_blank_pattern_5 (Set Integer) | Int_pattern_5 Integer | Struct_pattern_5 String [Pattern_5]
       deriving Show
   data Typedexpr =
     Application_texpr Typedexpr Typedexpr |
-    Char_texpr Char |
     Function_texpr Pat_1 Typedexpr |
     Int_texpr Integer |
     Match_texpr Typedexpr [(Alg_pat_2, Typedexpr)] |
@@ -60,7 +53,6 @@ module Defs where
     in
       case c of
         Application_texpr d e -> Application_expression_2 (h d) (h e)
-        Char_texpr d -> Char_expression_2 d
         Function_texpr d e -> Function_expression_2 d (h e)
         Int_texpr d -> Int_expression_2 d
         Match_texpr d e -> Match_expression_2 (h d) (second h <$> e)
@@ -170,7 +162,6 @@ module Defs where
                 second (bimap (Application_alg_pat_2 i) (Struct_alg_pat_3 i)) <$>
                 get_pattern_types a (f3, b', b) (q, s, Type_eq h (f2 m) : f, n) j (f2 <$> x) (Name o i)))
       Blank_alg_pat_1 -> Right ((d, e, f, n), (Blank_alg_pat_2, Blank_alg_pat_3))
-      Char_alg_pat_1 i -> Right ((d, e, Type_eq h char_type : f, n), (Char_alg_pat_2 i, Char_alg_pat_3 i))
       Int_alg_pat_1 i -> Right ((d, e, Type_eq h int_type : f, n), (Int_alg_pat_2 i, Int_alg_pat_3 i))
       Name_alg_pat_1 i ->
         Right ((d, e, f, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] h) n), (Name_alg_pat_2 i, Blank_alg_pat_3))
@@ -200,11 +191,7 @@ module Defs where
           Zr -> c
   instances :: Map' (Map' Inst)
   instances =
-    Data.Map.fromList
-      [
-        ("Ord", Data.Map.fromList [("Char", Inst [] []), ("Int", Inst [] [])]),
-        ("Ring", Data.Map.fromList [("Int", Inst [] [])]),
-        ("Writeable", Data.Map.fromList [("Int", Inst [] [])])]
+    Data.Map.fromList [("Ord", Data.Map.fromList [("Int", Inst [] [])]), ("Ring", Data.Map.fromList [("Int", Inst [] [])])]
   kindvar :: String -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
   kindvar a (b, c, e) =
     let
@@ -475,7 +462,6 @@ module Defs where
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
     case (x, y) of
-      (Blank_pattern_5, Char_alg_pat_3 z) -> primitive_pattern_0 (Char_pattern_5, Char_blank_pattern_5) z
       (Blank_pattern_5, Int_alg_pat_3 z) -> primitive_pattern_0 (Int_pattern_5, Int_blank_pattern_5) z
       (Blank_pattern_5, Struct_alg_pat_3 z a) ->
         (
@@ -487,8 +473,6 @@ module Defs where
                   True -> fst (struct_pattern context z ((,) Blank_pattern_5 <$> a))) <$>
               context ! z),
           True)
-      (Char_blank_pattern_5 z, Char_alg_pat_3 a) -> primitive_pattern_2 (Char_pattern_5, Char_blank_pattern_5) z a
-      (Char_pattern_5 z, Char_alg_pat_3 a) -> primitive_pattern_1 Char_pattern_5 z a
       (Int_blank_pattern_5 z, Int_alg_pat_3 a) -> primitive_pattern_2 (Int_pattern_5, Int_blank_pattern_5) z a
       (Int_pattern_5 z, Int_alg_pat_3 a) -> primitive_pattern_1 Int_pattern_5 z a
       (Struct_pattern_5 z a, Struct_alg_pat_3 b c) ->
@@ -989,7 +973,6 @@ module Defs where
             type_expression (x1, v', v) r (o', o2) (Eqtns (f4, f2) h mi c') d c (function_type t4 e) (r7, m8) >>=
             \(i, j, p, d7) ->
               (\(l, m, q, e') -> (Application_texpr i l, m, q, d7 ++ e')) <$> type_expression (x1, v', v) r p j d g t4 (r7, m8))
-        Char_expression_1 c -> Right (Char_texpr c, Eqtns (f4, f) (Type_eq e char_type : h) mi c', (o', o), [])
         Function_expression_1 c g ->
           (
             type_pat r (x1, v', v) c t4 d (o', o2) (f4, f2) h >>=

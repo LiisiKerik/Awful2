@@ -11,7 +11,6 @@ module Tokenise where
     Name_char Char |
     Newline_char |
     Operator_char Char |
-    Quote_char |
     Right_curly_char |
     Space_char
       deriving Show
@@ -26,12 +25,13 @@ module Tokenise where
     Blank_token |
     Branch_token |
     Cat_token |
-    Char_token Char |
     Class_token |
     Comma_token |
     Data_token |
     Def_token |
     In_token |
+    Infixl_token |
+    Infixr_token |
     Instance_token |
     Int_token Integer |
     Left_curly_token |
@@ -43,7 +43,6 @@ module Tokenise where
     Name_token String |
     Negate_token |
     Of_token |
-    Opdecl_token |
     Operator_token String |
     Right_curly_token |
     Right_round_token |
@@ -72,7 +71,6 @@ module Tokenise where
     case a of
       '\n' -> Newline_char
       ' ' -> Space_char
-      '"' -> Quote_char
       '(' -> Delimiter_char Left_round_delimiter
       ')' -> Delimiter_char Right_round_delimiter
       ',' -> Delimiter_char Comma_delimiter
@@ -88,7 +86,7 @@ module Tokenise where
             (
               flip
                 elem
-                ['!', '#', '$', '%', '&', '*', '+', '.', '/', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^', '`', '~'],
+                ['!', '"', '#', '$', '%', '&', '*', '+', '.', '/', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^', '`', '~'],
               Operator_char),
             (isDigit, Int_char)]
           Name_char)
@@ -165,20 +163,8 @@ module Tokenise where
             Name_char _ -> accumulate word_token name_char a b
             Newline_char -> tokenise' (next_line a) d
             Operator_char _ -> f
-            Quote_char -> (\(g, h) -> add_token a (Char_token g) h) <$> tokenise_char e d
             Right_curly_char -> add_token a Right_curly_token <$> tokenise' e d
             Space_char -> tokenise' e d
-  tokenise_char :: Location_1 -> [Char'] -> Err (Char, Tokens)
-  tokenise_char a b =
-    case b of
-      [] -> Left ("Missing character and end quote" ++ location' a)
-      c : d ->
-        let
-          e = char'_to_char c
-        in
-          case e of
-            '\n' -> Left ("Newline inside quotes" ++ location' a)
-            _ -> (,) e <$> tokenise_quote (next_char a) d
   tokenise_l :: Integer -> Location_1 -> [Char'] -> Err Tokens
   tokenise_l a b c =
     case c of
@@ -210,17 +196,6 @@ module Tokenise where
             _ -> f g e
   tokenise_operator :: Location_1 -> [Char'] -> Err Tokens
   tokenise_operator = accumulate Operator_token operator_char
-  tokenise_quote :: Location_1 -> [Char'] -> Err Tokens
-  tokenise_quote a b =
-    let
-      e = Left ("Missing end quote" ++ location' a)
-    in
-      case b of
-        [] -> e
-        c : d ->
-          case c of
-            Quote_char -> tokenise' (next_char a) d
-            _ -> e
   tokenise_single :: Location_1 -> [Char'] -> Err Tokens
   tokenise_single a b =
     case b of
@@ -230,31 +205,11 @@ module Tokenise where
           Newline_char -> tokenise' (next_line a)
           _ -> tokenise_single (next_char a))
             d
-  char'_to_char :: Char' -> Char
-  char'_to_char a =
-    case a of
-      Delimiter_char b ->
-        case b of
-          Comma_delimiter -> ','
-          Left_round_delimiter -> '('
-          Left_square_delimiter -> '['
-          Right_round_delimiter -> ')'
-          Right_square_delimiter -> ']'
-      Int_char b -> b
-      Left_curly_char -> '{'
-      Minus_char -> '-'
-      Name_char b -> b
-      Newline_char -> '\n'
-      Operator_char b -> b
-      Quote_char -> '"'
-      Right_curly_char -> '}'
-      Space_char -> ' '
   word_token :: String -> Token_0
   word_token a =
     case a of
       "_" -> Blank_token
       "Cat" -> Cat_token
-      "Newline" -> Char_token '\n'
       "algebraic" -> Algebraic_token
       "branch" -> Branch_token
       "case" -> Match_token
@@ -263,10 +218,11 @@ module Tokenise where
       "def" -> Def_token
       "import" -> Load_token
       "in" -> In_token
+      "infixl" -> Infixl_token
+      "infixr" -> Infixr_token
       "instance" -> Instance_token
       "let" -> Let_token
       "of" -> Of_token
-      "operator" -> Opdecl_token
       "struct" -> Struct_token
       _ -> Name_token a
 --------------------------------------------------------------------------------------------------------------------------------
