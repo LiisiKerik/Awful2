@@ -1039,7 +1039,7 @@ module Datas where
                   (flip (\(k, l) -> ins_new k (b' (function_type x l))))
                   (ins_new m3 (b' (Prelude.foldr (function_type <$> snd) x i)) e)
                   i,
-                a0,
+                ins_new a (Prom_alg b (Data.Map.singleton m3 (prom_type <$> snd <$> i))) a0,
                 ins_new m3 (Constructor [] g2 (snd <$> i) x [(m3, fromIntegral (length i))]) k7,
                 ins_new m3 (PConstructor b (prom_type <$> snd <$> i) (prom_type x) [(m3, fromIntegral (length i))]) t9)) <$>
             type_fields f h g y' y7)
