@@ -616,7 +616,7 @@ module Defs where
       [] -> if a == g then Right ([], c, x, c0, c') else e
       h : d ->
         case a of
-          Application_kind_1 (Application_kind_1 (Name_kind_1 "Arrow") l) f ->
+          Application_kind_1 (Application_kind_1 (Name_kind_1 "Kind arrow") l) f ->
             let
               i j k =
                 (

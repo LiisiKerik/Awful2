@@ -125,7 +125,9 @@ module Datas where
   gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Map' Location_0
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
   hkinds :: Map' Kind
-  hkinds = Data.Map.fromList [("Nat", Star_kind), ("Ordering", Star_kind), ("Star", Star_kind)]
+  hkinds =
+    Data.Map.fromList
+      [("Kind arrow", Arrow_kind (Arrow_kind Star_kind)), ("Nat", Star_kind), ("Ordering", Star_kind), ("Star", Star_kind)]
   int_type :: Type_1
   int_type = ntype "Int"
   kind_err :: Location_1 -> Err t
