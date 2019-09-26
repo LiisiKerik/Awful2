@@ -103,11 +103,6 @@ module Tree where
     case b of
       Left c -> a c
       Right c -> Right c
-  mk_list :: Location_0 -> [Expression_0] -> Expression_0
-  mk_list l =
-    Prelude.foldr
-      (\x -> \y -> Application_expression_0 (Application_expression_0 (Name_expression_0 (Name l "Construct_List")) [x]) [y])
-      (Name_expression_0 (Name l "Empty_List"))
   parse :: Parser' t -> (Location_0 -> Location_1) -> String -> Err t
   parse a b c =
     let
@@ -284,7 +279,7 @@ module Tree where
       (\a -> Application_alg_pat a []) <$> parse_cap <+>
       Name_alg_pat <$> parse_low)
   parse_elementary_expression :: Parser' Expression_0
-  parse_elementary_expression = parse_int_expression <+> parse_list_expr <+> parse_name_expression
+  parse_elementary_expression = parse_int_expression <+> parse_name_expression
   parse_elementary_pat :: Parser' Pat
   parse_elementary_pat = parse_blank_pat <+> Name_pat <$> parse_low <+> Constr_pat <$> parse_cap
   parse_elementary_patn :: Parser' Patn
@@ -358,8 +353,6 @@ module Tree where
       0 -> parse_list 1 p <+> return []
       1 -> (:) <$> p <*> parse_many (parse_comma *> p)
       _ -> (:) <$> p <* parse_comma <*> parse_list (i - 1) p
-  parse_list_expr :: Parser' Expression_0
-  parse_list_expr = mk_list <&> parse_sq (parse_list 1 parse_expression')
   parse_load :: Parser' Name
   parse_load =
     filter_cap (parse_name_3 Load_token ((flip (++) ".awf" <$> parse_name) <* parse_operator "." <* parse_name_4 "awf"))
