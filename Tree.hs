@@ -336,8 +336,7 @@ module Tree where
       parse_constraints <*>
       parse_optional parse_round parse_method_impl)
   parse_int :: Parser' Integer
-  parse_int =
-    parse_int' <+> (negate <$ parse_operator "-" <*> parse_int' >>= \x -> if x == 0 then empty_parser else return x)
+  parse_int = negate <$ parse_token Negate_token <*> parse_int' <+> parse_int'
   parse_int' :: Parser' Integer
   parse_int' =
     parse_elementary

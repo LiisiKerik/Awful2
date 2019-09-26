@@ -1,5 +1,4 @@
 {-
-What happens with unary minus and binary minus during parsing?
 Jaskelioff "Modular Monad Transformers" - saada need naited toole Awfulis
 Lugeda tyybiperede kohta
 Hargnevate andmetyypide eelised? Seosed tyybiperedega?

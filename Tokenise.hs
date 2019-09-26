@@ -6,6 +6,7 @@ module Tokenise where
   data Char' =
     Delimiter_char Delimiter |
     Int_char Char |
+    Minus_char |
     Name_char Char |
     Newline_char |
     Operator_char Char |
@@ -47,6 +48,7 @@ module Tokenise where
     Load_token |
     Match_token |
     Name_token String |
+    Negate_token |
     Of_token |
     Opdecl_token |
     Operator_token String |
@@ -81,6 +83,7 @@ module Tokenise where
       '(' -> Delimiter_char Left_round_delimiter
       ')' -> Delimiter_char Right_round_delimiter
       ',' -> Delimiter_char Comma_delimiter
+      '-' -> Minus_char
       '/' -> Slash_char
       '[' -> Delimiter_char Left_square_delimiter
       ']' -> Delimiter_char Right_square_delimiter
@@ -93,9 +96,7 @@ module Tokenise where
           a
           [
             (
-              flip
-                elem
-                ['!', '#', '$', '%', '&', '*', '+', '-', '.', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^'],
+              flip elem ['!', '#', '$', '%', '&', '*', '+', '.', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^'],
               Operator_char),
             (isDigit, Int_char)]
           Name_char)
@@ -133,6 +134,7 @@ module Tokenise where
   operator_char :: Char' -> Maybe Char
   operator_char a =
     case a of
+      Minus_char -> Just '-'
       Operator_char b -> Just b
       Slash_char -> Just '/'
       Tilde_char -> Just '~'
@@ -163,6 +165,10 @@ module Tokenise where
                     Right_square_delimiter -> Right_square_token) <$>
                 tokenise' e d)
             Int_char _ -> accumulate (Int_token <$> read) int_char a b
+            Minus_char ->
+              case d of
+                Int_char _ : _ -> add_token a Negate_token <$> tokenise' e d
+                _ -> f
             Name_char _ -> accumulate word_token name_char a b
             Newline_char -> tokenise' (next_line a) d
             Operator_char _ -> f
@@ -251,6 +257,7 @@ module Tokenise where
           Right_round_delimiter -> ')'
           Right_square_delimiter -> ']'
       Int_char b -> b
+      Minus_char -> '-'
       Name_char b -> b
       Newline_char -> '\n'
       Operator_char b -> b
