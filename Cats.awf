@@ -1,4 +1,4 @@
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+--------------------------------------------------------------------------------------------------------------------------------
 import Standard.awf
 data Opp [t :: Star] = algebraic {MkOpp t}
 Cat {{Opp k}} <<Cat k>> (
@@ -10,8 +10,8 @@ Cat {{Pair k l}} <<Cat k, Cat l>> (
   PairArrow f g . PairArrow h i = PairArrow (f . h) (g . i),
   id = PairArrow id id)
 Cat {{Unit}} (MkUnit -> MkUnit = struct UnitArrow, UnitArrow . UnitArrow = UnitArrow, id = UnitArrow)
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
-~/
+--------------------------------------------------------------------------------------------------------------------------------
+{-
 Cat{{Either K L}}<<Cat K, Cat L>>(
   T -> U =
     Branch Mk_Pair T U {
@@ -26,4 +26,4 @@ Cat{{Either K L}}<<Cat K, Cat L>>(
         Match Mk_Pair f g {Mk_Pair (Right_Arrow h) (Right_Arrow i) -> Right_Arrow (h . i)},
       _ -> Match Mk_Pair f g {}},
   Id[T] = Branch T {Left _ -> Left_Arrow Id, Right _ -> Right_Arrow Id})
-/~
+-}

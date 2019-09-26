@@ -4,21 +4,16 @@ Lugeda tyybiperede kohta
 Hargnevate andmetyypide eelised? Seosed tyybiperedega?
 Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 pattern matching in types
-make names and types similar to Haskell
-field name promotion
 generalise branching types to branch not only over promoted algebraics but over Star, Int and Char
 liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
 stringide syntaktiline suhkur
 piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair T U) L ->
 All Ord C, All c C <- klassimuutuja
 polütüüpsus
-promote field names?
 pattern match types with only one type constructor?
 promote constructor operators (two type ops - for pair and either - and also promotable data constructor operators)
 improve cat syntax
 viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
-in naming module: check name patterns and turn some into constructors without arguments
-reserve double colon for type specification; when single colon is promoted to type level it will cause a parsing conflict!
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}

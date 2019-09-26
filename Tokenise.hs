@@ -6,24 +6,17 @@ module Tokenise where
   data Char' =
     Delimiter_char Delimiter |
     Int_char Char |
+    Left_curly_char |
     Minus_char |
     Name_char Char |
     Newline_char |
     Operator_char Char |
     Quote_char |
-    Slash_char |
-    Space_char |
-    Tick_char |
-    Tilde_char
+    Right_curly_char |
+    Space_char
       deriving Show
   data Delimiter =
-    Comma_delimiter |
-    Left_curly_delimiter |
-    Left_round_delimiter |
-    Left_square_delimiter |
-    Right_curly_delimiter |
-    Right_round_delimiter |
-    Right_square_delimiter
+    Comma_delimiter | Left_round_delimiter | Left_square_delimiter | Right_round_delimiter | Right_square_delimiter
       deriving Show
   type Err t = Either String t
   data Location_0 = Location_0 Integer Integer deriving (Eq, Ord, Show)
@@ -84,19 +77,18 @@ module Tokenise where
       ')' -> Delimiter_char Right_round_delimiter
       ',' -> Delimiter_char Comma_delimiter
       '-' -> Minus_char
-      '/' -> Slash_char
       '[' -> Delimiter_char Left_square_delimiter
       ']' -> Delimiter_char Right_square_delimiter
-      '`' -> Tick_char
-      '{' -> Delimiter_char Left_curly_delimiter
-      '}' -> Delimiter_char Right_curly_delimiter
-      '~' -> Tilde_char
+      '{' -> Left_curly_char
+      '}' -> Right_curly_char
       _ ->
         (if_sequence
           a
           [
             (
-              flip elem ['!', '#', '$', '%', '&', '*', '+', '.', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^'],
+              flip
+                elem
+                ['!', '#', '$', '%', '&', '*', '+', '.', '/', ':', ';', '|', '<', '=', '>', '?', '@', '\\', '^', '`', '~'],
               Operator_char),
             (isDigit, Int_char)]
           Name_char)
@@ -136,8 +128,6 @@ module Tokenise where
     case a of
       Minus_char -> Just '-'
       Operator_char b -> Just b
-      Slash_char -> Just '/'
-      Tilde_char -> Just '~'
       _ -> Nothing
   tokenise :: (Location_0 -> Location_1) -> String -> Err Tokens
   tokenise a b = tokenise' (a (Location_0 1 1)) (char <$> b)
@@ -157,26 +147,27 @@ module Tokenise where
                   a
                   (case g of
                     Comma_delimiter -> Comma_token
-                    Left_curly_delimiter -> Left_curly_token
                     Left_round_delimiter -> Left_round_token
                     Left_square_delimiter -> Left_square_token
-                    Right_curly_delimiter -> Right_curly_token
                     Right_round_delimiter -> Right_round_token
                     Right_square_delimiter -> Right_square_token) <$>
                 tokenise' e d)
             Int_char _ -> accumulate (Int_token <$> read) int_char a b
+            Left_curly_char ->
+              case d of
+                Minus_char : x -> tokenise_multiline 1 (next_char e) x
+                _ -> add_token a Left_curly_token <$> tokenise' e d
             Minus_char ->
               case d of
                 Int_char _ : _ -> add_token a Negate_token <$> tokenise' e d
+                Minus_char : x -> tokenise_single (next_char e) x
                 _ -> f
             Name_char _ -> accumulate word_token name_char a b
             Newline_char -> tokenise' (next_line a) d
             Operator_char _ -> f
             Quote_char -> (\(g, h) -> add_token a (Char_token g) h) <$> tokenise_char e d
-            Slash_char -> f
+            Right_curly_char -> add_token a Right_curly_token <$> tokenise' e d
             Space_char -> tokenise' e d
-            Tick_char -> tokenise_single e d
-            Tilde_char -> tokenise_tilde a b e d
   tokenise_char :: Location_1 -> [Char'] -> Err (Char, Tokens)
   tokenise_char a b =
     case b of
@@ -188,6 +179,21 @@ module Tokenise where
           case e of
             '\n' -> Left ("Newline inside quotes" ++ location' a)
             _ -> (,) e <$> tokenise_quote (next_char a) d
+  tokenise_l :: Integer -> Location_1 -> [Char'] -> Err Tokens
+  tokenise_l a b c =
+    case c of
+      Minus_char : d -> tokenise_multiline (a + 1) (next_char b) d
+      _ -> tokenise_multiline a b c
+  tokenise_m :: Integer -> Location_1 -> [Char'] -> Err Tokens
+  tokenise_m a b c =
+    case c of
+      Right_curly_char : d ->
+        (case a of
+          1 -> tokenise'
+          _ -> tokenise_multiline (a - 1))
+            (next_char b)
+            d
+      _ -> tokenise_multiline a b c
   tokenise_multiline :: Integer -> Location_1 -> [Char'] -> Err Tokens
   tokenise_multiline a b c =
     case c of
@@ -198,15 +204,10 @@ module Tokenise where
           g = next_char b
         in
           case d of
+            Left_curly_char -> tokenise_l a g e
+            Minus_char -> tokenise_m a g e
             Newline_char -> f (next_line b) e
-            Slash_char -> tokenise_slash a g e
-            Tilde_char -> tokenise_multiline_tilde a g e
             _ -> f g e
-  tokenise_multiline_tilde :: Integer -> Location_1 -> [Char'] -> Err Tokens
-  tokenise_multiline_tilde a b c =
-    case c of
-      Slash_char : d -> tokenise_multiline (a + 1) (next_char b) d
-      _ -> tokenise_multiline a b c
   tokenise_operator :: Location_1 -> [Char'] -> Err Tokens
   tokenise_operator = accumulate Operator_token operator_char
   tokenise_quote :: Location_1 -> [Char'] -> Err Tokens
@@ -229,43 +230,25 @@ module Tokenise where
           Newline_char -> tokenise' (next_line a)
           _ -> tokenise_single (next_char a))
             d
-  tokenise_slash :: Integer -> Location_1 -> [Char'] -> Err Tokens
-  tokenise_slash a b c =
-    case c of
-      Tilde_char : d ->
-        (case a of
-          1 -> tokenise'
-          _ -> tokenise_multiline (a - 1))
-            (next_char b)
-            d
-      _ -> tokenise_multiline a b c
-  tokenise_tilde :: Location_1 -> [Char'] -> Location_1 -> [Char'] -> Err Tokens
-  tokenise_tilde a b c d =
-    case d of
-      Slash_char : e -> tokenise_multiline 1 (next_char c) e
-      _ -> tokenise_operator a b
   char'_to_char :: Char' -> Char
   char'_to_char a =
     case a of
       Delimiter_char b ->
         case b of
           Comma_delimiter -> ','
-          Left_curly_delimiter -> '{'
           Left_round_delimiter -> '('
           Left_square_delimiter -> '['
-          Right_curly_delimiter -> '}'
           Right_round_delimiter -> ')'
           Right_square_delimiter -> ']'
       Int_char b -> b
+      Left_curly_char -> '{'
       Minus_char -> '-'
       Name_char b -> b
       Newline_char -> '\n'
       Operator_char b -> b
       Quote_char -> '"'
-      Slash_char -> '/'
+      Right_curly_char -> '}'
       Space_char -> ' '
-      Tick_char -> '`'
-      Tilde_char -> '~'
   word_token :: String -> Token_0
   word_token a =
     case a of

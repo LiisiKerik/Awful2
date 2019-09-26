@@ -1,10 +1,10 @@
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+--------------------------------------------------------------------------------------------------------------------------------
 operator . compose 9 right
 data Unit = struct MkUnit
-````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
+--------------------------------------------------------------------------------------------------------------------------------
 
 
-~/
+{-
 data Bool = algebraic {False, True}
 class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
   ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
@@ -61,7 +61,7 @@ instance Container{Maybe}(
   filter f x = bind x (y -> case f y of {False -> Nothing, True -> x}),
   size x = case x of {Nothing -> 0, _ -> 1})
 instance Field{Bool}(inverse x = case x of {False -> Nothing, True -> Just True})
-instance Field{Int}(inverse x = case x of {-1 -> Just -1, 1 -> Just 1, _ -> Nothing})
+instance Field{Int}(inverse x = case x of { -1 -> Just -1, 1 -> Just 1, _ -> Nothing})
 instance Field{Pair t u}<Field t, Field u>(inverse (Mk_Pair x y) = Mk_Pair <$> Inverse x <*> Inverse y)
 instance Finite{Bool}(list = [False, True])
 instance Finite{Either t u}<Finite t, Finite u>(list = Left . list ++ Right . list)
@@ -155,4 +155,4 @@ def right[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor 
 def write[t :: Star]<Writeable t>(x :: t) :: List Char = First (writeBrackets x)
 def write'(x :: List Char, y :: List (List Char)) :: List Char = Interleave [" "] (x : y)
 def zr[t :: Star]<Ring t> :: t = convert 0
-/~
+-}
