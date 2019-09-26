@@ -102,28 +102,8 @@ module Datas where
         ("EQ", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
         ("GT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
         ("LT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
-        (
-          "Left",
-          Constructor
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            [ntype "T"]
-            (either_type (ntype "T") (ntype "U"))
-            [("Left", 1), ("Right", 1)]),
         ("Next", Constructor [] [] [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
-        (
-          "Right",
-          Constructor
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            [ntype "U"]
-            (either_type (ntype "T") (ntype "U"))
-            [("Left", 1), ("Right", 1)]),
         ("Zero", Constructor [] [] [] (ntype "Nat") [("Next", 1), ("Zero", 0)])]
-  either_kind :: Kind_1 -> Kind_1 -> Kind_1
-  either_kind x = Application_kind_1 (Application_kind_1 (Name_kind_1 "Either") x)
-  either_type :: Type_1 -> Type_1 -> Type_1
-  either_type x = Application_type_1 (Application_type_1 (ntype "Either") x)
   function_type :: Type_1 -> Type_1 -> Type_1
   function_type a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just (Name_kind_1 "Star")) []) a)
   gather_all_types :: Ord u => (t -> Map u v -> Map u v) -> [t] -> Map u v -> Map u v
@@ -145,14 +125,7 @@ module Datas where
   gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Map' Location_0
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
   hkinds :: Map' Kind
-  hkinds =
-    Data.Map.fromList
-      [
-        ("Arrow", Arrow_kind (Arrow_kind Star_kind)),
-        ("Either", Arrow_kind (Arrow_kind Star_kind)),
-        ("Nat", Star_kind),
-        ("Ordering", Star_kind),
-        ("Star", Star_kind)]
+  hkinds = Data.Map.fromList [("Nat", Star_kind), ("Ordering", Star_kind), ("Star", Star_kind)]
   int_type :: Type_1
   int_type = ntype "Int"
   kind_err :: Location_1 -> Err t
@@ -190,15 +163,12 @@ module Datas where
       [
         ("Arrow", Polykind (Just "k") [] (arrow_kind (Name_kind_1 "k") (arrow_kind (Name_kind_1 "k") (Name_kind_1 "Star")))),
         ("EQ", pkind comparison_kind),
-        ("Either", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
         ("GT", pkind comparison_kind),
         ("Int", pkind star_kind),
         ("LT", pkind comparison_kind),
-        ("Left", Polykind Nothing ["k", "l"] (arrow_kind (Name_kind_1 "k") (either_kind (Name_kind_1 "k") (Name_kind_1 "l")))),
         ("Nat", pkind star_kind),
         ("Next", pkind (arrow_kind nat_kind nat_kind)),
         ("Ordering", pkind star_kind),
-        ("Right", Polykind Nothing ["k", "l"] (arrow_kind (Name_kind_1 "l") (either_kind (Name_kind_1 "k") (Name_kind_1 "l")))),
         ("Zero", pkind nat_kind)]
   kvars :: [String] -> (Integer, Map' Kind_1, Set String) -> ((Integer, Map' Kind_1, Set String), [String])
   kvars a (b, c, d) =
@@ -245,7 +215,6 @@ module Datas where
   prom_algs =
     Data.Map.fromList
       [
-        ("Either", Prom_alg ["t", "u"] (Data.Map.fromList [("Left", [Name_kind_1 "t"]), ("Right", [Name_kind_1 "u"])])),
         ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])])),
         ("Ordering", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])]))]
   prom_type :: Type_1 -> Kind_1
@@ -267,7 +236,7 @@ module Datas where
       Name_kind_0 (Name _ "Star") -> True
       _ -> False
   promotables :: Map' Bool
-  promotables = Data.Map.fromList  [("Arrow", False), ("Either", True), ("Int", False), ("Nat", True), ("Ordering", True)]
+  promotables = Data.Map.fromList  [("Arrow", False), ("Int", False), ("Nat", True), ("Ordering", True)]
   repkinds :: Map' Kind_1 -> Kind_1 -> Kind_1
   repkinds a b =
     case b of

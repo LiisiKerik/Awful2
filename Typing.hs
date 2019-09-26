@@ -65,9 +65,7 @@ module Typing where
         ("EQ", Algebraic_expression_2 "EQ" []),
         ("GT", Algebraic_expression_2 "GT" []),
         ("LT", Algebraic_expression_2 "LT" []),
-        ("Left", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Left" [Name_expression_2 "x"])),
         ("Next", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Next" [Name_expression_2 "x"])),
-        ("Right", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Right" [Name_expression_2 "x"])),
         ("Zero", Algebraic_expression_2 "Zero" []),
         ("add Int", Add_Int_0_expression_2),
         ("compare Int", Compare_Int_0_expression_2),
@@ -112,16 +110,13 @@ module Typing where
         [
           "Arrow",
           "EQ",
-          "Either",
           "GT",
           "Int",
           "LT",
-          "Left",
           "Nat",
           "Next",
           "Ord",
           "Ordering",
-          "Right",
           "Ring",
           "Star",
           "Zero",
@@ -193,28 +188,8 @@ module Typing where
             Nothing
             []
             (arrow_type (Name_kind_1 "K") (ntype "T") (ntype "T"))),
-        (
-          "Left",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            Nothing
-            []
-            (function_type (ntype "T") (either_type (ntype "T") (ntype "U")))),
         ("LT", Type_2 Nothing [] [] [] Nothing [] comparison_type),
         ("Next", Type_2 Nothing [] [] [] Nothing [] (function_type nat_type nat_type)),
-        (
-          "Right",
-          Type_2
-            Nothing
-            []
-            []
-            [(Name_tpat "T", star_kind), (Name_tpat "U", star_kind)]
-            Nothing
-            []
-            (function_type (ntype "U") (either_type (ntype "T") (ntype "U")))),
         ("Zero", Type_2 Nothing [] [] [] Nothing [] nat_type),
         (
           "add",
