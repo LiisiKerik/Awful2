@@ -89,7 +89,6 @@ module Typing where
             (Function_expression_2
               (Name_pat_1 "y")
               (Algebraic_expression_2 "Mk_pair" [Name_expression_2 "x", Name_expression_2 "y"]))),
-        ("Mod", Mod_0_expression_2),
         ("Next", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Next" [Name_expression_2 "x"])),
         ("Nothing", Algebraic_expression_2 "Nothing" []),
         ("Right", Function_expression_2 (Name_pat_1 "x") (Algebraic_expression_2 "Right" [Name_expression_2 "x"])),
@@ -113,6 +112,7 @@ module Typing where
         ("convert Int", Convert_Int_expression_2),
         ("div", Div_0_expression_2),
         ("id Star", Function_expression_2 (Name_pat_1 "x") (Name_expression_2 "x")),
+        ("mod", Mod_0_expression_2),
         ("multiply Int", Multiply_Int_0_expression_2),
         ("negate Int", Negate_Int_expression_2)]
   init_type_context :: (File, Map' Op)
@@ -144,7 +144,6 @@ module Typing where
           "EQ",
           "Either",
           "EmptyList",
-          "First",
           "GT",
           "Int",
           "Just",
@@ -152,8 +151,7 @@ module Typing where
           "Left",
           "List",
           "Maybe",
-          "Mk_Pair",
-          "Mod",
+          "MkPair",
           "Nat",
           "Next",
           "Nothing",
@@ -172,7 +170,9 @@ module Typing where
           "compose",
           "convert",
           "div",
+          "fst",
           "id",
+          "mod",
           "multiply",
           "negate",
           "undefined"])

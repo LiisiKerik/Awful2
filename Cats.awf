@@ -4,6 +4,7 @@ Cat {{Pair k l}} <<Cat k, Cat l>> (
   MkPair t u -> MkPair v w = algebraic {PairArrow (t -> v) (u -> w)},
   PairArrow f g . PairArrow h i = PairArrow (f . h) (g . i),
   id = PairArrow id id)
+Cat {{Unit}} (MkUnit -> MkUnit = struct UnitArrow, UnitArrow . UnitArrow = UnitArrow, id = UnitArrow)
 ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
 ~/
 Data Opp[T : Star] = Algebraic {Mk_Opp T}
@@ -25,6 +26,4 @@ Cat{{Opp K}} <<Cat K>> (
   Mk_Opp T -> Mk_Opp U = Algebraic {Opp_Arrow (U -> T)},
   Opp_Arrow f . Opp_Arrow g = Opp_Arrow (g . f),
   Id = Opp_Arrow Id)
-Data Unit = Struct MkUnit
-Cat {{Unit}} (Unit -> Unit = Struct UnitArrow, UnitArrow . UnitArrow = UnitArrow, id = UnitArrow)
 /~

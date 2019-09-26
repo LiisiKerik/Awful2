@@ -65,7 +65,7 @@ module Tree where
   newtype Parser s f t = Parser {parser :: s -> f (t, s)}
   type Parser' = Parser State (Either Location_0)
   data State = State Tokens Location_0 deriving Show
-  data Tree_0 = Tree_0 [Data_0] [Cat_0] [Class_0] [Opdecl_0] [Def_0] deriving Show
+  data Tree_0 = Tree_0 [Opdecl_0] [Data_0] [Cat_0] [Class_0] [Def_0] deriving Show
   data Tree_1 = Tree_1 [Name] Tree_0 deriving Show
   data Type_0 = Application_type_0 Type_0 [Type_0] | Name_type_0 Name deriving Show
   data Type_7 = Type_7 Location_0 Type_0 deriving Show
@@ -442,7 +442,7 @@ module Tree where
       parse_op_0 <*>
       parse_name <*>
       parse_int <*>
-      (Lft <$ parse_name_4 "Left" <+> Rght <$ parse_name_4 "Right"))
+      (Lft <$ parse_name_4 "left" <+> Rght <$ parse_name_4 "right"))
   parse_operator :: String -> Parser' ()
   parse_operator x = parse_token (Operator_token x)
   parse_optional :: (Parser' [t] -> Parser' [t]) -> Parser' t -> Parser' [t]
@@ -485,10 +485,10 @@ module Tree where
       parse_many parse_load <*>
       (
         Tree_0 <$>
+        parse_many parse_opdecl <*>
         parse_many parse_data <*>
         parse_many parse_cat <*>
         parse_many parse_class <*>
-        parse_many parse_opdecl <*>
         parse_many parse_def))
   parse_type :: Parser' Type_7
   parse_type = Type_7 <&> parse_type'

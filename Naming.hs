@@ -113,16 +113,18 @@ module Naming where
       Tree_2 ->
       (Locations, Locations, Locations, Map' (Map' Location')) ->
       Err ((Locations, Locations, Locations, Map' (Map' Location')), Tree_4))
-  naming_1 f (Tree_2 a o g j b) (k, l, r, v) =
+  naming_1 f (Tree_2 j a o g b) (k, l, r, v) =
     (
-      naming_datas_1 f a k >>=
-      \(s, e) ->
-        (naming_cats_0 f ((s, r), o) >>=
-        \((d, u), q) ->
-          (
-            naming_classes_0 f g d >>=
-            \(d', e') ->
-              (\m -> \(h, (i, w)) -> ((i, m, u, w), Tree_4 e q e' h)) <$> naming_ops f l j <*> naming_defs_1 f b (d', v))))
+      naming_ops f l j >>=
+      \m ->
+        (
+          naming_datas_1 f a k >>=
+          \(s, e) ->
+            (naming_cats_0 f ((s, r), o) >>=
+            \((d, u), q) ->
+              (
+                naming_classes_0 f g d >>=
+                \(d', e') -> (\(h, (i, w)) -> ((i, m, u, w), Tree_4 e q e' h)) <$> naming_defs_1 f b (d', v)))))
   naming_2 :: String -> Tree_4 -> Locations -> Err Tree_5
   naming_2 a (Tree_4 c b d f) h =
     Tree_5 <$> naming_datas_2 a c h <*> traverse (naming_cat_1 a h) b <*> naming_classes_1 a d h <*> naming_defs_2 a f h

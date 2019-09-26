@@ -45,7 +45,7 @@ module Standard where
   data Op' = Op' Location_0 Op deriving Show
   data Pat_2 = Application_pat_2 Name [Pat_2] | Blank_pat_2 | Name_pat_2 Name deriving Show
   data Status = New | Old deriving (Eq, Show)
-  data Tree_2 = Tree_2 [Data_6] [Cat_1] [Class_7] [Name] [Def_1] deriving Show
+  data Tree_2 = Tree_2 [Name] [Data_6] [Cat_1] [Class_7] [Def_1] deriving Show
   data Tree_3 = Tree_3 [Name] Tree_2 deriving Show
   data Type_5 = Application_type_5 Type_5 Type_5 | Name_type_5 Name deriving Show
   data Type_8 = Type_8 Location_0 Type_5 deriving Show
@@ -114,12 +114,12 @@ module Standard where
           (Name l op, expr') : y' ->
             und_err op ops k (a l) (\op' -> shunting_yard a k (f, g) ops (pop g x expr'' (Op' l op')) expr' y'))
   standard_1 :: (Location_0 -> Location_1) -> Map' Op -> Tree_0 -> Err (Map' Op, Tree_2)
-  standard_1 d f (Tree_0 a l b e c) =
+  standard_1 d f (Tree_0 e a l b c) =
       let
         (i, j) = gather_ops d (old f) e
       in
         (
-          (\m -> \g -> \h -> \k -> (rem_old i, Tree_2 m g h j k)) <$>
+          (\m -> \g -> \h -> \k -> (rem_old i, Tree_2 j m g h k)) <$>
           traverse (std_dat d) a <*>
           traverse (std_cat d (fst <$> i)) l <*>
           traverse (std_cls d) b <*>

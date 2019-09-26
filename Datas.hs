@@ -226,36 +226,36 @@ module Datas where
   kinds =
     Data.Map.fromList
       [
-        ("Arrow", Polykind (Just "K") [] (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "K") (Name_kind_1 "Star")))),
+        ("Arrow", Polykind (Just "k") [] (arrow_kind (Name_kind_1 "k") (arrow_kind (Name_kind_1 "k") (Name_kind_1 "Star")))),
         ("Char", pkind star_kind),
         (
           "ConstructList",
           Polykind
             Nothing
             ["K"]
-            (arrow_kind (Name_kind_1 "K") (arrow_kind (list_kind (Name_kind_1 "K")) (list_kind (Name_kind_1 "K"))))),
+            (arrow_kind (Name_kind_1 "k") (arrow_kind (list_kind (Name_kind_1 "k")) (list_kind (Name_kind_1 "k"))))),
         ("EQ", pkind comparison_kind),
         ("Either", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
-        ("EmptyList", Polykind Nothing ["K"] (list_kind (Name_kind_1 "K"))),
+        ("EmptyList", Polykind Nothing ["k"] (list_kind (Name_kind_1 "k"))),
         ("GT", pkind comparison_kind),
         ("Int", pkind star_kind),
-        ("Just", Polykind Nothing ["K"] (arrow_kind (Name_kind_1 "K") (maybe_kind (Name_kind_1 "K")))),
+        ("Just", Polykind Nothing ["k"] (arrow_kind (Name_kind_1 "k") (maybe_kind (Name_kind_1 "k")))),
         ("LT", pkind comparison_kind),
-        ("Left", Polykind Nothing ["K", "L"] (arrow_kind (Name_kind_1 "K") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
+        ("Left", Polykind Nothing ["k", "l"] (arrow_kind (Name_kind_1 "k") (either_kind (Name_kind_1 "k") (Name_kind_1 "l")))),
         ("List", pkind (arrow_kind star_kind star_kind)),
         ("Maybe", pkind (arrow_kind star_kind star_kind)),
         (
           "MkPair",
           Polykind
             Nothing
-            ["K", "L"]
-            (arrow_kind (Name_kind_1 "K") (arrow_kind (Name_kind_1 "L") (pair_kind (Name_kind_1 "K") (Name_kind_1 "L"))))),
+            ["k", "l"]
+            (arrow_kind (Name_kind_1 "k") (arrow_kind (Name_kind_1 "l") (pair_kind (Name_kind_1 "k") (Name_kind_1 "l"))))),
         ("Nat", pkind star_kind),
         ("Next", pkind (arrow_kind nat_kind nat_kind)),
-        ("Nothing", Polykind Nothing ["K"] (maybe_kind (Name_kind_1 "K"))),
+        ("Nothing", Polykind Nothing ["k"] (maybe_kind (Name_kind_1 "k"))),
         ("Ordering", pkind star_kind),
         ("Pair", pkind (arrow_kind star_kind (arrow_kind star_kind star_kind))),
-        ("Right", Polykind Nothing ["K", "L"] (arrow_kind (Name_kind_1 "L") (either_kind (Name_kind_1 "K") (Name_kind_1 "L")))),
+        ("Right", Polykind Nothing ["k", "l"] (arrow_kind (Name_kind_1 "l") (either_kind (Name_kind_1 "k") (Name_kind_1 "l")))),
         ("Zero", pkind nat_kind)]
   kvars :: [String] -> (Integer, Map' Kind_1, Set String) -> ((Integer, Map' Kind_1, Set String), [String])
   kvars a (b, c, d) =
