@@ -133,9 +133,7 @@ init' =
       fromList [("Ord", fromList [("Int", Language)]), ("Ring", fromList [("Int", Language)])]),
     defs,
     fromList
-      [
-        ("Ord", (["compare"], fromList [("Int", [])])),
-        ("Ring", (["add", "convert", "multiply", "negate"], fromList [("Int", [])]))])
+      [("Ord", (["compare"], fromList [("Int", [])])), ("Ring", (["add", "convert", "multiply"], fromList [("Int", [])]))])
 main :: IO ()
 main = do
   args <- getArgs

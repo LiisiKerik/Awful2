@@ -65,7 +65,7 @@ module Datas where
     deriving Show
   type Types = Map' (Type_2, Status)
   arrow_kind :: Kind_1 -> Kind_1 -> Kind_1
-  arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "Arrow") a)
+  arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "Kind arrow") a)
   arrow_type :: Kind_1 -> Type_1 -> Type_1 -> Type_1
   arrow_type k a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just k) []) a)
   check_cat :: Location_1 -> Map' Cat_4 -> Kind_1 -> Err ()
@@ -726,7 +726,7 @@ module Datas where
             b
             d
             e
-            (Application_kind_1 (Application_kind_1 (Name_kind_1 "Arrow") (Name_kind_1 (show i))) k)
+            (Application_kind_1 (Application_kind_1 (Name_kind_1 "Kind arrow") (Name_kind_1 (show i))) k)
             (Data.Set.insert (show i) s, f, u4) >>=
           \(i', f', b') ->
             (\(i2, f2, c') -> (i2, f2, Application_type_1 b' c')) <$> type_eqs m i' c d e (Name_kind_1 (show i)) f')

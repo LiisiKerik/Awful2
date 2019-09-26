@@ -2,6 +2,7 @@
 infixr 9 & = MkPair
 infixl 7 * = times
 infixl 6 + = add
+infixr 5 ++ = cat
 infixr 9 . = compose
 infixr 5 : = ConstructList
 data Bool = algebraic {False, True}
@@ -10,23 +11,30 @@ data List [t :: Star] = algebraic {EmptyList, ConstructList t (List t)}
 data Maybe [t :: Star] = algebraic {Nothing, Just t}
 data Pair [t :: Star, u :: Star] = struct MkPair (fst :: t, snd :: u)
 data Unit = struct MkUnit
+class Applicative {f :: Star -> Star} <Functor [[Star, Star]] f> (
+  ap [t :: Star, u :: Star] :: f (t -> u) -> f t -> f u,
+  pure [t :: Star] :: t -> f t)
+class Bifunctor [[k, l, m]] <<Cat k, Cat l, Cat m>> {f :: k -> l -> m} (
+  bimap [t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
 class Field {t :: Star} <Ring t> (inverse :: t -> Maybe t)
+class Functor [[k, l]] <<Cat k, Cat l>> {f :: k -> l} (fmap [t :: k, u :: k] :: (t -> u) -> f t -> f u)
+def cat [t :: Star] (x :: List t, y :: List t) :: List t = case x of {EmptyList -> y, z : a -> z : a ++ y}
+def left [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: k -> l -> m, v :: l] <Bifunctor [[k, l, m]] f> (
+  g :: t -> u) :: f t v -> f u v =
+    bimap g id
 def negate [t :: Star] <Ring t> (x :: t) :: t = convert -1 * x
+def right [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: l -> k -> m, v :: l] <Bifunctor [[l, k, m]] f> ::
+  (t -> u) -> f v t -> f v u =
+    bimap id
 --------------------------------------------------------------------------------------------------------------------------------
 
 
 {-
-class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
-  ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
-class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f :: k -> l -> m}(
-  bimap[t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
 class Container{f :: Star -> Star}(
   empty[t :: Star] :: f t,
   filter[t :: Star] :: (t -> Bool) -> f t -> f t,
   size[t :: Star] :: f t -> Int)
 class Finite{t :: Star}<Ord>(list :: List t)
-class Functor{f :: Star -> Star}(fmap [t :: Star, u :: Star] :: (t -> u) -> f t -> f u)
-class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
 class Monad{f :: Star -> Star}<Applicative>(bind[t :: Star, u :: Star] :: f t -> (t -> f u) -> f u)
 
 TODO:
@@ -46,9 +54,7 @@ defineerida join kaudu?
 
 class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor f> (join [t :: k] :: f (f t) -> f t)
 
-operator ++ concat 5 Right
 operator - minus 6 Left
-operator . compose 9 Right
 operator <$> fmap 4 Left
 operator <*> ap 4 Left
 operator >>= bind 1 Left
