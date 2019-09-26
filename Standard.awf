@@ -1,18 +1,21 @@
 --------------------------------------------------------------------------------------------------------------------------------
+infixr 9 & = MkPair
 infixl 7 * = times
 infixl 6 + = add
 infixr 9 . = compose
+infixr 5 : = ConstructList
+data Bool = algebraic {False, True}
 data Either [t :: Star, u :: Star] = algebraic {Left t, Right u}
 data List [t :: Star] = algebraic {EmptyList, ConstructList t (List t)}
 data Maybe [t :: Star] = algebraic {Nothing, Just t}
 data Pair [t :: Star, u :: Star] = struct MkPair (fst :: t, snd :: u)
 data Unit = struct MkUnit
+class Field {t :: Star} <Ring t> (inverse :: t -> Maybe t)
 def negate [t :: Star] <Ring t> (x :: t) :: t = convert -1 * x
 --------------------------------------------------------------------------------------------------------------------------------
 
 
 {-
-data Bool = algebraic {False, True}
 class Applicative{f :: Star -> Star}<Functor[[Star, Star]]>(
   ap[t :: Star, u :: Star] :: f (t -> u) -> f t -> f u, return[t :: Star] :: t -> f t)
 class Bifunctor[[k, l, m]]<<Cat k, Cat l, Cat m>>{f :: k -> l -> m}(
@@ -21,7 +24,6 @@ class Container{f :: Star -> Star}(
   empty[t :: Star] :: f t,
   filter[t :: Star] :: (t -> Bool) -> f t -> f t,
   size[t :: Star] :: f t -> Int)
-class Field{t :: Star}<Ring>(inverse :: t -> Maybe t)
 class Finite{t :: Star}<Ord>(list :: List t)
 class Functor{f :: Star -> Star}(fmap [t :: Star, u :: Star] :: (t -> u) -> f t -> f u)
 class Functor[[k, l]]<<Cat k, Cat l>>{f :: k -> l}(fmap[t :: k, u :: k] :: (t -> u) -> f t -> f u)
@@ -44,12 +46,9 @@ defineerida join kaudu?
 
 class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor f> (join [t :: k] :: f (f t) -> f t)
 
-operator * multiply 7 Left
-operator + add 6 Left
 operator ++ concat 5 Right
 operator - minus 6 Left
 operator . compose 9 Right
-operator : ConstructList 5 Right
 operator <$> fmap 4 Left
 operator <*> ap 4 Left
 operator >>= bind 1 Left

@@ -10,7 +10,7 @@ module Standard where
   data Cat_1 =
     Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_6, Expression_9, Expression_9)
       deriving Show
-  data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method_9] deriving Show
+  data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe Constraint_0) [Method_9] deriving Show
   data Def_1 =
     Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
     Instance_1

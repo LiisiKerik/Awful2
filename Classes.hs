@@ -100,11 +100,17 @@ module Classes where
             type_kind_7 a i2 Star_kind d >>=
             \h ->
               (
-                type_inh b [b] ((\(Name _ t4, _) -> t4) <$> g') x2 *>
+                type_inh b [b] ((\(Constraint_0 (Name _ t4) _ _) -> t4) <$> g') x2 *>
                 (
                   (case g' of
                     Nothing -> Right Nothing
-                    Just (t4, m2) -> (\x3 -> Just (t4, x3)) <$> traverse (type_kind_7 a i Star_kind) m2) >>=
+                    Just (Constraint_0 t4 m2 (Name d3 f5)) ->
+                      (
+                        (\x3 -> Just (t4, x3)) <$>
+                        traverse (type_kind_7 a i Star_kind) m2 <*
+                        case c == f5 of
+                          False -> Left ("Undefined type variable " ++ f5 ++ location' (a d3))
+                          True -> Right ())) >>=
                   \g3 ->
                     (
                       (\g ->
@@ -118,7 +124,7 @@ module Classes where
                               ins_new b (h0, t8, h) i',
                               ins_new b (Class_5 h0 t8 h (first (\(Name _ t4) -> t4) <$> g3) g2) j0,
                               case g' of
-                                Just (Name _ t0, _) -> Data.Map.insert b t0 x2
+                                Just (Constraint_0 (Name _ t0) _ _) -> Data.Map.insert b t0 x2
                                 Nothing -> x2))) <$>
                       type_methods_0 a e (Data.Map.insert c (pkind h) j) i2 m9)))))
   type_class_1 ::

@@ -21,7 +21,7 @@ module Tree where
       [Name]
       ((Location_0, Patn), (Location_0, Patn), Data_br_0, (Pat, Expression_0), (Pat, Expression_0))
         deriving Show
-  data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method] deriving Show
+  data Class_0 = Class_0 Name [Name] [Name] (Name, Kind_0) (Maybe Constraint_0) [Method] deriving Show
   data Constraint_0 = Constraint_0 Name [Kind_0] Name deriving Show
   data Data_0 = Data_0 Name [(Name, Kind_0)] Data_br_0 deriving Show
   data Data_br_0 =
@@ -236,7 +236,7 @@ module Tree where
       parse_kind_vars <*>
       parse_cat_constrs <*>
       parse_curlies ((,) <$> parse_low <* parse_colon <*> parse_kind) <*>
-      (Just <$ parse_operator "<" <*> ((,) <$> parse_cap <*> parse_kinds') <* parse_operator ">" <+> pure Nothing) <*>
+      (Just <$ parse_operator "<" <*> parse_constraint <* parse_operator ">" <+> pure Nothing) <*>
       parse_optional parse_round parse_method)
   parse_colon :: Parser' ()
   parse_colon = parse_operator "::"

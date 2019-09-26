@@ -14,8 +14,8 @@ module Naming where
   data Cat_3 =
     Cat_3 Location_0 (Name, [String]) [Name] ((Location_0, Patn'), (Location_0, Patn'), Data_br_2, Expression_1, Expression_1)
       deriving Show
-  data Class_1 = Class_1 String [Name] [Name] (Name, Kind_0) (Maybe (Name, [Kind_0])) [Method_1] deriving Show
-  data Class_2 = Class_2 String [String] [Name] (String, Kind_0) (Maybe (Name, [Kind_0])) [Method_2] deriving Show
+  data Class_1 = Class_1 String [Name] [Name] (Name, Kind_0) (Maybe Constraint_0) [Method_1] deriving Show
+  data Class_2 = Class_2 String [String] [Name] (String, Kind_0) (Maybe Constraint_0) [Method_2] deriving Show
   data Data_1 = Data_1 String [(Name, Kind_0)] Data_br_1 deriving Show
   data Data_2 = Data_2 String [(String, Kind_0)] Data_br_2 deriving Show
   data Data_br_1 =
