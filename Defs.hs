@@ -32,7 +32,7 @@ module Defs where
       [[String]]
         deriving Show
   data Eqtn = Kind_eq Kind_1 Kind_1 | Type_eq Type_1 Type_1 deriving Show
-  data Eqtns = Eqtns [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
+  data Eqtns = Eqtns (Set String, Set String) [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
   data Inst = Inst [Kind_1] [[String]] deriving Show
   data Pattern_5 =
@@ -203,7 +203,7 @@ module Defs where
   instances =
     Data.Map.fromList [("Ord", Data.Map.fromList [("Int", Inst [] [])]), ("Ring", Data.Map.fromList [("Int", Inst [] [])])]
   jeqs :: Eqtns -> Eqtns -> Eqtns
-  jeqs (Eqtns a b c) (Eqtns d e f) = Eqtns (a ++ d) (b ++ e) (c ++ f)
+  jeqs (Eqtns g a b c) (Eqtns h d e f) = Eqtns (s_union g h) (a ++ d) (b ++ e) (c ++ f)
   kindvar :: String -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
   kindvar a (b, c, e) =
     let
@@ -525,12 +525,12 @@ module Defs where
       Type_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err ((Alg_pat_2, Typedexpr), (Set String, Set String), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
+      Err ((Alg_pat_2, Typedexpr), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
   type_case a c d f (g, h) i j k =
     (
       get_pattern_type (Location_1 c) a (d, f) g i >>=
       \((m, n, s, t), (o, y)) ->
-        (\(u, v2, v, w, r0) -> ((o, u), s_union n v2, jeqs (Eqtns s [] []) v, w, r0, y)) <$> type_expression a c m t h j k)
+        (\(u, v, w, r0) -> ((o, u), jeqs (Eqtns n s [] []) v, w, r0, y)) <$> type_expression a c m t h j k)
   type_cases ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
@@ -544,19 +544,17 @@ module Defs where
       Err
         (
           [(Alg_pat_2, Typedexpr)],
-          (Set String, Set String),
           Eqtns,
           (Integer, Integer),
           [(Location_0, [Alg_pat_3])],
           [Alg_pat_3]))
   type_cases b c d f g n h i =
     case g of
-      [] -> Right ([], (Data.Set.empty, Data.Set.empty), Eqtns [] [] [], d, [], [])
+      [] -> Right ([], Eqtns (Data.Set.empty, Data.Set.empty) [] [] [], d, [], [])
       l : m ->
         (
           type_case b c d f l n h i >>=
-          \(o, p2, p, q, r0, r') ->
-            (\(r, s2, s, t, r1, w) -> (o : r, s_union p2 s2, jeqs p s, t, r0 ++ r1, r' : w)) <$> type_cases b c q f m n h i)
+          \(o, p, q, r0, r') -> (\(r, s, t, r1, w) -> (o : r, jeqs p s, t, r0 ++ r1, r' : w)) <$> type_cases b c q f m n h i)
   type_cat_2 ::
     (
       (
@@ -936,7 +934,7 @@ module Defs where
     in
       (
         type_expression (a4, c4, c) a (0, w) e f h b >>=
-        \(g, i, Eqtns j q8 x, _, x3) ->
+        \(g, Eqtns i j q8 x, _, x3) ->
           (
             solvesys
               (\w2 -> \eq ->
@@ -982,7 +980,7 @@ module Defs where
       Expression_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err (Typedexpr, (Set String, Set String), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
+      Err (Typedexpr, Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
   type_expression (x1, v', v) r (o', o) d b e r7 =
     let
       ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
@@ -991,10 +989,8 @@ module Defs where
         Application_expression_1 c g ->
           (
             type_expression (x1, v', v) r (o', o2) d c (function_type t4 e) r7 >>=
-            \(i, j2, j, p, d7) ->
-              (
-                (\(l, m2, m, q, e') -> (Application_texpr i l, s_union j2 m2, jeqs j m, q, d7 ++ e')) <$>
-                type_expression (x1, v', v) r p d g t4 r7))
+            \(i, j, p, d7) ->
+              (\(l, m, q, e') -> (Application_texpr i l, jeqs j m, q, d7 ++ e')) <$> type_expression (x1, v', v) r p d g t4 r7)
         Function_expression_1 c g ->
           let
             ((a, h), i) = new_typevar x1 (o2, f2) star_kind
@@ -1003,22 +999,17 @@ module Defs where
               type_pat r (x1, v', v) c t4 d (o', a) >>=
               \(j, k, l, m, n) ->
                 (
-                  (\(p, q, s, t, u) ->
-                    (
-                      Function_texpr j p,
-                      s_union (s_union (Data.Set.empty, h) m) q,
-                      jeqs (Eqtns (Type_eq t4 i : n) [] []) s,
-                      t,
-                      u)) <$>
+                  (\(p, s, t, u) ->
+                    (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) [] []) s, t, u)) <$>
                   type_expression (x1, v', v) r l k g i r7))
         Int_expression_1 c ->
-          Right (Int_texpr c, (Data.Set.empty, Data.Set.empty), Eqtns [Type_eq e int_type] [] [], (o', o), [])
+          Right (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [], (o', o), [])
         Match_expression_1 a7 c g ->
           (
             type_expression (x1, v', v) r (o', o2) d c t4 r7 >>=
-            \(k, m2, m, n, n2) ->
+            \(k, m, n, n2) ->
               (
-                (\(q, u2, u, x, n3, n4) -> (Match_texpr k q, s_union m2 u2, jeqs m u, x, n2 ++ [(a7, n4)] ++ n3)) <$>
+                (\(q, u, x, n3, n4) -> (Match_texpr k q, jeqs m u, x, n2 ++ [(a7, n4)] ++ n3)) <$>
                 type_cases (x1, v', v) r n d g t4 e r7))
         Name_expression_1 (Name a7 c) ->
           und_err
@@ -1040,8 +1031,11 @@ module Defs where
                     case x0 of
                       Nothing -> Name_texpr_1 c (second snd <$> x7)
                       Just (Constraint_1 y0 _ _) -> Name_texpr_0 c y0 (head u7),
-                    (Data.Set.fromList f6, kl),
-                    Eqtns [Type_eq e (repl' p (repkinds_type d1 j))] (kindrep' d1 <$> Name_kind_1 <$> m3) x7,
+                    Eqtns
+                      (Data.Set.fromList f6, kl)
+                      [Type_eq e (repl' p (repkinds_type d1 j))]
+                      (kindrep' d1 <$> Name_kind_1 <$> m3)
+                      x7,
                     (o9, f0),
                     []))
   type_exprs ::
