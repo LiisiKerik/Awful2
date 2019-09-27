@@ -32,7 +32,7 @@ module Defs where
       [[String]]
         deriving Show
   data Eqtn = Kind_eq Kind_1 Kind_1 | Type_eq Type_1 Type_1 deriving Show
-  data Eqtns = Eqtns (Set String, Set String) [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
+  data Eqtns = Eqtns [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
   data Inst = Inst [Kind_1] [[String]] deriving Show
   data Pattern_5 =
@@ -141,11 +141,11 @@ module Defs where
     (
       (Location_0 -> Location_1) ->
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
-      ((Integer, Integer), (Set String, Set String), [Eqtn], Map' Type_2) ->
+      ((Integer, Integer), (Set String, Set String), Map' Type_2) ->
       Alg_pat_1 ->
       Type_1 ->
       Err (((Integer, Integer), (Set String, Set String), [Eqtn], Map' Type_2), (Alg_pat_2, Alg_pat_3)))
-  get_pattern_type a (f3, b', b) (d, e, f, n) g h =
+  get_pattern_type a (f3, b', b) (d, e, n) g h =
     case g of
       Application_alg_pat_1 (Name o i) j ->
         und_err
@@ -159,28 +159,35 @@ module Defs where
               f2 x1 = type_rep (kindrep' t2) (repl' r x1)
             in
               (
-                second (bimap (Application_alg_pat_2 i) (Struct_alg_pat_3 i)) <$>
-                get_pattern_types a (f3, b', b) (q, s, Type_eq h (f2 m) : f, n) j (f2 <$> x) (Name o i)))
-      Blank_alg_pat_1 -> Right ((d, e, f, n), (Blank_alg_pat_2, Blank_alg_pat_3))
-      Int_alg_pat_1 i -> Right ((d, e, Type_eq h int_type : f, n), (Int_alg_pat_2 i, Int_alg_pat_3 i))
+                bimap
+                  (\(y0, y1, y2, y3) -> (y0, y1, Type_eq h (f2 m) : y2, y3))
+                  (bimap (Application_alg_pat_2 i) (Struct_alg_pat_3 i)) <$>
+                get_pattern_types a (f3, b', b) (q, s, n) j (f2 <$> x) (Name o i)))
+      Blank_alg_pat_1 -> Right ((d, e, [], n), (Blank_alg_pat_2, Blank_alg_pat_3))
+      Int_alg_pat_1 i -> Right ((d, e, [Type_eq h int_type], n), (Int_alg_pat_2 i, Int_alg_pat_3 i))
       Name_alg_pat_1 i ->
-        Right ((d, e, f, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] h) n), (Name_alg_pat_2 i, Blank_alg_pat_3))
+        Right ((d, e, [], Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] h) n), (Name_alg_pat_2 i, Blank_alg_pat_3))
   get_pattern_types ::
     (
       (Location_0 -> Location_1) ->
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
-      ((Integer, Integer), (Set String, Set String), [Eqtn], Map' Type_2) ->
+      ((Integer, Integer), (Set String, Set String), Map' Type_2) ->
       [Alg_pat_1] ->
       [Type_1] ->
       Name ->
       Err (((Integer, Integer), (Set String, Set String), [Eqtn], Map' Type_2), ([Alg_pat_2], [Alg_pat_3])))
-  get_pattern_types a b d e f (Name m n) =
+  get_pattern_types a b (d0, d1, d2) e f (Name m n) =
     case (e, f) of
-      ([], []) -> Right (d, ([], []))
+      ([], []) -> Right ((d0, d1, [], d2), ([], []))
       ([], _) -> Left ("Constructor " ++ n ++ location (a m) ++ " has been given too few arguments.")
       (_, []) -> Left ("Constructor " ++ n ++ location (a m) ++ " has been given too many arguments.")
       (g : h, i : j) ->
-        get_pattern_type a b d g i >>= \(k, (l, t)) -> second (bimap ((:) l) ((:) t)) <$> get_pattern_types a b k h j (Name m n)
+        (
+          get_pattern_type a b (d0, d1, d2) g i >>=
+          \((k0, k1, k2, k3), (l, t)) ->
+            (
+              bimap (\(l0, l1, l2, l3) -> (l0, l1, k2 ++ l2, l3)) (bimap ((:) l) ((:) t)) <$>
+              get_pattern_types a b (k0, k1, k3) h j (Name m n)))
   getarg :: [t] -> Nat -> t
   getarg a b =
     case a of
@@ -192,6 +199,8 @@ module Defs where
   instances :: Map' (Map' Inst)
   instances =
     Data.Map.fromList [("Ord", Data.Map.fromList [("Int", Inst [] [])]), ("Ring", Data.Map.fromList [("Int", Inst [] [])])]
+  jeqs :: Eqtns -> Eqtns -> Eqtns
+  jeqs (Eqtns a b c) (Eqtns d e f) = Eqtns (a ++ d) (b ++ e) (c ++ f)
   kindvar :: String -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
   kindvar a (b, c, e) =
     let
@@ -506,36 +515,45 @@ module Defs where
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       String ->
       (Integer, Integer) ->
-      Eqtns ->
+      (Set String, Set String) ->
       Map' Type_2 ->
       (Alg_pat_1, Expression_1) ->
       Type_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err ((Alg_pat_2, Typedexpr), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
-  type_case a c d (Eqtns e p y' q) f (g, h) i j k =
+      Err ((Alg_pat_2, Typedexpr), (Set String, Set String), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], Alg_pat_3))
+  type_case a c d e f (g, h) i j k =
     (
-      get_pattern_type (Location_1 c) a (d, e, p, f) g i >>=
-      \((m, n, s, t), (o, y)) -> (\(u, v, w, r0) -> ((o, u), v, w, r0, y)) <$> type_expression a c m (Eqtns n s y' q) t h j k)
+      get_pattern_type (Location_1 c) a (d, e, f) g i >>=
+      \((m, n, s, t), (o, y)) ->
+        (\(u, v2, v, w, r0) -> ((o, u), v2, jeqs (Eqtns s [] []) v, w, r0, y)) <$> type_expression a c m n t h j k)
   type_cases ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       String ->
       (Integer, Integer) ->
-      Eqtns ->
+      (Set String, Set String) ->
       Map' Type_2 ->
       [(Alg_pat_1, Expression_1)] ->
       Type_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err ([(Alg_pat_2, Typedexpr)], Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])], [Alg_pat_3]))
-  type_cases b c d e f g n h i =
+      Err
+        (
+          [(Alg_pat_2, Typedexpr)],
+          (Set String, Set String),
+          Eqtns,
+          (Integer, Integer),
+          [(Location_0, [Alg_pat_3])],
+          [Alg_pat_3]))
+  type_cases b c d e2 f g n h i =
     case g of
-      [] -> Right ([], e, d, [], [])
+      [] -> Right ([], e2, Eqtns [] [] [], d, [], [])
       l : m ->
         (
-          type_case b c d e f l n h i >>=
-          \(o, p, q, r0, r') -> (\(r, s, t, r1, w) -> (o : r, s, t, r0 ++ r1, r' : w)) <$> type_cases b c q p f m n h i)
+          type_case b c d e2 f l n h i >>=
+          \(o, p2, p, q, r0, r') ->
+            (\(r, s2, s, t, r1, w) -> (o : r, s2, jeqs p s, t, r0 ++ r1, r' : w)) <$> type_cases b c q p2 f m n h i)
   type_cat_2 ::
     (
       (
@@ -914,8 +932,8 @@ module Defs where
       n = " in " ++ k
     in
       (
-        type_expression (a4, c4, c) a (0, w) (Eqtns (Data.Set.empty, Data.Set.empty) [] [] []) e f h b >>=
-        \(g, Eqtns i j q8 x, _, x3) ->
+        type_expression (a4, c4, c) a (0, w) (Data.Set.empty, Data.Set.empty) e f h b >>=
+        \(g, i, Eqtns j q8 x, _, x3) ->
           (
             solvesys
               (\w2 -> \eq ->
@@ -957,48 +975,43 @@ module Defs where
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       String ->
       (Integer, Integer) ->
-      Eqtns ->
+      (Set String, Set String) ->
       Map' Type_2 ->
       Expression_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err (Typedexpr, Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
-  type_expression (x1, v', v) r (o', o) (Eqtns (f4, f) h mi c') d b e (r7, m8) =
+      Err (Typedexpr, (Set String, Set String), Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
+  type_expression (x1, v', v) r (o', o) (f4, f) d b e (r7, m8) =
     let
       ((o2, f2), t4) = new_typevar x1 (o, f) star_kind
     in
       case b of
         Application_expression_1 c g ->
           (
-            type_expression (x1, v', v) r (o', o2) (Eqtns (f4, f2) h mi c') d c (function_type t4 e) (r7, m8) >>=
-            \(i, j, p, d7) ->
-              (\(l, m, q, e') -> (Application_texpr i l, m, q, d7 ++ e')) <$> type_expression (x1, v', v) r p j d g t4 (r7, m8))
+            type_expression (x1, v', v) r (o', o2) (f4, f2) d c (function_type t4 e) (r7, m8) >>=
+            \(i, j2, j, p, d7) ->
+              (
+                (\(l, m2, m, q, e') -> (Application_texpr i l, m2, jeqs j m, q, d7 ++ e')) <$>
+                type_expression (x1, v', v) r p j2 d g t4 (r7, m8)))
         Function_expression_1 c g ->
           (
-            type_pat r (x1, v', v) c t4 d (o', o2) (f4, f2) h >>=
+            type_pat r (x1, v', v) c t4 d (o', o2) (f4, f2) >>=
             \(a6, b6, (c2, c6), (f5, d6), f6) ->
               let
                 ((c3, k5), t9) = new_typevar x1 (c6, d6) star_kind
               in
                 (
-                  (\(a', b', d', f7) -> (Function_texpr a6 a', b', d', f7)) <$>
-                  type_expression
-                    (x1, v', v)
-                    r
-                    (c2, c3)
-                    (Eqtns (f5, k5) (Type_eq e (function_type t4 t9) : f6) mi c')
-                    b6
-                    g
-                    t9
-                    (r7, m8)))
-        Int_expression_1 c -> Right (Int_texpr c, Eqtns (f4, f) (Type_eq e int_type : h) mi c', (o', o), [])
+                  (\(a', b7, b', d', f7) ->
+                    (Function_texpr a6 a', b7, jeqs (Eqtns (Type_eq e (function_type t4 t9) : f6) [] []) b', d', f7)) <$>
+                  type_expression (x1, v', v) r (c2, c3) (f5, k5) b6 g t9 (r7, m8)))
+        Int_expression_1 c -> Right (Int_texpr c, (f4, f), Eqtns [Type_eq e int_type] [] [], (o', o), [])
         Match_expression_1 a7 c g ->
           (
-            type_expression (x1, v', v) r (o', o2) (Eqtns (f4, f2) h mi c') d c t4 (r7, m8) >>=
-            \(k, m, n, n2) ->
+            type_expression (x1, v', v) r (o', o2) (f4, f2) d c t4 (r7, m8) >>=
+            \(k, m2, m, n, n2) ->
               (
-                (\(q, u, x, n3, n4) -> (Match_texpr k q, u, x, n2 ++ [(a7, n4)] ++ n3)) <$>
-                type_cases (x1, v', v) r n m d g t4 e (r7, m8)))
+                (\(q, u2, u, x, n3, n4) -> (Match_texpr k q, u2, jeqs m u, x, n2 ++ [(a7, n4)] ++ n3)) <$>
+                type_cases (x1, v', v) r n m2 d g t4 e (r7, m8)))
         Name_expression_1 (Name a7 c) ->
           und_err
             c
@@ -1019,11 +1032,8 @@ module Defs where
                     case x0 of
                       Nothing -> Name_texpr_1 c (second snd <$> x7)
                       Just (Constraint_1 y0 _ _) -> Name_texpr_0 c y0 (head u7),
-                    Eqtns
-                      (Data.Set.union f4 (Data.Set.fromList f6), kl)
-                      ([Type_eq e (repl' p (repkinds_type d1 j))] ++ h)
-                      ((Name_kind_1 <$> m3) ++ mi)
-                      (x7 ++ c'),
+                    (Data.Set.union f4 (Data.Set.fromList f6), kl),
+                    Eqtns [Type_eq e (repl' p (repkinds_type d1 j))] (Name_kind_1 <$> m3) x7,
                     (o9, f0),
                     []))
   type_exprs ::
@@ -1100,9 +1110,8 @@ module Defs where
       Map' Type_2 ->
       (Integer, Integer) ->
       (Set String, Set String) ->
-      [Eqtn] ->
       Err (Pat_1, Map' Type_2, (Integer, Integer), (Set String, Set String), [Eqtn]))
-  type_pat a (d2, b0, b) c d e f g h =
+  type_pat a (d2, b0, b) c d e f g =
     case c of
       Application_pat' (Name i j) k ->
         und_err
@@ -1118,11 +1127,11 @@ module Defs where
                   f2 x1 = type_rep (kindrep' t2) (repl' r x1)
                 in
                   (
-                    (\(t, u, v, w, x) -> (Application_pat_1 t, u, v, w, x)) <$>
-                    type_pats a (d2, b0, b) k (f2 <$> n) e q s (Type_eq d (f2 o) : h) (Name i j))
+                    (\(t, u, v, w, x) -> (Application_pat_1 t, u, v, w, Type_eq d (f2 o) : x)) <$>
+                    type_pats a (d2, b0, b) k (f2 <$> n) e q s (Name i j))
               _ -> Left ("Constructor " ++ j ++ location (Location_1 a i) ++ " is not a struct constructor."))
-      Blank_pat' -> Right (Blank_pat_1, e, f, g, h)
-      Name_pat' i -> Right (Name_pat_1 i, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] d) e, f, g, h)
+      Blank_pat' -> Right (Blank_pat_1, e, f, g, [])
+      Name_pat' i -> Right (Name_pat_1 i, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] d) e, f, g, [])
   type_pats ::
     (
       String ->
@@ -1132,25 +1141,24 @@ module Defs where
       Map' Type_2 ->
       (Integer, Integer) ->
       (Set String, Set String) ->
-      [Eqtn] ->
       Name ->
       Err ([Pat_1], Map' Type_2, (Integer, Integer), (Set String, Set String), [Eqtn]))
-  type_pats a b d e f g h i (Name x y) =
+  type_pats a b d e f g h (Name x y) =
     let
       z a' = Left ("Constructor " ++ y ++ location (Location_1 a x) ++ " has been given too " ++ a' ++ " arguments.")
     in
       case d of
         [] ->
           case e of
-            [] -> Right ([], f, g, h, i)
+            [] -> Right ([], f, g, h, [])
             _ -> z "few"
         j : k ->
           case e of
             [] -> z "many"
             m : n ->
               (
-                type_pat a b j m f g h i >>=
-                \(c, o, p, q, r) -> (\(s, t, u, v, w) -> (c : s, t, u, v, w)) <$> type_pats a b k n o p q r (Name x y))
+                type_pat a b j m f g h >>=
+                \(c, o, p, q, r) -> (\(s, t, u, v, w) -> (c : s, t, u, v, r ++ w)) <$> type_pats a b k n o p q (Name x y))
   typestring :: Type_1 -> [Type_1] -> (String, [Type_1])
   typestring a d =
     case a of
