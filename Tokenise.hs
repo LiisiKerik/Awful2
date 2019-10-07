@@ -17,7 +17,7 @@ module Tokenise where
   data Delimiter =
     Comma_delimiter | Left_round_delimiter | Left_square_delimiter | Right_round_delimiter | Right_square_delimiter
       deriving Show
-  type Err t = Either String t
+  type Err = Either String
   data Location_0 = Location_0 Integer Integer deriving (Eq, Ord, Show)
   data Location_1 = Location_1 String Location_0 deriving Show
   data Token_0 =

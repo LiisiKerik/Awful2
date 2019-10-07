@@ -13,6 +13,7 @@ module Defs where
   import Naming
   import Standard
   import Tokenise
+  import Transf
   import Tree
   data Alg_pat_3 = Blank_alg_pat_3 | Int_alg_pat_3 Integer | Struct_alg_pat_3 String [Alg_pat_3] deriving Show
   data Def_4 =
@@ -530,7 +531,7 @@ module Defs where
     (
       get_pattern_type (Location_1 c) a (d, f) g i >>=
       \((m, n, s, t), (o, y)) ->
-        (\(u, v, w, r0) -> ((o, u), jeqs (Eqtns n s [] []) v, w, r0, y)) <$> type_expression a c m t h j k)
+        (\(w, (u, v, r0)) -> ((o, u), jeqs (Eqtns n s [] []) v, w, r0, y)) <$> transf (type_expression a c t h j k) m)
   type_cases ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
@@ -933,8 +934,8 @@ module Defs where
       n = " in " ++ k
     in
       (
-        type_expression (a4, c4, c) a (0, w) e f h b >>=
-        \(g, Eqtns i j q8 x, _, x3) ->
+        transf (type_expression (a4, c4, c) a e f h b) (0, w) >>=
+        \(_, (g, Eqtns i j q8 x, x3)) ->
           (
             solvesys
               (\w2 -> \eq ->
@@ -975,69 +976,88 @@ module Defs where
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       String ->
-      (Integer, Integer) ->
       Map' Type_2 ->
       Expression_1 ->
       Type_1 ->
       (Map' Polykind, Map' Kind) ->
-      Err (Typedexpr, Eqtns, (Integer, Integer), [(Location_0, [Alg_pat_3])]))
-  type_expression (x1, v', v) r (o', o) d b e r7 =
-    let
-      ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
-    in
-      case b of
-        Application_expression_1 c g ->
-          (
-            type_expression (x1, v', v) r (o', o2) d c (function_type t4 e) r7 >>=
-            \(i, j, p, d7) ->
-              (\(l, m, q, e') -> (Application_texpr i l, jeqs j m, q, d7 ++ e')) <$> type_expression (x1, v', v) r p d g t4 r7)
-        Function_expression_1 c g ->
-          let
-            ((a, h), i) = new_typevar x1 (o2, f2) star_kind
-          in
-            (
-              type_pat r (x1, v', v) c t4 d (o', a) >>=
-              \(j, k, l, m, n) ->
-                (
-                  (\(p, s, t, u) ->
-                    (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) [] []) s, t, u)) <$>
-                  type_expression (x1, v', v) r l k g i r7))
-        Int_expression_1 c ->
-          Right (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [], (o', o), [])
-        Match_expression_1 a7 c g ->
-          (
-            type_expression (x1, v', v) r (o', o2) d c t4 r7 >>=
-            \(k, m, n, n2) ->
+      Transf (Integer, Integer) Err (Typedexpr, Eqtns, [(Location_0, [Alg_pat_3])]))
+  type_expression (x1, v', v) r d b e r7 =
+    case b of
+      Application_expression_1 c g ->
+        Transf
+          (\(o', o) ->
+            let
+              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
+            in
               (
-                (\(q, u, x, n3, n4) -> (Match_texpr k q, jeqs m u, x, n2 ++ [(a7, n4)] ++ n3)) <$>
-                type_cases (x1, v', v) r n d g t4 e r7))
-        Name_expression_1 (Name a7 c) ->
-          und_err
-            c
-            d
-            "variable"
-            (Location_1 r a7)
-            (\(Type_2 m2 i3 m3 i x0 a' j) ->
-              let
-                a8 = maybeToList m2 ++ i3
-                o9 = o' + fromIntegral (length a8)
-                f6 = show <$> [o' .. o9 - 1]
-                d1 = Data.Map.fromList (zip a8 (Name_kind_1 <$> f6))
-                ((f0, p, kl), u7) = typevar' (x1, v') (second (kindrep' d1) <$> i) (o, Data.Map.empty, Data.Set.empty)
-                x7 = (\(Constraint_1 a0 _ b0) -> (a0, (Name a7 c, p ! b0))) <$> a'
-              in
-                Right
+                transf (type_expression (x1, v', v) r d c (function_type t4 e) r7) (o', o2) >>=
+                \(p, (i, j, d7)) ->
+                  transf
+                    (
+                      (\(l, m, e') ->
+                        (Application_texpr i l, jeqs (Eqtns (Data.Set.empty, f2) [] [] []) (jeqs j m), d7 ++ e')) <$>
+                      type_expression (x1, v', v) r d g t4 r7)
+                    p))
+      Function_expression_1 c g ->
+        Transf
+          (\(o', o) ->
+            let
+              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
+              ((a, h), i) = new_typevar x1 (o2, f2) star_kind
+            in
+              (
+                type_pat r (x1, v', v) c t4 d (o', a) >>=
+                \(j, k, l, m, n) ->
+                  transf
+                    (
+                      (\(p, s, u) ->
+                        (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) [] []) s, u)) <$>
+                      type_expression (x1, v', v) r k g i r7)
+                    l))
+      Int_expression_1 c -> return (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [], [])
+      Match_expression_1 a7 c g ->
+        Transf
+          (\(o', o) ->
+            let
+              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
+            in
+              (
+                transf (type_expression (x1, v', v) r d c t4 r7) (o', o2) >>=
+                \(n, (k, m, n2)) ->
                   (
-                    case x0 of
-                      Nothing -> Name_texpr_1 c (second snd <$> x7)
-                      Just (Constraint_1 y0 _ _) -> Name_texpr_0 c y0 (head u7),
-                    Eqtns
-                      (Data.Set.fromList f6, kl)
-                      [Type_eq e (repl' p (repkinds_type d1 j))]
-                      (kindrep' d1 <$> Name_kind_1 <$> m3)
-                      x7,
-                    (o9, f0),
-                    []))
+                    (\(q, u, x, n3, n4) ->
+                      (x, (Match_texpr k q, jeqs (Eqtns (Data.Set.empty, f2) [] [] []) (jeqs m u), n2 ++ [(a7, n4)] ++ n3))) <$>
+                    type_cases (x1, v', v) r n d g t4 e r7)))
+      Name_expression_1 (Name a7 c) ->
+        Transf
+          (\(o', o) ->
+            und_err
+              c
+              d
+              "variable"
+              (Location_1 r a7)
+              (\(Type_2 m2 i3 m3 i x0 a' j) ->
+                let
+                  a8 = maybeToList m2 ++ i3
+                  o9 = o' + fromIntegral (length a8)
+                  f6 = show <$> [o' .. o9 - 1]
+                  d1 = Data.Map.fromList (zip a8 (Name_kind_1 <$> f6))
+                  ((f0, p, kl), u7) = typevar' (x1, v') (second (kindrep' d1) <$> i) (o, Data.Map.empty, Data.Set.empty)
+                  x7 = (\(Constraint_1 a0 _ b0) -> (a0, (Name a7 c, p ! b0))) <$> a'
+                in
+                  Right
+                    (
+                      (o9, f0),
+                      (
+                        case x0 of
+                          Nothing -> Name_texpr_1 c (second snd <$> x7)
+                          Just (Constraint_1 y0 _ _) -> Name_texpr_0 c y0 (head u7),
+                        Eqtns
+                          (Data.Set.fromList f6, kl)
+                          [Type_eq e (repl' p (repkinds_type d1 j))]
+                          (kindrep' d1 <$> Name_kind_1 <$> m3)
+                          x7,
+                        []))))
   type_exprs ::
     (
       (Name -> String) ->
