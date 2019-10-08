@@ -372,107 +372,107 @@ module Defs where
           h : i -> slv_constrs a (((\j -> (j, (y, f))) <$> h) ++ b) c g i y
   solvek' ::
     (
-      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      (String -> Eqtn -> Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ())) ->
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       Eqtn ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()))
   solvek' m3 h b c d eq (y, x, m, (w, a)) =
     case Data.Set.member b w of
       False -> h
       True -> solvek_rep m3 h b c d (y, x, m, (w, a))
   solvek_rep ::
     (
-      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      (String -> Eqtn -> Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ())) ->
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()))
   solvek_rep m3 a c d e (y, x, f, (w, k)) =
     let
       m = kindrep c d
     in
       case occ_k c d of
-        False -> solvesys m3 (krep_eq m <$> e) (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
+        False ->
+          transf (solvesys m3 (krep_eq m <$> e)) (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k))
         True -> a
   solvesys ::
     (
-      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (String -> Eqtn -> Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ())) ->
       [Eqtn] ->
-      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
-  solvesys m b (a2, a', t, (w, u)) =
+      Transf ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
+  solvesys m b =
     case b of
-      [] -> Right (a2, a', t, (w, u))
+      [] -> return ()
       eq : g ->
-        case eq of
-          Kind_eq c d ->
-            let
-              e3 = m "Kind" eq
-            in
+        let
+          e3 = m "Kind" eq
+          e4 = m "Type" eq
+        in
+          case eq of
+            Kind_eq c d ->
               case (c, d) of
-                (Application_kind_1 e f, Application_kind_1 h i) ->
-                  solvesys m (Kind_eq e h : Kind_eq f i : g) (a2, a', t, (w, u))
+                (Application_kind_1 e f, Application_kind_1 h i) -> solvesys m (Kind_eq e h : Kind_eq f i : g)
                 (Name_kind_1 e, Name_kind_1 f) ->
                   case e == f of
                     False ->
-                      case (Data.Set.member e w, Data.Set.member f w) of
-                        (False, False) -> e3
-                        (True, _) -> solvek_rep m e3 e d g (a2, a', t, (w, u))
-                        (_, True) -> solvek_rep m e3 f c g (a2, a', t, (w, u))
-                    True -> solvesys m g (a2, a', t, (w, u))
-                (Name_kind_1 e, _) -> solvek' m e3 e d g eq (a2, a', t, (w, u))
-                (_, Name_kind_1 e) -> solvek' m e3 e c g eq (a2, a', t, (w, u))
-          Type_eq c d ->
-            let
-              e3 = m "Type" eq
-            in
+                      Transf
+                        (\(a2, a', t, (w, u)) ->
+                          case (Data.Set.member e w, Data.Set.member f w) of
+                            (False, False) -> e3
+                            (True, _) -> solvek_rep m e3 e d g (a2, a', t, (w, u))
+                            (_, True) -> solvek_rep m e3 f c g (a2, a', t, (w, u)))
+                    True -> solvesys m g
+                (Name_kind_1 e, _) -> Transf (solvek' m e3 e d g eq)
+                (_, Name_kind_1 e) -> Transf (solvek' m e3 e c g eq)
+            Type_eq c d ->
               case (c, d) of
-                (Application_type_1 e f, Application_type_1 h i) ->
-                  solvesys m (Type_eq e h : Type_eq f i : g) (a2, a', t, (w, u))
+                (Application_type_1 e f, Application_type_1 h i) -> solvesys m (Type_eq e h : Type_eq f i : g)
                 (Name_type_1 e e0 e1, Name_type_1 f f0 f1) ->
                   case e == f of
                     False ->
-                      case (Data.Set.member e u, Data.Set.member f u) of
-                        (False, False) -> e3
-                        (True, _) -> solvesys_rep m e3 e d g (a2, a', t, (w, u))
-                        (_, True) -> solvesys_rep m e3 f c g (a2, a', t, (w, u))
-                    True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g) (a2, a', t, (w, u))
-                (Name_type_1 e _ _, _) -> solvesys' m e3 e d g (a2, a', t, (w, u))
-                (_, Name_type_1 e _ _) -> solvesys' m e3 e c g (a2, a', t, (w, u))
+                      Transf
+                        (\(a2, a', t, (w, u)) ->
+                          case (Data.Set.member e u, Data.Set.member f u) of
+                            (False, False) -> e4
+                            (True, _) -> solvesys_rep m e4 e d g (a2, a', t, (w, u))
+                            (_, True) -> solvesys_rep m e4 f c g (a2, a', t, (w, u)))
+                    True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g)
+                (Name_type_1 e _ _, _) -> Transf (solvesys' m e4 e d g)
+                (_, Name_type_1 e _ _) -> Transf (solvesys' m e4 e c g)
   solvesys' ::
     (
-      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      (String -> Eqtn -> Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ())) ->
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()) ->
       String ->
       Type_1 ->
       [Eqtn] ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()))
   solvesys' m3 h b c d (y, x, m, (w, a)) =
     case Data.Set.member b a of
       False -> h
       True -> solvesys_rep m3 h b c d (y, x, m, (w, a))
   solvesys_rep ::
     (
-      (String -> Eqtn -> Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      (String -> Eqtn -> Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ())) ->
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()) ->
       String ->
       Type_1 ->
       [Eqtn] ->
       ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))
+      Err (([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)), ()))
   solvesys_rep m3 a c d e (y, x, f, (w, k)) =
     let
       m = sysrep' c d
     in
       case occ_check c d of
-        False -> solvesys m3 (rep_eq m <$> e) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
+        False -> transf (solvesys m3 (rep_eq m <$> e)) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k))
         True -> a
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
@@ -933,18 +933,19 @@ module Defs where
         transf (type_expression (a4, c4, c) a e f h b) (0, w) >>=
         \(_, (g, Eqtns i j q8 x, x3)) ->
           (
-            solvesys
-              (\w2 -> \eq ->
-                let
-                  (y, p) =
-                    case eq of
-                      Kind_eq k7 k8 -> (write_kind k7, write_kind k8)
-                      Type_eq t7 t8 -> (write_type t7, write_type t8)
-                in
-                  Left (w2 ++ " mismatch between " ++ y ++ " and " ++ p ++ n))
-              j
+            transf
+              (solvesys
+                (\w2 -> \eq ->
+                  let
+                    (y, p) =
+                      case eq of
+                        Kind_eq k7 k8 -> (write_kind k7, write_kind k8)
+                        Type_eq t7 t8 -> (write_type t7, write_type t8)
+                  in
+                    Left (w2 ++ " mismatch between " ++ y ++ " and " ++ p ++ n))
+                j)
               (q8, x, g, i) >>=
-            \(q9, y, p, (k2, k')) ->
+            \((q9, y, p, (k2, k')), ()) ->
               case Data.Set.null k2 of
                 False -> Left ("Unresolved kind variables" ++ n)
                 True ->
