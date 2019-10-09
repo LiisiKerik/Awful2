@@ -23,67 +23,31 @@ module Eval where
     case c of
       Application_expression_2 d e ->
         (
-          eval' a d >>=
-          \h ->
-            (
-              eval' a e >>=
-              \j ->
-                case h of
-                  Add_Int_0_expression_2 ->
-                    case j of
-                      Int_expression_2 l -> Just (Add_Int_1_expression_2 l)
-                      _ -> undefined
-                  Add_Int_1_expression_2 k ->
-                    case j of
-                      Int_expression_2 n -> Just (Int_expression_2 (k + n))
-                      _ -> undefined
-                  Compare_Int_0_expression_2 ->
-                    case j of
-                      Int_expression_2 k -> Just (Compare_Int_1_expression_2 k)
-                      _ -> undefined
-                  Compare_Int_1_expression_2 k ->
-                    case j of
-                      Int_expression_2 l -> Just (Algebraic_expression_2 (show (compare k l)) [])
-                      _ -> undefined
-                  Convert_Int_expression_2 -> Just j
-                  Div_0_expression_2 ->
-                    case j of
-                      Int_expression_2 k -> Just (Div_1_expression_2 k)
-                      _ -> undefined
-                  Div_1_expression_2 k ->
-                    case j of
-                      Int_expression_2 l ->
-                        Just
-                          (case l of
-                            0 -> nothing_algebraic
-                            _ -> wrap_algebraic (Int_expression_2 (div k l)))
-                      _ -> undefined
-                  Field_expression_2 k ->
-                    case j of
-                      Algebraic_expression_2 _ l -> Just (l !! fromIntegral k)
-                      _ -> undefined
-                  Function_expression_2 k l -> eval' a (subst_pat' k j l)
-                  Mod_0_expression_2 ->
-                    case j of
-                      Int_expression_2 k -> Just (Mod_1_expression_2 k)
-                      _ -> undefined
-                  Mod_1_expression_2 k ->
-                    case j of
-                      Int_expression_2 l ->
-                        Just
-                          (case l of
-                            0 -> nothing_algebraic
-                            _ -> wrap_algebraic (Int_expression_2 (mod k l)))
-                      _ -> undefined
-                  Multiply_Int_0_expression_2 ->
-                    case j of
-                      Int_expression_2 k -> Just (Multiply_Int_1_expression_2 k)
-                      _ -> undefined
-                  Multiply_Int_1_expression_2 k ->
-                    case j of
-                      Int_expression_2 l -> Just (Int_expression_2 (k * l))
-                      _ -> undefined
-                  _ -> undefined))
+          (,) <$> eval' a d <*> eval' a e >>=
+          \(h, j) ->
+            case (h, j) of
+              (Add_Int_0_expression_2, Int_expression_2 l) -> Just (Add_Int_1_expression_2 l)
+              (Add_Int_1_expression_2 k, Int_expression_2 n) -> Just (Int_expression_2 (k + n))
+              (Compare_Int_0_expression_2, Int_expression_2 k) -> Just (Compare_Int_1_expression_2 k)
+              (Compare_Int_1_expression_2 k, Int_expression_2 l) -> Just (Algebraic_expression_2 (show (compare k l)) [])
+              (Convert_Int_expression_2, _) -> Just j
+              (Div_0_expression_2, Int_expression_2 k) -> Just (Div_1_expression_2 k)
+              (Div_1_expression_2 k, Int_expression_2 l) ->
+                Just
+                  (case l of
+                    0 -> nothing_algebraic
+                    _ -> wrap_algebraic (Int_expression_2 (div k l)))
+              (Field_expression_2 k, Algebraic_expression_2 _ l) -> Just (l !! fromIntegral k)
+              (Function_expression_2 k l, _) -> eval' a (subst_pat' k j l)
+              (Mod_0_expression_2, Int_expression_2 k) -> Just (Mod_1_expression_2 k)
+              (Mod_1_expression_2 k, Int_expression_2 l) ->
+                Just
+                  (case l of
+                    0 -> nothing_algebraic
+                    _ -> wrap_algebraic (Int_expression_2 (mod k l)))
+              (Multiply_Int_0_expression_2, Int_expression_2 k) -> Just (Multiply_Int_1_expression_2 k)
+              (Multiply_Int_1_expression_2 k, Int_expression_2 l) -> Just (Int_expression_2 (k * l))
+              _ -> undefined)
       Match_expression_2 b d -> eval' a b >>= \e -> eval' a (eval_match e d)
       Name_expression_2 d -> Data.Map.lookup d a >>= eval' a
       _ -> Just c
