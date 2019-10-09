@@ -25,6 +25,7 @@ module Typing where
   import Naming
   import Standard
   import Tokenise
+  import Transf
   import Tree
   data File =
     File
@@ -146,7 +147,7 @@ module Typing where
           Map' ([String], Map' [(String, Nat)])))
   standard_naming_typing f a (b, (c, t), g, w) =
     (
-      standard_1 (Location_1 f) t a >>=
+      transf (standard_1 (Location_1 f) a) t >>=
       \(v, n') -> naming f n' b >>= \(d, e) -> (\(h, i, n) -> (d, (h, v), i, n)) <$> typing f e (c, g, w))
   type_expr' ::
     (
