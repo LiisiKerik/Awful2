@@ -2,10 +2,10 @@
 {-# OPTIONS_GHC -Wall #-}
 module Tree where
   import Control.Applicative
+  import Control.Monad.Trans.State.Strict
   import Data.Char
   import Data.Bifunctor
   import Tokenise
-  import Transf
   data Alg_pat =
     Application_alg_pat Name [Alg_pat] |
     Blank_alg_pat |
@@ -60,17 +60,17 @@ module Tree where
     deriving Show
   data Patn = Application_patn Name [Patn] | Name_patn Name deriving Show
   data Pattern_1 = Blank_pattern_1 | Name_pattern_1 Name deriving Show
-  type Parser = Transf State (Either Location_0)
-  data State = State Tokens Location_0 deriving Show
+  type Parser = StateT State' (Either Location_0)
+  data State' = State' Tokens Location_0 deriving Show
   data Tree_0 = Tree_0 [Opdecl_0] [Data_0] [Cat_0] [Class_0] [Def_0] deriving Show
   data Tree_1 = Tree_1 [Name] Tree_0 deriving Show
   data Type_0 = Application_type_0 Type_0 [Type_0] | Name_type_0 Name deriving Show
   data Type_7 = Type_7 Location_0 Type_0 deriving Show
   infixl 3 <+>
   (<+>) :: Parser t -> Parser t -> Parser t
-  Transf a <+> Transf b = Transf (\c -> left_bind (\d -> b (update_location c d)) (a c))
+  StateT a <+> StateT b = StateT (\c -> left_bind (\d -> b (update_location c d)) (a c))
   empty_parser :: Parser t
-  empty_parser = Transf (\(State _ l) -> Left l)
+  empty_parser = StateT (\(State' _ l) -> Left l)
   filter_cap :: Parser Name -> Parser Name
   filter_cap = filter_parser (\(Name _ (a : _)) -> isUpper a)
   filter_low :: Parser Name -> Parser Name
@@ -97,9 +97,9 @@ module Tree where
       (
         tokenise b c >>=
         \e ->
-          case transf a (State e init_location) of
+          case runStateT a (State' e init_location) of
             Left f -> d f
-            Right (State (Tokens h _) g, f) ->
+            Right (f, State' (Tokens h _) g) ->
               case h of
                 [] -> Right f
                 _ -> d g)
@@ -253,8 +253,8 @@ module Tree where
   parse_def = parse_basic <+> parse_instance
   parse_elementary :: (Token_0 -> Maybe t) -> Parser t
   parse_elementary a =
-    Transf
-      (\(State (Tokens b c) d) ->
+    StateT
+      (\(State' (Tokens b c) d) ->
         case b of
           [] -> Left c
           Token_1 e f : g ->
@@ -262,7 +262,7 @@ module Tree where
               h = max d e
             in
               case a f of
-                Just i -> Right (State (Tokens g c) h, i)
+                Just i -> Right (i, State' (Tokens g c) h)
                 Nothing -> Left h)
   parse_elementary_alg_pattern :: Parser Alg_pat
   parse_elementary_alg_pattern =
@@ -351,7 +351,7 @@ module Tree where
   parse_load =
     filter_cap (parse_name_3 Load_token ((flip (++) ".awf" <$> parse_name) <* parse_operator "." <* parse_name_4 "awf"))
   parse_location :: Parser Location_0
-  parse_location = Transf (\a -> Right (a, state_location a))
+  parse_location = state_location <$> get
   parse_low :: Parser Name
   parse_low = filter_low parse_name'
   parse_many :: Parser t -> Parser [t]
@@ -468,11 +468,11 @@ module Tree where
   parse_type = Type_7 <$> parse_location <*> parse_type'
   parse_type' :: Parser Type_0
   parse_type' = parse_arrow_type <+> parse_ap_type <+> parse_elementary_type
-  state_location :: State -> Location_0
-  state_location (State (Tokens a b) _) =
+  state_location :: State' -> Location_0
+  state_location (State' (Tokens a b) _) =
     case a of
       [] -> b
       Token_1 c _ : _ -> c
-  update_location :: State -> Location_0 -> State
-  update_location (State a b) c = State a (max b c)
+  update_location :: State' -> Location_0 -> State'
+  update_location (State' a b) c = State' a (max b c)
 --------------------------------------------------------------------------------------------------------------------------------

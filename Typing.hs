@@ -19,13 +19,13 @@ viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
 {-# OPTIONS_GHC -Wall #-}
 module Typing where
   import Classes
+  import Control.Monad.Trans.State.Strict
   import Data.Map
   import Datas
   import Defs
   import Naming
   import Standard
   import Tokenise
-  import Transf
   import Tree
   data File =
     File
@@ -147,8 +147,8 @@ module Typing where
           Map' ([String], Map' [(String, Nat)])))
   standard_naming_typing f a (b, (c, t), g, w) =
     (
-      transf (standard_1 (Location_1 f) a) t >>=
-      \(v, n') -> naming f n' b >>= \(d, e) -> (\(h, i, n) -> (d, (h, v), i, n)) <$> typing f e (c, g, w))
+      runStateT (standard_1 (Location_1 f) a) t >>=
+      \(n', v) -> naming f n' b >>= \(d, e) -> (\(h, i, n) -> (d, (h, v), i, n)) <$> typing f e (c, g, w))
   type_expr' ::
     (
       (Map' Polykind, Map' PConstructor, Map' Constructor, Map' Type_2, Map' Kind, Map' Prom_alg) ->

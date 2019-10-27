@@ -1,10 +1,10 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Standard where
+  import Control.Monad.Trans.State.Strict
   import Data.Bifunctor
   import Data.Map
   import Tokenise
-  import Transf
   import Tree
   data Alg_pat_7 = Application_alg_pat_7 Name [Alg_pat_7] | Blank_alg_pat_7 | Int_alg_pat_7 Integer | Name_alg_pat_7 Name
     deriving Show
@@ -112,19 +112,19 @@ module Standard where
           [] -> Right (pop_all g x expr'')
           (Name l op, expr') : y' ->
             und_err op ops k (a l) (\op' -> shunting_yard a k (f, g) ops (pop g x expr'' (Op' l op')) expr' y'))
-  standard_1 :: (Location_0 -> Location_1) -> Tree_0 -> Transf (Map' Op) Err Tree_2
+  standard_1 :: (Location_0 -> Location_1) -> Tree_0 -> StateT (Map' Op) Err Tree_2
   standard_1 d (Tree_0 e a l b c) =
-      Transf
-        (\f ->
-          let
-            (i, j) = gather_ops d (old f) e
-          in
-            (
-              (\m -> \g -> \h -> \k -> (rem_old i, Tree_2 j m g h k)) <$>
-              traverse (std_dat d) a <*>
-              traverse (std_cat d (fst <$> i)) l <*>
-              traverse (std_cls d) b <*>
-              standard_defs d (fst <$> i) c))
+    StateT
+      (\f ->
+        let
+          (i, j) = gather_ops d (old f) e
+        in
+          (
+            (\m -> \g -> \h -> \k -> (Tree_2 j m g h k, rem_old i)) <$>
+            traverse (std_dat d) a <*>
+            traverse (std_cat d (fst <$> i)) l <*>
+            traverse (std_cls d) b <*>
+            standard_defs d (fst <$> i) c))
   standard_arguments ::
     (Location_0 -> Location_1) -> Map' Op -> [(Pat, Type_7)] -> Type_7 -> Expression_0 -> Err (Type_8, Expression_9)
   standard_arguments a m b c d =
