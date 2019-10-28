@@ -1,19 +1,12 @@
 {-
-Jaskelioff "Modular Monad Transformers" - saada need naited toole Awfulis
-Lugeda tyybiperede kohta
-Hargnevate andmetyypide eelised? Seosed tyybiperedega?
 Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 pattern matching in types
 generalise branching types to branch not only over promoted algebraics but over Star and Int
-liigirakendamise eemaldamine liigituletuse kasuks (igal pool? teatud piiratud juhtudel?)
 stringide syntaktiline suhkur
-piiratud pesastatud mustrid hargnevas andmetüübis, nt: Construct_List (Mk_Pair T U) L ->
 All Ord C, All c C <- klassimuutuja
-polütüüpsus
 pattern match types with only one type constructor?
 promote constructor operators (two type ops - for pair and either - and also promotable data constructor operators)
 improve cat syntax
-viia "kas asi on tõesti tüübikonstruktor?" kontroll tüüpijasse
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}

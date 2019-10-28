@@ -33,7 +33,7 @@ module Defs where
       [[String]]
         deriving Show
   data Eqtn = Kind_eq Kind_1 Kind_1 | Type_eq Type_1 Type_1 deriving Show
-  data Eqtns = Eqtns (Set String, Set String) [Eqtn] [Kind_1] [(String, (Name, Type_1))] deriving Show
+  data Eqtns = Eqtns (Set String, Set String) [Eqtn] [(Type_1, Kind_1)] [Kind_1] [(String, (Name, Type_1))] deriving Show
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
   data Inst = Inst [Kind_1] [[String]] deriving Show
   data Pattern_5 =
@@ -138,13 +138,28 @@ module Defs where
             Just (y', _) -> constr_check_3 m x y'
             Nothing -> False
       True -> True
+  get_kind :: Map' Polykind -> Type_1 -> Kind_1
+  get_kind f a =
+    case a of
+      Application_type_1 b _ ->
+        case get_kind f b of
+          Application_kind_1 _ c -> c
+          _ -> undefined
+      Name_type_1 c d e ->
+        let
+          Polykind g h i = f ! c
+        in
+          (kindrep' (Data.Map.fromList (maybeToList ((,) <$> g <*> d) ++ zip h e))) i
   get_pattern_type ::
     (
       (Location_0 -> Location_1) ->
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       Alg_pat_1 ->
       Type_1 ->
-      StateT ((Integer, Integer), Map' Type_2) Err ((Set String, Set String), [Eqtn], (Alg_pat_2, Alg_pat_3)))
+      StateT
+        ((Integer, Integer), Map' Type_2)
+        Err
+        ((Set String, Set String), [Eqtn], (Alg_pat_2, Alg_pat_3), [(Type_1, Kind_1)]))
   get_pattern_type a (f3, b', b) g h  =
     case g of
       Application_alg_pat_1 (Name o i) j ->
@@ -157,24 +172,28 @@ module Defs where
               (a o)
               (\(Constructor k u1 x m _) ->
                 let
-                  (q, r, s, t2) =
+                  ((q, r, s, t2), k8) =
                     typevars (f3, b') (k, u1) (d, Data.Map.empty, (Data.Set.empty, Data.Set.empty), Data.Map.empty)
                   f2 x1 = type_rep (kindrep' t2) (repl' r x1)
                 in
                   runStateT
                     (
-                      (\(a3, a5, a6, a7) ->
-                        (s_union s a3, Type_eq h (f2 m) : a5, (Application_alg_pat_2 i a6, Struct_alg_pat_3 i a7))) <$>
+                      (\(a3, a5, a6, a7, n9) ->
+                        (
+                          s_union s a3,
+                          Type_eq h (f2 m) : a5,
+                          (Application_alg_pat_2 i a6, Struct_alg_pat_3 i a7),
+                          k8 ++ n9)) <$>
                       get_pattern_types a (f3, b', b) j (f2 <$> x) (Name o i))
                     (q, n)))
-      Blank_alg_pat_1 -> return ((Data.Set.empty, Data.Set.empty), [], (Blank_alg_pat_2, Blank_alg_pat_3))
-      Int_alg_pat_1 i -> return ((Data.Set.empty, Data.Set.empty), [Type_eq h int_type], (Int_alg_pat_2 i, Int_alg_pat_3 i))
+      Blank_alg_pat_1 -> return ((Data.Set.empty, Data.Set.empty), [], (Blank_alg_pat_2, Blank_alg_pat_3), [])
+      Int_alg_pat_1 i -> return ((Data.Set.empty, Data.Set.empty), [Type_eq h int_type], (Int_alg_pat_2 i, Int_alg_pat_3 i), [])
       Name_alg_pat_1 i ->
         StateT
           (\(d, n) ->
             Right
               (
-                ((Data.Set.empty, Data.Set.empty), [], (Name_alg_pat_2 i, Blank_alg_pat_3)),
+                ((Data.Set.empty, Data.Set.empty), [], (Name_alg_pat_2 i, Blank_alg_pat_3), []),
                 (d, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] h) n)))
   get_pattern_types ::
     (
@@ -183,13 +202,16 @@ module Defs where
       [Alg_pat_1] ->
       [Type_1] ->
       Name ->
-      StateT ((Integer, Integer), Map' Type_2) Err ((Set String, Set String), [Eqtn], [Alg_pat_2], [Alg_pat_3]))
+      StateT
+        ((Integer, Integer), Map' Type_2)
+        Err
+        ((Set String, Set String), [Eqtn], [Alg_pat_2], [Alg_pat_3], [(Type_1, Kind_1)]))
   get_pattern_types a b e f (Name m n) =
     case (e, f) of
-      ([], []) -> return ((Data.Set.empty, Data.Set.empty), [], [], [])
+      ([], []) -> return ((Data.Set.empty, Data.Set.empty), [], [], [], [])
       (g : h, i : j) ->
         (
-          (\(k1, k2, (l, t)) -> \(a3, a5, a6, a7) -> (s_union k1 a3, k2 ++ a5, l : a6, t : a7)) <$>
+          (\(k1, k2, (l, t), a4) -> \(a3, a5, a6, a7, y7) -> (s_union k1 a3, k2 ++ a5, l : a6, t : a7, a4 ++ y7)) <$>
           get_pattern_type a b g i <*>
           get_pattern_types a b h j (Name m n))
       _ -> StateT (return (Left ("Constructor " ++ n ++ location (a m) ++ " has been given a wrong number of arguments.")))
@@ -205,7 +227,7 @@ module Defs where
   instances =
     Data.Map.fromList [("Ord", Data.Map.fromList [("Int", Inst [] [])]), ("Ring", Data.Map.fromList [("Int", Inst [] [])])]
   jeqs :: Eqtns -> Eqtns -> Eqtns
-  jeqs (Eqtns g a b c) (Eqtns h d e f) = Eqtns (s_union g h) (a ++ d) (b ++ e) (c ++ f)
+  jeqs (Eqtns g a b c i) (Eqtns h d e f j) = Eqtns (s_union g h) (a ++ d) (b ++ e) (c ++ f) (i ++ j)
   kindvar :: String -> (Integer, Set String, Map' Kind_1) -> (Integer, Set String, Map' Kind_1)
   kindvar a (b, c, e) =
     let
@@ -222,31 +244,34 @@ module Defs where
     case b of
       Kind_eq c d -> Kind_eq (a c) (a d)
       Type_eq c d -> Type_eq (type_rep a c) (type_rep a d)
-  new_typevar :: Map' Prom_alg -> (Integer, Set String) -> Kind_1 -> ((Integer, Set String), Type_1)
+  new_typevar :: Map' Prom_alg -> (Integer, Set String) -> Kind_1 -> ((Integer, Set String), Type_1, [(Type_1, Kind_1)])
   new_typevar e (a, b) d =
     let
       c = show a
       (f, g) = kind_string d []
-      h = ((a + 1, Data.Set.insert c b), ntype c)
+      u1 = ntype c
+      h = ((a + 1, Data.Set.insert c b), u1, [(u1, d)])
     in
       case Data.Map.lookup f e of
         Nothing -> h
         Just (Prom_alg m i) ->
           case assocs i of
             [(k, l)] ->
-              second
-                (Prelude.foldl Application_type_1 (Name_type_1 k Nothing g))
-                (new_typevars e (kindrep' (Data.Map.fromList (zip m g)) <$> l) (a, b))
+              let
+                (u2, f7, k7) = new_typevars e (kindrep' (Data.Map.fromList (zip m g)) <$> l) (a, b)
+              in
+                (u2, Prelude.foldl Application_type_1 (Name_type_1 k Nothing g) f7, k7)
             _ -> h
-  new_typevars :: Map' Prom_alg -> [Kind_1] -> (Integer, Set String) -> ((Integer, Set String), [Type_1])
+  new_typevars :: Map' Prom_alg -> [Kind_1] -> (Integer, Set String) -> ((Integer, Set String), [Type_1], [(Type_1, Kind_1)])
   new_typevars a c b =
     case c of
-      [] -> (b, [])
+      [] -> (b, [], [])
       d : e ->
         let
-          (f, g) = new_typevar a b d
+          (f, g, t) = new_typevar a b d
+          (m, n, l) = new_typevars a e f
         in
-          second ((:) g) (new_typevars a e f)
+          (m, g : n, t ++ l)
   occ_check :: String -> Type_1 -> Bool
   occ_check a b =
     case b of
@@ -371,46 +396,95 @@ module Defs where
         case e of
           [] -> undefined
           h : i -> slv_constrs a (((\j -> (j, (y, f))) <$> h) ++ b) c g i y
+  solve_kvars ::
+    (
+      Map' Polykind ->
+      [Either (Type_1, Kind_1) (Kind_1, Kind_1)] ->
+      (Set String, [Kind_1], [(String, (Name, Type_1))], Typedexpr) ->
+      (Set String, [Kind_1], [(String, (Name, Type_1))], Typedexpr))
+  solve_kvars l a (b, c, d, e) =
+    case a of
+      [] -> (b, c, d, e)
+      f : g ->
+        case f of
+          Left (h, i) -> solve_kvars l (Right (i, get_kind l h) : g) (b, c, d, e)
+          Right h ->
+            case h of
+              (Application_kind_1 j k, Application_kind_1 n m) -> solve_kvars l (Right (j, n) : Right (k, m) : g) (b, c, d, e)
+              (Name_kind_1 j, Name_kind_1 k) ->
+                case j == k of
+                  False ->
+                    case (Data.Set.member j b, Data.Set.member k b) of
+                      (True, _) -> solve_kvars' l j (Name_kind_1 k) g (b, c, d, e)
+                      (_, True) -> solve_kvars' l k (Name_kind_1 j) g (b, c, d, e)
+                      _ -> undefined
+                  True -> solve_kvars l g (b, c, d, e)
+              (Name_kind_1 i, j) -> solve_kvars' l i j g (b, c, d, e)
+              (i, Name_kind_1 j) -> solve_kvars' l j i g (b, c, d, e)
+  solve_kvars' ::
+    (
+      Map' Polykind ->
+      String ->
+      Kind_1 ->
+      [Either (Type_1, Kind_1) (Kind_1, Kind_1)] ->
+      (Set String, [Kind_1], [(String, (Name, Type_1))], Typedexpr) ->
+      (Set String, [Kind_1], [(String, (Name, Type_1))], Typedexpr))
+  solve_kvars' j a b c (d, e, f, g) =
+    let
+      h = kindrep a b
+      i = type_rep h
+    in
+      solve_kvars j (bimap (bimap i h) (bimap h h) <$> c) (Data.Set.delete a d, h <$> e, second (second i) <$> f, sysrep3 h g)
   solvek' ::
     (
-      (String -> Eqtn -> Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
-      Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (
+        String ->
+        Eqtn ->
+        Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
+      Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
       Eqtn ->
-      StateT ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
+      StateT ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
   solvek' m3 h b c d eq =
     StateT
-      (\(y, x, m, (w, a)) ->
+      (\(g4, y, x, m, (w, a)) ->
         case Data.Set.member b w of
           False -> h
-          True -> runStateT (solvek_rep m3 h b c d) (y, x, m, (w, a)))
+          True -> runStateT (solvek_rep m3 h b c d) (g4, y, x, m, (w, a)))
   solvek_rep ::
     (
-      (String -> Eqtn -> Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
-      Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (
+        String ->
+        Eqtn ->
+        Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
+      Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Kind_1 ->
       [Eqtn] ->
-      StateT ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
+      StateT ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
   solvek_rep m3 a c d e =
     let
       m = kindrep c d
+      a2 = type_rep m
     in
       case occ_k c d of
         False ->
           StateT
-            (\(y, x, f, (w, k)) ->
+            (\(t4, y, x, f, (w, k)) ->
               runStateT
                 (solvesys m3 (krep_eq m <$> e))
-                (m <$> y, second (second (type_rep m)) <$> x, f, (Data.Set.delete c w, k)))
+                (bimap a2 m <$> t4, m <$> y, second (second a2) <$> x, sysrep3 m f, (Data.Set.delete c w, k)))
         True -> StateT (return a)
   solvesys ::
     (
-      (String -> Eqtn -> Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
+      (
+        String ->
+        Eqtn ->
+        Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
       [Eqtn] ->
-      StateT ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
+      StateT ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
   solvesys m b =
     case b of
       [] -> return ()
@@ -427,11 +501,11 @@ module Defs where
                   case e == f of
                     False ->
                       StateT
-                        (\(a2, a', t, (w, u)) ->
+                        (\(m3, a2, a', t, (w, u)) ->
                           case (Data.Set.member e w, Data.Set.member f w) of
                             (False, False) -> e3
-                            (True, _) -> runStateT (solvek_rep m e3 e d g) (a2, a', t, (w, u))
-                            (_, True) -> runStateT (solvek_rep m e3 f c g) (a2, a', t, (w, u)))
+                            (True, _) -> runStateT (solvek_rep m e3 e d g) (m3, a2, a', t, (w, u))
+                            (_, True) -> runStateT (solvek_rep m e3 f c g) (m3, a2, a', t, (w, u)))
                     True -> solvesys m g
                 (Name_kind_1 e, _) -> solvek' m e3 e d g eq
                 (_, Name_kind_1 e) -> solvek' m e3 e c g eq
@@ -442,35 +516,41 @@ module Defs where
                   case e == f of
                     False ->
                       StateT
-                        (\(a2, a', t, (w, u)) ->
+                        (\(m3, a2, a', t, (w, u)) ->
                           case (Data.Set.member e u, Data.Set.member f u) of
                             (False, False) -> e4
-                            (True, _) -> runStateT (solvesys_rep m e4 e d g) (a2, a', t, (w, u))
-                            (_, True) -> runStateT (solvesys_rep m e4 f c g) (a2, a', t, (w, u)))
+                            (True, _) -> runStateT (solvesys_rep m e4 e d g) (m3, a2, a', t, (w, u))
+                            (_, True) -> runStateT (solvesys_rep m e4 f c g) (m3, a2, a', t, (w, u)))
                     True -> solvesys m (maybeToList (Kind_eq <$> e0 <*> f0) ++ zipWith Kind_eq e1 f1 ++ g)
                 (Name_type_1 e _ _, _) -> StateT (solvesys' m e4 e d g)
                 (_, Name_type_1 e _ _) -> StateT (solvesys' m e4 e c g)
   solvesys' ::
     (
-      (String -> Eqtn -> Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
-      Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (
+        String ->
+        Eqtn ->
+        Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
+      Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Type_1 ->
       [Eqtn] ->
-      ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
-      Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))))
-  solvesys' m3 h b c d (y, x, m, (w, a)) =
+      ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) ->
+      Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))))
+  solvesys' m3 h b c d (x2, y, x, m, (w, a)) =
     case Data.Set.member b a of
       False -> h
-      True -> runStateT (solvesys_rep m3 h b c d) (y, x, m, (w, a))
+      True -> runStateT (solvesys_rep m3 h b c d) (x2, y, x, m, (w, a))
   solvesys_rep ::
     (
-      (String -> Eqtn -> Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
-      Err ((), ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
+      (
+        String ->
+        Eqtn ->
+        Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)))) ->
+      Err ((), ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String))) ->
       String ->
       Type_1 ->
       [Eqtn] ->
-      StateT ([Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
+      StateT ([(Type_1, Kind_1)], [Kind_1], [(String, (Name, Type_1))], Typedexpr, (Set String, Set String)) Err ())
   solvesys_rep m3 a c d e =
     let
       m = sysrep' c d
@@ -478,8 +558,10 @@ module Defs where
       case occ_check c d of
         False ->
           StateT
-            (\(y, x, f, (w, k)) ->
-              runStateT (solvesys m3 (rep_eq m <$> e)) (y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k)))
+            (\(y2, y, x, f, (w, k)) ->
+              runStateT
+                (solvesys m3 (rep_eq m <$> e))
+                (first m <$> y2, y, second (second m) <$> x, sysrep2 c d f, (w, Data.Set.delete c k)))
         True -> StateT (return a)
   split_pattern :: Map' [(String, Integer)] -> Pattern_5 -> Alg_pat_3 -> ([(Pattern_5, Bool)], Bool)
   split_pattern context x y =
@@ -523,6 +605,19 @@ module Defs where
         Name_texpr_0 d g e -> Name_texpr_0 d g (sysrep' a b e)
         Name_texpr_1 d e -> Name_texpr_1 d (second (sysrep' a b) <$> e)
         _ -> c
+  sysrep3 :: (Kind_1 -> Kind_1) -> Typedexpr -> Typedexpr
+  sysrep3 a b =
+    let
+      c = sysrep3 a
+      g = type_rep a
+    in
+      case b of
+        Application_texpr d e -> Application_texpr (c d) (c e)
+        Function_texpr d e -> Function_texpr d (c e)
+        Match_texpr d e -> Match_texpr (c d) (second c <$> e)
+        Name_texpr_0 d e f -> Name_texpr_0 d e (g f)
+        Name_texpr_1 d e -> Name_texpr_1 d (second g <$> e)
+        _ -> b
   type_case ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
@@ -538,8 +633,8 @@ module Defs where
       (\d ->
         (
           runStateT (get_pattern_type (Location_1 c) a g i) (d, f) >>=
-          \((n, s, (o, y)), (m, t)) ->
-            runStateT ((\(u, v, r0) -> ((o, u), jeqs (Eqtns n s [] []) v, r0, y)) <$> type_expression a c t h j k) m))
+          \((n, s, (o, y), d3), (m, t)) ->
+            runStateT ((\(u, v, r0) -> ((o, u), jeqs (Eqtns n s d3 [] []) v, r0, y)) <$> type_expression a c t h j k) m))
   type_cases ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
@@ -552,7 +647,7 @@ module Defs where
       StateT (Integer, Integer) Err ([(Alg_pat_2, Typedexpr)], Eqtns, [(Location_0, [Alg_pat_3])], [Alg_pat_3]))
   type_cases b c f g n h i =
     case g of
-      [] -> return ([], Eqtns (Data.Set.empty, Data.Set.empty) [] [] [], [], [])
+      [] -> return ([], Eqtns (Data.Set.empty, Data.Set.empty) [] [] [] [], [], [])
       l : m ->
         (
           type_case b c f l n h i >>=
@@ -591,9 +686,9 @@ module Defs where
           (Prelude.foldl (\m3 -> \t5 -> Data.Map.insert t5 (Cat_4 [] []) m3) j n)
           b
       a8 u3 = new_typevar f4 (u3, Data.Set.empty) f3
-      ((x0, _), z0) = a8 0
-      ((w1, _), z1) = a8 x0
-      ((x2, _), z2) = a8 w1
+      ((x0, _), z0, _) = a8 0
+      ((w1, _), z1, _) = a8 x0
+      ((x2, _), z2, _) = a8 w1
     in
       (
         (\j7 -> \j8 -> Data.Map.fromList [("compose " ++ p, j7), ("id " ++ p, j8)]) <$>
@@ -925,13 +1020,13 @@ module Defs where
       Map' Cat_4 ->
       Location_0 ->
       Err Expression_2)
-  type_expr k h a (a4, c4, c, e) f m w w' b a3 l3 =
+  type_expr k h a (a4, c4, c, e) f m w w' (b, b5) a3 l3 =
     let
       n = " in " ++ k
     in
       (
-        runStateT (type_expression (a4, c4, c) a e f h b) (0, w) >>=
-        \((g, Eqtns i j q8 x, x3), _) ->
+        runStateT (type_expression (a4, c4, c) a e f h (b, b5)) (0, w) >>=
+        \((g, Eqtns i j f7 q8 x, x3), _) ->
           (
             runStateT
               (solvesys
@@ -944,31 +1039,34 @@ module Defs where
                   in
                     Left (w2 ++ " mismatch between " ++ y ++ " and " ++ p ++ n))
                 j)
-              (q8, x, g, i) >>=
-            \((), (q9, y, p, (k2, k'))) ->
-              case Data.Set.null k2 of
-                False -> Left ("Unresolved kind variables" ++ n)
+              (f7, q8, x, g, i) >>=
+            \((), (t3, b7, m8, p2, (g7, k'))) ->
+              case Data.Set.null k' of
+                False -> Left ("Unresolved type variables" ++ n)
                 True ->
-                  case Data.Set.null k' of
-                    False -> Left ("Unresolved type variables" ++ n)
-                    True ->
-                      (
-                        addargs w' p <$
-                        traverse_ (check_cat (Location_1 a l3) a3) q9 <*
-                        slv
-                          m
-                          y
-                          (\(Name p' q) -> \t -> \u ->
-                            (
-                              "Function " ++
-                              q ++
-                              location (Location_1 a p') ++
-                              " requires instance or constraint " ++
-                              t ++
-                              " " ++
-                              u ++
-                              ".")) <*
-                        pats (Location_1 a) ((\(Constructor _ _ _ _ e') -> e') <$> c) x3)))
+                  let
+                    (k2, q9, y, p) = solve_kvars b (Left <$> t3) (g7, b7, m8, p2)
+                  in
+                    case Data.Set.null k2 of
+                      False -> Left ("Unresolved kind variables" ++ n)
+                      True ->
+                        (
+                          addargs w' p <$
+                          traverse_ (check_cat (Location_1 a l3) a3) q9 <*
+                          slv
+                            m
+                            y
+                            (\(Name p' q) -> \t -> \u ->
+                              (
+                                "Function " ++
+                                q ++
+                                location (Location_1 a p') ++
+                                " requires instance or constraint " ++
+                                t ++
+                                " " ++
+                                u ++
+                                ".")) <*
+                          pats (Location_1 a) ((\(Constructor _ _ _ _ e') -> e') <$> c) x3)))
   type_expression ::
     (
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
@@ -984,7 +1082,7 @@ module Defs where
         StateT
           (\(o', o) ->
             let
-              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
+              ((o2, f2), t4, _) = new_typevar x1 (o, Data.Set.empty) star_kind
             in
               (
                 runStateT (type_expression (x1, v', v) r d c (function_type t4 e) r7) (o', o2) >>=
@@ -992,31 +1090,31 @@ module Defs where
                   runStateT
                     (
                       (\(l, m, e') ->
-                        (Application_texpr i l, jeqs (Eqtns (Data.Set.empty, f2) [] [] []) (jeqs j m), d7 ++ e')) <$>
+                        (Application_texpr i l, jeqs (Eqtns (Data.Set.empty, f2) [] [] [] []) (jeqs j m), d7 ++ e')) <$>
                       type_expression (x1, v', v) r d g t4 r7)
                     p))
       Function_expression_1 c g ->
         StateT
           (\(o', o) ->
             let
-              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
-              ((a, h), i) = new_typevar x1 (o2, f2) star_kind
+              ((o2, f2), t4, _) = new_typevar x1 (o, Data.Set.empty) star_kind
+              ((a, h), i, _) = new_typevar x1 (o2, f2) star_kind
             in
               (
                 runStateT (type_pat r (x1, v', v) c t4) ((o', a), d) >>=
-                \((j, m, n), (l, k)) ->
+                \((j, m, n, n4), (l, k)) ->
                   runStateT
                     (
                       (\(p, s, u) ->
-                        (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) [] []) s, u)) <$>
+                        (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) n4 [] []) s, u)) <$>
                       type_expression (x1, v', v) r k g i r7)
                     l))
-      Int_expression_1 c -> return (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [], [])
+      Int_expression_1 c -> return (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [] [], [])
       Match_expression_1 a7 c g ->
         StateT
           (\(o', o) ->
             let
-              ((o2, f2), t4) = new_typevar x1 (o, Data.Set.empty) star_kind
+              ((o2, f2), t4, _) = new_typevar x1 (o, Data.Set.empty) star_kind
             in
               runStateT
                 (
@@ -1024,7 +1122,7 @@ module Defs where
                   \(k, m, n2) ->
                     (
                       (\(q, u, n3, n4) ->
-                        (Match_texpr k q, jeqs (Eqtns (Data.Set.empty, f2) [] [] []) (jeqs m u), n2 ++ [(a7, n4)] ++ n3)) <$>
+                        (Match_texpr k q, jeqs (Eqtns (Data.Set.empty, f2) [] [] [] []) (jeqs m u), n2 ++ [(a7, n4)] ++ n3)) <$>
                       type_cases (x1, v', v) r d g t4 e r7))
                 (o', o2))
       Name_expression_1 (Name a7 c) ->
@@ -1041,7 +1139,7 @@ module Defs where
                   o9 = o' + fromIntegral (length a8)
                   f6 = show <$> [o' .. o9 - 1]
                   d1 = Data.Map.fromList (zip a8 (Name_kind_1 <$> f6))
-                  ((f0, p, kl), u7) = typevar' (x1, v') (second (kindrep' d1) <$> i) (o, Data.Map.empty, Data.Set.empty)
+                  ((f0, p, kl), u7, m5) = typevar' (x1, v') (second (kindrep' d1) <$> i) (o, Data.Map.empty, Data.Set.empty)
                   x7 = (\(Constraint_1 a0 _ b0) -> (a0, (Name a7 c, p ! b0))) <$> a'
                 in
                   Right
@@ -1053,6 +1151,7 @@ module Defs where
                         Eqtns
                           (Data.Set.fromList f6, kl)
                           [Type_eq e (repl' p (repkinds_type d1 j))]
+                          m5
                           (kindrep' d1 <$> Name_kind_1 <$> m3)
                           x7,
                         []),
@@ -1128,7 +1227,7 @@ module Defs where
       (Map' Prom_alg, Map' PConstructor, Map' Constructor) ->
       Pat' ->
       Type_1 ->
-      StateT ((Integer, Integer), Map' Type_2) Err (Pat_1, (Set String, Set String), [Eqtn]))
+      StateT ((Integer, Integer), Map' Type_2) Err (Pat_1, (Set String, Set String), [Eqtn], [(Type_1, Kind_1)]))
   type_pat a (d2, b0, b) c d  =
     case c of
       Application_pat' (Name i j) k ->
@@ -1143,23 +1242,23 @@ module Defs where
                 case p of
                   [_] ->
                     let
-                      (q, r, s, t2) =
+                      ((q, r, s, t2), m5) =
                         typevars (d2, b0) (l, m) (f, Data.Map.empty, (Data.Set.empty, Data.Set.empty), Data.Map.empty)
                       f2 x1 = type_rep (kindrep' t2) (repl' r x1)
                     in
                       runStateT
                         (
-                          (\(t, w, x) -> (Application_pat_1 t, s_union s w, Type_eq d (f2 o) : x)) <$>
+                          (\(t, w, x, f4) -> (Application_pat_1 t, s_union s w, Type_eq d (f2 o) : x, m5 ++ f4)) <$>
                           type_pats a (d2, b0, b) k (f2 <$> n) (Name i j))
                         (q, e)
                   _ -> Left ("Constructor " ++ j ++ location (Location_1 a i) ++ " is not a struct constructor.")))
-      Blank_pat' -> return (Blank_pat_1, (Data.Set.empty, Data.Set.empty), [])
+      Blank_pat' -> return (Blank_pat_1, (Data.Set.empty, Data.Set.empty), [], [])
       Name_pat' i ->
         StateT
           (\(f, e) ->
             Right
               (
-                (Name_pat_1 i, (Data.Set.empty, Data.Set.empty), []),
+                (Name_pat_1 i, (Data.Set.empty, Data.Set.empty), [], []),
                 (f, Data.Map.insert i (Type_2 Nothing [] [] [] Nothing [] d) e)))
   type_pats ::
     (
@@ -1168,7 +1267,7 @@ module Defs where
       [Pat'] ->
       [Type_1] ->
       Name ->
-      StateT ((Integer, Integer), Map' Type_2) Err ([Pat_1], (Set String, Set String), [Eqtn]))
+      StateT ((Integer, Integer), Map' Type_2) Err ([Pat_1], (Set String, Set String), [Eqtn], [(Type_1, Kind_1)]))
   type_pats a b d e (Name x y) =
     StateT
       (\(g, f) ->
@@ -1178,7 +1277,7 @@ module Defs where
           case d of
             [] ->
               case e of
-                [] -> Right (([], (Data.Set.empty, Data.Set.empty), []), (g, f))
+                [] -> Right (([], (Data.Set.empty, Data.Set.empty), [], []), (g, f))
                 _ -> z "few"
             j : k ->
               case e of
@@ -1186,8 +1285,10 @@ module Defs where
                 m : n ->
                   (
                     runStateT (type_pat a b j m) (g, f) >>=
-                    \((c, q, r), o) ->
-                      runStateT ((\(s, v, w) -> (c : s, s_union q v, r ++ w)) <$> type_pats a b k n (Name x y)) o))
+                    \((c, q, r, d3), o) ->
+                      runStateT
+                        ((\(s, v, w, w3) -> (c : s, s_union q v, r ++ w, d3 ++ w3)) <$> type_pats a b k n (Name x y))
+                        o))
   typestring :: Type_1 -> [Type_1] -> (String, [Type_1])
   typestring a d =
     case a of
@@ -1198,47 +1299,47 @@ module Defs where
       (Map' Prom_alg, Map' PConstructor) ->
       (TPat, Kind_1) ->
       (Integer, Map' Type_1, Set String) ->
-      ((Integer, Map' Type_1, Set String), Type_1))
+      ((Integer, Map' Type_1, Set String), Type_1, [(Type_1, Kind_1)]))
   typevar (l, j) (a, i) (b, c, d) =
     case a of
       Application_tpat f e ->
         let
           PConstructor _ h k _ = j ! f
+          (g, m, n) = typevar' (l, j) (zip e (kindrep' (skinds k i) <$> h)) (b, c, d)
         in
-          second
-            (Prelude.foldl Application_type_1 (ntype f))
-            (typevar' (l, j) (zip e (kindrep' (skinds k i) <$> h)) (b, c, d))
+          (g, Prelude.foldl Application_type_1 (ntype f) m, n)
       Name_tpat e ->
         let
-          ((f, g), h) = new_typevar l (b, d) i
+          ((f, g), h, m) = new_typevar l (b, d) i
         in
-          ((f, Data.Map.insert e h c, g), h)
+          ((f, Data.Map.insert e h c, g), h, m)
   typevar' ::
     (
       (Map' Prom_alg, Map' PConstructor) ->
       [(TPat, Kind_1)] ->
       (Integer, Map' Type_1, Set String) ->
-      ((Integer, Map' Type_1, Set String), [Type_1]))
+      ((Integer, Map' Type_1, Set String), [Type_1], [(Type_1, Kind_1)]))
   typevar' f a b =
     case a of
-      [] -> (b, [])
+      [] -> (b, [], [])
       c : d ->
         let
-          (e, g) = typevar f c b
+          (e, g, h) = typevar f c b
+          (i, j, k) = typevar' f d e
         in
-          second ((:) g) (typevar' f d e)
+          (i, g : j, h ++ k)
   typevars ::
     (
       (Map' Prom_alg, Map' PConstructor) ->
       ([String], [(TPat, Kind_1)]) ->
       ((Integer, Integer), Map' Type_1, (Set String, Set String), Map' Kind_1) ->
-      ((Integer, Integer), Map' Type_1, (Set String, Set String), Map' Kind_1))
+      (((Integer, Integer), Map' Type_1, (Set String, Set String), Map' Kind_1), [(Type_1, Kind_1)]))
   typevars m (a, b) ((c, d), e, (f, g), y) =
     let
       (h, i, x) = kindvars a (c, f, y)
-      ((j, k, l), _) = typevar' m (second (kindrep' x) <$> b) (d, e, g)
+      ((j, k, l), _, m5) = typevar' m (second (kindrep' x) <$> b) (d, e, g)
     in
-      ((h, j), k, (i, l), x)
+      (((h, j), k, (i, l), x), m5)
   write_kind :: Kind_1 -> String
   write_kind a = fst (write_kind' a)
   write_kind' :: Kind_1 -> (String, Bool)
