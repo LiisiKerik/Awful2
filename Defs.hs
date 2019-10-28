@@ -1106,7 +1106,10 @@ module Defs where
                   runStateT
                     (
                       (\(p, s, u) ->
-                        (Function_texpr j p, jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq t4 i : n) n4 [] []) s, u)) <$>
+                        (
+                          Function_texpr j p,
+                          jeqs (Eqtns (s_union (Data.Set.empty, h) m) (Type_eq e (function_type t4 i) : n) n4 [] []) s,
+                          u)) <$>
                       type_expression (x1, v', v) r k g i r7)
                     l))
       Int_expression_1 c -> return (Int_texpr c, Eqtns (Data.Set.empty, Data.Set.empty) [Type_eq e int_type] [] [] [], [])
