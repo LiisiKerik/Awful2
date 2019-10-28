@@ -5,19 +5,25 @@ infixl 6 + = add
 infixr 5 ++ = cat
 infixr 9 . = compose
 infixr 5 : = ConstructList
+infixl 4 <$> = fmap
+infixl 4 <*> = ap
+infixr 1 =<< = bind
 data Bool = algebraic {False, True}
 data Either [t :: Star, u :: Star] = algebraic {Left t, Right u}
 data List [t :: Star] = algebraic {EmptyList, ConstructList t (List t)}
 data Maybe [t :: Star] = algebraic {Nothing, Just t}
 data Pair [t :: Star, u :: Star] = struct MkPair (fst :: t, snd :: u)
 data Unit = struct MkUnit
-class Applicative {f :: Star -> Star} <Functor [[Star, Star]] f> (
-  ap [t :: Star, u :: Star] :: f (t -> u) -> f t -> f u,
-  pure [t :: Star] :: t -> f t)
+class Applicative {f :: Star -> Star} <Functor [[Star, Star]] f, Pointed [[Star]] f> (
+  ap [t :: Star, u :: Star] :: f (t -> u) -> f t -> f u)
 class Bifunctor [[k, l, m]] <<Cat k, Cat l, Cat m>> {f :: k -> l -> m} (
   bimap [t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
 class Field {t :: Star} <Ring t> (inverse :: t -> Maybe t)
+class Finite {t :: Star} <Ord t> (all :: List t)
 class Functor [[k, l]] <<Cat k, Cat l>> {f :: k -> l} (fmap [t :: k, u :: k] :: (t -> u) -> f t -> f u)
+class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor [[k, k]] f, Pointed [[k]] f> (join [t :: Star] :: f (f t) -> f t)
+class Pointed [[k]] <<Cat k>> {f :: k -> k} (return [t :: Star] :: t -> f t)
+def bind [[k]] <<Cat k>> [t :: k, f :: k -> k, u :: k] (g :: t -> f u) :: f t -> f u = join . fmap g
 def cat [t :: Star] (x :: List t, y :: List t) :: List t = case x of {EmptyList -> y, z : a -> z : a ++ y}
 def left [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: k -> l -> m, v :: l] <Bifunctor [[k, l, m]] f> (
   g :: t -> u) :: f t v -> f u v =
@@ -27,37 +33,11 @@ def right [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: l -> k -> m,
   (t -> u) -> f v t -> f v u =
     bimap id
 --------------------------------------------------------------------------------------------------------------------------------
-
-
 {-
 class Container{f :: Star -> Star}(
   empty[t :: Star] :: f t,
   filter[t :: Star] :: (t -> Bool) -> f t -> f t,
   size[t :: Star] :: f t -> Int)
-class Finite{t :: Star}<Ord>(list :: List t)
-class Monad{f :: Star -> Star}<Applicative>(bind[t :: Star, u :: Star] :: f t -> (t -> f u) -> f u)
-
-TODO:
-
-
-
-f t :: k
-f u :: k
-t -> f u :: k -> k
-f t -> f u :: k -> k
-(t -> f u) -> f t -> f u :: (k -> k) -> k -> k
-
-class Monad[[k]] <<Cat k>> {f :: k -> k} <Functor f> (bind [t :: k, u :: k] :: (t -> f u) -> f t -> f u)
-
-
-defineerida join kaudu?
-
-class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor f> (join [t :: k] :: f (f t) -> f t)
-
-operator - minus 6 Left
-operator <$> fmap 4 Left
-operator <*> ap 4 Left
-operator >>= bind 1 Left
 instance Applicative{Either _}(x <*> y = case x of {Left z -> Left z, Right f -> f <$> y}, return = Right)
 instance Applicative{Arrow{{Star}} _}((f <*> g) x = f x (g x), return x _ = x)
 instance Applicative{List}(x <*> y = case x of {EmptyList -> List, f : z -> (f <$> y) ++ (z <*> y)}, return x = [x])
