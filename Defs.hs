@@ -1,6 +1,8 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Defs where
+  import Cats_0
+  import Cats_1
   import Classes_0
   import Classes_1
   import Control.Monad
