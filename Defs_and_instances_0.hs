@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Defs_and_instances_0 (Def_4 (..), Inst (..), KT2 (..), repkinds_type, type_defs_1) where
+module Defs_and_instances_0 (Def_4 (..), Inst (..), KT2 (..), instances, repkinds_type, type_defs_1) where
   import Cats_0
   import Cats_1
   import Classes_0
@@ -33,6 +33,9 @@ module Defs_and_instances_0 (Def_4 (..), Inst (..), KT2 (..), repkinds_type, typ
         deriving Show
   data Inst = Inst [Kind_1] [[String]] deriving Show
   data KT2 = KT2 [String] [String] [(String, Kind_1)] deriving Show
+  instances :: Map' (Map' Inst)
+  instances =
+    Data.Map.fromList [("Ord", Data.Map.fromList [("Int", Inst [] [])]), ("Ring", Data.Map.fromList [("Int", Inst [] [])])]
   repkinds_method :: Map' Kind_1 -> Method_4 -> Method_4
   repkinds_method a (Method_4 b c d e) = Method_4 b (second (repkinds a) <$> c) d (repkinds_type a e)
   repkinds_type :: Map' Kind_1 -> Type_1 -> Type_1

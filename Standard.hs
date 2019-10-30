@@ -1,6 +1,30 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Standard where
+module Standard (
+  Alg_pat_7 (..),
+  Cat_1 (..),
+  Class_7 (..),
+  Data_6 (..),
+  Data_br_6 (..),
+  Data_case_6 (..),
+  Def_1 (..),
+  Expression_9 (..),
+  Form_6 (..),
+  Location' (..),
+  Map',
+  Method_9 (..),
+  Pat_2 (..),
+  Status (..),
+  Tree_2 (..),
+  Type_5 (..),
+  Type_8 (..),
+  ins_new,
+  old,
+  old',
+  rem_old,
+  standard_1,
+  std_expr,
+  und_err) where
   import Control.Monad.Trans.State.Strict
   import Data.Bifunctor
   import Data.Map
@@ -65,6 +89,8 @@ module Standard where
   ins_new a b = Data.Map.insert a (b, New)
   old :: Map' t -> Map' (t, Status)
   old = (<$>) (flip (,) Old)
+  old' :: Map' (Map' t) -> Map' (Map' (t, Status))
+  old' = (<$>) old
   pop :: (Name -> t -> t -> t) -> [(Op', t)] -> t -> Op' -> [(Op', t)]
   pop f x expr (Op' l (Op pr assoc name)) =
     let
