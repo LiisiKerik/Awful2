@@ -1,7 +1,8 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Defs where
-  import Classes
+  import Classes_0
+  import Classes_1
   import Control.Monad
   import Control.Monad.Trans.State.Strict
   import Data.Bifunctor

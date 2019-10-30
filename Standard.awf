@@ -14,23 +14,25 @@ data List [t :: Star] = algebraic {EmptyList, ConstructList t (List t)}
 data Maybe [t :: Star] = algebraic {Nothing, Just t}
 data Pair [t :: Star, u :: Star] = struct MkPair (fst :: t, snd :: u)
 data Unit = struct MkUnit
-class Applicative {f :: Star -> Star} <Functor [[Star, Star]] f, Pointed [[Star]] f> (
-  ap [t :: Star, u :: Star] :: f (t -> u) -> f t -> f u)
+class Applicative {f :: Functor [[Star, Star]] * Pointed [[Star]]} (ap [t :: Star, u :: Star] :: f (t -> u) -> f t -> f u)
 class Bifunctor [[k, l, m]] <<Cat k, Cat l, Cat m>> {f :: k -> l -> m} (
   bimap [t :: k, u :: k, v :: l, w :: l] :: (t -> u) -> (v -> w) -> f t v -> f u w)
-class Field {t :: Star} <Ring t> (inverse :: t -> Maybe t)
-class Finite {t :: Star} <Ord t> (all :: List t)
+class Field {t :: Ring} (inverse :: t -> Maybe t)
+class Finite {t :: Ord} (all :: List t)
 class Functor [[k, l]] <<Cat k, Cat l>> {f :: k -> l} (fmap [t :: k, u :: k] :: (t -> u) -> f t -> f u)
-class Monad [[k]] <<Cat k>> {f :: k -> k} <Functor [[k, k]] f, Pointed [[k]] f> (join [t :: Star] :: f (f t) -> f t)
+class Monad [[k]] <<Cat k>> {f :: Functor [[k, k]] * Pointed [[k]]} (join [t :: Star] :: f (f t) -> f t)
 class Pointed [[k]] <<Cat k>> {f :: k -> k} (return [t :: Star] :: t -> f t)
-def bind [[k]] <<Cat k>> [t :: k, f :: k -> k, u :: k] (g :: t -> f u) :: f t -> f u = join . fmap g
+def bind [[k]] <<Cat k>> [t :: k, f :: k -> k, u :: k] <Monad [[k]] f> (g :: t -> f u) :: f t -> f u = join . fmap g
 def cat [t :: Star] (x :: List t, y :: List t) :: List t = case x of {EmptyList -> y, z : a -> z : a ++ y}
-def left [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: k -> l -> m, v :: l] <Bifunctor [[k, l, m]] f> (
+def left [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: Bifunctor [[k, l, m]], v :: l] (
   g :: t -> u) :: f t v -> f u v =
     bimap g id
-def negate [t :: Star] <Ring t> (x :: t) :: t = convert -1 * x
-def right [[k, l, m]] <<Cat k, Cat l, Cat m>> [t :: k, u :: k, f :: l -> k -> m, v :: l] <Bifunctor [[l, k, m]] f> ::
-  (t -> u) -> f v t -> f v u =
+def negate [t :: Ring] (x :: t) :: t = convert -1 * x
+def right [[k, l, m]] <<Cat k, Cat l, Cat m>> [
+  t :: l,
+  u :: l,
+  f :: Bifunctor [[k, l, m]],
+  v :: k] :: (t -> u) -> f v t -> f v u =
     bimap id
 --------------------------------------------------------------------------------------------------------------------------------
 {-
@@ -105,26 +107,6 @@ instance Ring{Pair t u}<Ring t, Ring u>(
   convert x = Mk_Pair (convert x) (convert x),
   Mk_Pair x y * Mk_Pair z a = Mk_Pair (x * z) (y * a),
   negate (Mk_Pair x y) = Mk_Pair (negate x) (negate y))
-instance Writeable{Bool}(
-  Write_Brackets x = Mk_Pair (case x of {False -> ["F", "a", "l", "s", "e"], True -> ["T", "r", "u", "e"]}) 0)
-instance Writeable{Char}(
-  Write_Brackets c = Mk_Pair (case c of {Newline -> ["N", "e", "w", "l", "i", "n", "e"], _ -> [""", c, """]}) 0)
-instance Writeable{Either t u}<Writeable t, Writeable u>(
-  Write_Brackets x =
-    Mk_Pair
-      (case x of {
-        Left y -> Concat ["L", "e", "f", "t"] (Brackets y),
-        Right y -> Concat ["R", "i", "g", "h", "t"] (Brackets y)})
-      True)
-instance Writeable{List t}<Writeable t>(Write_Brackets x = Mk_Pair (["["] ++ Interleave [",", " "] (Write . x) ++ ["]"]) 1)
-instance Writeable{Maybe t}<Writeable t>(
-  Write_Brackets x =
-    case x of {
-      Nothing -> Mk_Pair ["N", "o", "t", "h", "i", "n", "g"] False,
-      Just y -> Mk_Pair (["J", "u", "s", "t", " "] ++ Brackets y) True})
-instance Writeable{Ordering}(Write_Brackets x = Mk_Pair (case x of {LT -> ["L", "T"], EQ -> ["E", "Q"], GT -> ["G", "T"]}) 0)
-instance Writeable{Pair t u}<Writeable t, Writeable u>(
-  Write_Brackets (Mk_Pair x y) = Mk_Pair (Write' ["M", "k", "_", "P", "a", "i", "r"] [Brackets x, Brackets y]) True)
 def add'[f :: Star -> Star, t :: Star]<Applicative f, Ring t>(x :: f t, y :: f t) :: f t = add <$> x <*> y
 def brackets[t :: Star]<Writeable t>(x :: t) :: List Char =
   let Mk_Pair y z = Write_Brackets x in case z of {False -> y, True -> ["("] ++ y ++ [")"]}
@@ -144,7 +126,5 @@ def lessOrEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of 
 def not(x :: Bool) :: Bool = case x of {False -> true, true -> False}
 def notEqual[t :: Star]<Ord t>(x :: t, y :: t) :: Bool = case compare x y of {EQ -> False, _ -> true}
 def right[t :: Star, u :: Star, f :: Star -> Star -> Star, v :: Star]<Bifunctor f> :: (t -> u) -> f v t -> f v u = bimap id
-def write[t :: Star]<Writeable t>(x :: t) :: List Char = First (writeBrackets x)
-def write'(x :: List Char, y :: List (List Char)) :: List Char = Interleave [" "] (x : y)
 def zr[t :: Star]<Ring t> :: t = convert 0
 -}

@@ -26,4 +26,6 @@ Cat{{Either K L}}<<Cat K, Cat L>>(
         Match Mk_Pair f g {Mk_Pair (Right_Arrow h) (Right_Arrow i) -> Right_Arrow (h . i)},
       _ -> Match Mk_Pair f g {}},
   Id[T] = Branch T {Left _ -> Left_Arrow Id, Right _ -> Right_Arrow Id})
+Cat {{k -> l}} <<Cat l>> (
+  f -> g = struct ArrowArrow (
 -}

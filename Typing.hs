@@ -11,7 +11,8 @@ improve cat syntax
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Typing where
-  import Classes
+  import Classes_0
+  import Classes_1
   import Control.Monad.Trans.State.Strict
   import Data.Map
   import Datas
@@ -35,6 +36,33 @@ module Typing where
       (Map' Cat_4)
       (Map' PConstructor)
         deriving Show
+  classes_0 :: Map' Class_4
+  classes_0 =
+    Data.Map.fromList
+      [
+        (
+          "Ord",
+          Class_4
+            []
+            []
+            ("T", star_kind)
+            Nothing
+            [Method_4 "compare" [] [] (function_type (ntype "T") (function_type (ntype "T") comparison_type))]),
+        (
+          "Ring",
+          Class_4
+            []
+            []
+            ("T", star_kind)
+            Nothing
+            [
+              Method_4 "add" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T"))),
+              Method_4 "convert" [] [] (function_type int_type (ntype "T")),
+              Method_4 "times" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))])]
+  classes_1 :: Map' Class_5
+  classes_1 = (\(Class_4 e f (_, a) b c) -> Class_5 e f a b ((\(Method_4 d _ _ _) -> d) <$> c)) <$> classes_0
+  classes_2 :: Map' ([String], [String], Kind_1)
+  classes_2 = (\(Class_4 b c (_, a) _ _) -> (b, c, a)) <$> classes_0
   context_union :: (File, Map' Op) -> (File, Map' Op) -> (File, Map' Op)
   context_union (File i j d a x e q t g o z w', t0) (File k l h c y m r u n p p2 a', t2) =
     (
@@ -238,29 +266,32 @@ module Typing where
       type_datas a (b, c) (g, h, i, j, k, p, q, r, s) >>=
       \((f', m', n', u, z, c', i', e', o'), p') ->
         (
-          type_classes a (fst <$> u) (fst <$> f') d (fst <$> i') (old l, n', t, old o, old m) >>=
-          \(q', r', s', t', u') ->
+          type_classes_0 (Location_1 a) (fst <$> u) (fst <$> f') d (fst <$> i') (t, old o, old m, Data.Map.empty) >>=
+          \(r7, (s', t', u', _)) ->
             (
-              (\(w', x', b0, y') ->
+              type_classes_1 a r7 (fst <$> u) (fst <$> t') (fst <$> u') (fst <$> i') (n', old l) >>=
+              \(r', q') ->
                 (
-                  File
-                    (rem_old f')
-                    (rem_old m')
-                    w'
-                    (rem_old u)
-                    z
-                    (rem_old q')
-                    (rem_old u')
-                    x'
-                    (rem_old t')
-                    (rem_old c')
-                    (rem_old i')
-                    (rem_old e'),
-                  b0,
-                  y')) <$>
-              type_defs
-                a
-                (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e', fst <$> c')
-                (f, p')
-                (r', n, o', s'))))
+                  (\(w', x', b0, y') ->
+                    (
+                      File
+                        (rem_old f')
+                        (rem_old m')
+                        w'
+                        (rem_old u)
+                        z
+                        (rem_old q')
+                        (rem_old u')
+                        x'
+                        (rem_old t')
+                        (rem_old c')
+                        (rem_old i')
+                        (rem_old e'),
+                      b0,
+                      y')) <$>
+                  type_defs
+                    a
+                    (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e', fst <$> c')
+                    (f, p')
+                    (r', n, o', s')))))
 --------------------------------------------------------------------------------------------------------------------------------
