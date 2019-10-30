@@ -9,7 +9,7 @@ improve cat syntax
 -}
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Typing where
+module Typing (File (..), context_union, defs, init_type_context, standard_naming_typing, type_expr') where
   import Cats_0
   import Cats_1
   import Classes_0
@@ -21,6 +21,7 @@ module Typing where
   import Datas_2
   import Defs
   import Defs_and_instances_0
+  import Defs_and_instances_1
   import Naming
   import Standard
   import Tokenise
@@ -101,33 +102,6 @@ module Typing where
         (singleton "Star" (Cat_4 [] []))
         pconstrs,
       empty)
-  locations :: Locations
-  locations =
-    fromList
-      (
-        (\x -> (x, Language)) <$>
-        [
-          "Arrow",
-          "EQ",
-          "GT",
-          "Int",
-          "LT",
-          "Nat",
-          "Next",
-          "Ord",
-          "Ordering",
-          "Ring",
-          "Star",
-          "Zero",
-          "add",
-          "compare",
-          "compose",
-          "convert",
-          "div",
-          "id",
-          "mod",
-          "times",
-          "undefined"])
   nat_type :: Type_1
   nat_type = ntype "Nat"
   standard_naming_typing ::
@@ -135,13 +109,13 @@ module Typing where
       String ->
       Tree_0 ->
       (
-        (Locations, Locations, Locations, Map' (Map' Location')),
+        (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
         (File, Map' Op),
         Map' Expression_2,
         Map' ([String], Map' [(String, Nat)])) ->
       Err
         (
-          (Locations, Locations, Locations, Map' (Map' Location')),
+          (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
           (File, Map' Op),
           Map' Expression_2,
           Map' ([String], Map' [(String, Nat)])))

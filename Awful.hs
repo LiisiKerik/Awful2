@@ -20,7 +20,7 @@ check ::
     [String] ->
     (
       Files,
-      (Locations, Locations, Locations, Map' (Map' Location')),
+      (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
       Map' Expression_2,
       Map' ([String], Map' [(String, Nat)])) ->
     Location' ->
@@ -30,7 +30,7 @@ check ::
         (
           (
             Files,
-            (Locations, Locations, Locations, Map' (Map' Location')),
+            (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
             Map' Expression_2,
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
@@ -90,7 +90,7 @@ check_imports ::
     (
       (
         Files,
-        (Locations, Locations, Locations, Map' (Map' Location')),
+        (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
         Map' Expression_2,
         Map' ([String], Map' [(String, Nat)])),
       (File, Map' Op)) ->
@@ -100,7 +100,7 @@ check_imports ::
         (
           (
             Files,
-            (Locations, Locations, Locations, Map' (Map' Location')),
+            (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
             Map' Expression_2,
             Map' ([String], Map' [(String, Nat)])),
           (File, Map' Op))))
@@ -123,7 +123,11 @@ eval'' a b = do
       \((_, (t, _, _, _), f, y), (File j g i w _ _ _ m _ d2 w' x', u)) ->
         tokenise_parse_naming_typing_eval t j (d2, x', g, i) f b m y w u w')
 init' ::
-  (Files, (Locations, Locations, Locations, Map' (Map' Location')), Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
+  (
+    Files,
+    (Map' Location', Map' Location', Map' Location', Map' (Map' Location')),
+    Map' Expression_2,
+    Map' ([String], Map' [(String, Nat)]))
 init' =
   (
     empty,
