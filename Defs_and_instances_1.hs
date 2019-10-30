@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wall #-}
 module Defs_and_instances_1 (new_typevar, type_defs_2, type_expr) where
   import Classes_0
-  import Classes_1
+  import Classes_2
   import Control.Monad
   import Control.Monad.Trans.State.Strict
   import Data.Bifunctor

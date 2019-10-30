@@ -4,7 +4,7 @@ module Defs_and_instances_0 (Def_4 (..), Inst (..), KT2 (..), instances, repkind
   import Cats_0
   import Cats_1
   import Classes_0
-  import Classes_1
+  import Classes_2
   import Data.Bifunctor
   import Data.List
   import Data.Map
