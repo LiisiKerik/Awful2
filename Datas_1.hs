@@ -34,8 +34,8 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
                   p = zip g k
                 in
                   (
-                    (\(n, o) -> ((Data.Map.insert f (Left e) i, n), Data_case_3 f p o)) <$>
-                    type_data_br_1 (a, Prelude.foldl (\q -> \(r, s) -> Data.Map.insert r s q) b p, c) h j)
+                    (\(n, o) -> ((insert f (Left e) i, n), Data_case_3 f p o)) <$>
+                    type_data_br_1 (a, Prelude.foldl (\q -> \(r, s) -> insert r s q) b p, c) h j)
               GT -> Left ("Type constructor " ++ show f ++ location (Location_1 a e) ++ " has been given too many arguments.")
   type_branchings_0 ::
     (
@@ -57,7 +57,7 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
       Err ((Map' (Polykind, Status), Map' Expression_2), Data_3))
   type_data_1 a (b, c) (Data_2 d m4 f) (i, k) =
     (
-      type_kinds_5 (Location_1 a) b (m4, Data.Map.empty){-type_kt_0 (Location_1 a) b m4-} >>=
+      type_kinds_5 (Location_1 a) b (m4, empty) >>=
       \(l, y) ->
         (
           (\(n, o) ->
@@ -74,7 +74,7 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
                 let
                   j = show <$> [0 .. length g - 1]
                 in
-                  Data.Map.insert
+                  insert
                     f
                     (Prelude.foldr
                       (\h -> Function_expression_2 (Name_pat_1 h))
@@ -99,10 +99,7 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
                 Just (Prom_alg i j) ->
                   (
                     second (Branching_data_3 f n) <$>
-                    type_branchings_0
-                      (a, Data.Map.delete f l, k, (\t -> Right (fmap (kindrep' (Data.Map.fromList (zip i n))) t)) <$> j, m)
-                      g
-                      c))
+                    type_branchings_0 (a, delete f l, k, (\t -> Right (fmap (kindrep' (fromList (zip i n))) t)) <$> j, m) g c))
       Struct_data_2 e f ->
         let
           d = (\(g, _) -> '!' : g) <$> f
@@ -110,8 +107,8 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
           Right
             (
               Prelude.foldl
-                (\g -> \(h, i) -> Data.Map.insert h i g)
-                (Data.Map.insert
+                (\g -> \(h, i) -> insert h i g)
+                (insert
                   e
                   (Prelude.foldr
                     (\h -> Function_expression_2 (Name_pat_1 h))
@@ -160,5 +157,5 @@ module Datas_1 (Data_3 (..), Data_br_3 (..), Data_case_3 (..), type_data_br_1, t
   type_kinds_5 f a (b, x) =
     case b of
       [] -> Right ([], x)
-      (g, c) : d -> type_kind_7 f a Star_kind c >>= \e -> first ((:) (g, e)) <$> type_kinds_5 f a (d, Data.Map.insert g e x)
+      (g, c) : d -> type_kind_7 f a Star_kind c >>= \e -> first ((:) (g, e)) <$> type_kinds_5 f a (d, insert g e x)
 --------------------------------------------------------------------------------------------------------------------------------
