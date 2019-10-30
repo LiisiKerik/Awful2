@@ -446,8 +446,8 @@ module Datas where
               type_datas_2 (Location_1 a) h' (fst <$> f') (fst <$> u) (fst <$> i') (d', b') >>=
               \(k', l') ->
                 (
-                  type_cats_1 (a, fst <$> u, fst <$> e', fst <$> f', fst <$> c', fst <$> i') j' (k', l', g') >>=
-                  \((m', n', o'), p') -> Right ((f', m', n', u, z, c', i', e', o'), p')))))
+                  first (\(m', n', o') -> (f', m', n', u, z, c', i', e', o')) <$>
+                  type_cats_1 (a, fst <$> u, fst <$> e', fst <$> f', fst <$> c', fst <$> i') j' (k', l', g')))))
   type_datas_1 ::
     (
       String ->
