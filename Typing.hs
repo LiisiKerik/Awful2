@@ -12,6 +12,7 @@ improve cat syntax
 module Typing (File (..), context_union, defs, init_type_context, standard_naming_typing, type_expr') where
   import Cats_0
   import Cats_1
+  import Cats_2
   import Classes_0
   import Classes_1
   import Control.Monad.Trans.State.Strict
@@ -19,7 +20,6 @@ module Typing (File (..), context_union, defs, init_type_context, standard_namin
   import Datas_0
   import Datas_1
   import Datas_2
-  import Defs
   import Defs_and_instances_0
   import Defs_and_instances_1
   import Naming
@@ -234,26 +234,56 @@ module Typing (File (..), context_union, defs, init_type_context, standard_namin
                           type_classes_1 a r7 (fst <$> u) (fst <$> t') (fst <$> u') (fst <$> i') (n', old l) >>=
                           \(r', q') ->
                             (
-                              (\(w', x', b0, y') ->
-                                (
-                                  File
-                                    (rem_old f')
-                                    (rem_old m')
-                                    w'
-                                    (rem_old u)
-                                    z
-                                    (rem_old q')
-                                    (rem_old u')
-                                    x'
-                                    (rem_old t')
-                                    (rem_old c')
-                                    (rem_old i')
-                                    (rem_old e'),
-                                  b0,
-                                  y')) <$>
-                              type_defs
+                              type_defs_1
                                 a
-                                (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e', fst <$> c')
-                                (f, p')
-                                (r', n, o', s'))))))))
+                                (fst <$> u)
+                                f
+                                (fst <$> f')
+                                r'
+                                (fst <$> q')
+                                (fst <$> u')
+                                (fst <$> i')
+                                (old' n, s') >>=
+                              \(v', w', (x', y')) ->
+                                (
+                                  (\a0 -> \b0 ->
+                                    (
+                                      File
+                                        (rem_old f')
+                                        (rem_old m')
+                                        (rem_old w')
+                                        (rem_old u)
+                                        z
+                                        (rem_old q')
+                                        (rem_old u')
+                                        (rem_old' x')
+                                        (rem_old t')
+                                        (rem_old c')
+                                        (rem_old i')
+                                        (rem_old e'),
+                                      Data.Map.union (Data.Map.union o' a0) b0,
+                                      y')) <$>
+                                  type_cats_2
+                                    (
+                                      a,
+                                      fst <$> u,
+                                      fst <$> f',
+                                      y',
+                                      fmap fst <$> x',
+                                      fst <$> i',
+                                      fst <$> e',
+                                      fst <$> m',
+                                      fst <$> w',
+                                      fst <$> c')
+                                    p' <*>
+                                  type_defs_2
+                                    a
+                                    v'
+                                    (fst <$> c', fst <$> e', fst <$> m', fst <$> w')
+                                    (fmap fst <$> x')
+                                    (fst <$> f')
+                                    y'
+                                    (fst <$> q')
+                                    (fst <$> u)
+                                    (fst <$> i')))))))))
 --------------------------------------------------------------------------------------------------------------------------------

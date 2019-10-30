@@ -22,6 +22,7 @@ module Standard (
   old,
   old',
   rem_old,
+  rem_old',
   standard_1,
   std_expr,
   und_err) where
@@ -120,6 +121,8 @@ module Standard (
       (Op' l (Op _ _ name), expr') : x' -> pop' pop_all f x' l name expr' expr
   rem_old :: Map' (t, Status) -> Map' t
   rem_old a = fst <$> Data.Map.filter (\(_, b) -> b == New) a
+  rem_old' :: Map' (Map' (t, Status)) -> Map' (Map' t)
+  rem_old' a = Data.Map.filter (\b -> not (Data.Map.null b)) (rem_old <$> a)
   shunting_yard ::
     (
       (Location_0 -> Location_1) ->
