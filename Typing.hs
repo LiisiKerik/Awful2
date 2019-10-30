@@ -1,5 +1,4 @@
 {-
-Klasside ja liikide vordsus - mis on seos Scala subtypinguga?
 pattern matching in types
 generalise branching types to branch not only over promoted algebraics but over Star and Int
 stringide syntaktiline suhkur
@@ -11,12 +10,16 @@ improve cat syntax
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Typing where
+  import Cats_0
+  import Cats_1
   import Classes_0
   import Classes_1
   import Control.Monad.Trans.State.Strict
   import Data.Map
   import Datas
   import Datas_0
+  import Datas_1
+  import Datas_2
   import Defs
   import Naming
   import Standard
@@ -237,35 +240,44 @@ module Typing where
     Err (File, Map' Expression_2, Map' ([String], Map' [(String, Nat)]))
   typing a (Tree_5 b c d f) (File g h i j k l m n o p q r, s, t) =
     (
-      type_datas a (b, c) (g, h, i, j, k, p, q, r, s) >>=
-      \((f', m', n', u, z, c', i', e', o'), p') ->
+      type_proms (Location_1 a) b q (j, g, s, k, i, p, h, r) >>=
+      \((u, a', w, z, b', c', d', e'), y) ->
         (
-          type_classes_0 (Location_1 a) (fst <$> u) (fst <$> f') d (fst <$> i') (t, old o, old m, Data.Map.empty) >>=
-          \(r7, (s', t', u', _)) ->
+          (,) <$> type_datas_1 a (fst <$> u, fst <$> c') y (a', w) <*> type_cats_0 (Location_1 a, fst <$> u) c (old q) >>=
+          \(((f', g'), h'), (i', j')) ->
             (
-              type_classes_1 a r7 (fst <$> u) (fst <$> t') (fst <$> u') (fst <$> i') (n', old l) >>=
-              \(r', q') ->
+              type_datas_2 (Location_1 a) h' (fst <$> f') (fst <$> u) (fst <$> i') (d', b') >>=
+              \(k', l') ->
                 (
-                  (\(w', x', b0, y') ->
+                  type_cats_1 (a, fst <$> u, fst <$> e', fst <$> f', fst <$> c', fst <$> i') j' (k', l', g') >>=
+                  \((m', n', o'), p') ->
                     (
-                      File
-                        (rem_old f')
-                        (rem_old m')
-                        w'
-                        (rem_old u)
-                        z
-                        (rem_old q')
-                        (rem_old u')
-                        x'
-                        (rem_old t')
-                        (rem_old c')
-                        (rem_old i')
-                        (rem_old e'),
-                      b0,
-                      y')) <$>
-                  type_defs
-                    a
-                    (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e', fst <$> c')
-                    (f, p')
-                    (r', n, o', s')))))
+                      type_classes_0 (Location_1 a) (fst <$> u) (fst <$> f') d (fst <$> i') (t, old o, old m, Data.Map.empty) >>=
+                      \(r7, (s', t', u', _)) ->
+                        (
+                          type_classes_1 a r7 (fst <$> u) (fst <$> t') (fst <$> u') (fst <$> i') (n', old l) >>=
+                          \(r', q') ->
+                            (
+                              (\(w', x', b0, y') ->
+                                (
+                                  File
+                                    (rem_old f')
+                                    (rem_old m')
+                                    w'
+                                    (rem_old u)
+                                    z
+                                    (rem_old q')
+                                    (rem_old u')
+                                    x'
+                                    (rem_old t')
+                                    (rem_old c')
+                                    (rem_old i')
+                                    (rem_old e'),
+                                  b0,
+                                  y')) <$>
+                              type_defs
+                                a
+                                (fst <$> u, fst <$> f', fst <$> q', fst <$> u', fst <$> i', fst <$> m', fst <$> e', fst <$> c')
+                                (f, p')
+                                (r', n, o', s'))))))))
 --------------------------------------------------------------------------------------------------------------------------------

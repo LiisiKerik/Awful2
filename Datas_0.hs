@@ -20,14 +20,21 @@ module Datas_0 (
   arrow_type,
   check_cat,
   check_cats_2,
+  comparison_type,
+  constructors,
   function_type,
+  hkinds,
   kind_err,
   kind_string,
   kindrep,
   kindrep',
+  kinds,
   ntype,
+  pconstrs,
   pkind,
+  prom_algs,
   prom_type,
+  promotables,
   solve_type_eqs,
   star_kind,
   type_brs_0,
@@ -111,6 +118,19 @@ module Datas_0 (
     case c of
       [] -> Right ()
       d : e -> check_cat a b d *> check_cats_2 a b e
+  comparison_kind :: Kind_1
+  comparison_kind = Name_kind_1 "Ordering"
+  comparison_type :: Type_1
+  comparison_type = ntype "Ordering"
+  constructors :: Map' Constructor
+  constructors =
+    Data.Map.fromList
+      [
+        ("EQ", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("GT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("LT", Constructor [] [] [] comparison_type [("EQ", 0), ("GT", 0), ("LT", 0)]),
+        ("Next", Constructor [] [] [ntype "Nat"] (ntype "Nat") [("Next", 1), ("Zero", 0)]),
+        ("Zero", Constructor [] [] [] (ntype "Nat") [("Next", 1), ("Zero", 0)])]
   function_type :: Type_1 -> Type_1 -> Type_1
   function_type = arrow_type star_kind
   gather_all_types :: Ord u => (t -> Map u v -> Map u v) -> [t] -> Map u v -> Map u v
@@ -131,8 +151,25 @@ module Datas_0 (
       Name_type_5 (Name a d) -> if Data.Set.member d f then c else Data.Map.insert d a c
   gather_types :: Set String -> [Type_8] -> Map' Location_0 -> Map' Location_0
   gather_types a b = gather_all_types (gather_type a) ((\(Type_8 _ c) -> c) <$> b)
+  hkinds :: Map' Kind
+  hkinds =
+    Data.Map.fromList
+      [("Kind arrow", Arrow_kind (Arrow_kind Star_kind)), ("Nat", Star_kind), ("Ordering", Star_kind), ("Star", Star_kind)]
   kind_err :: Location_1 -> Err t
   kind_err a = Left ("Kind mismatch" ++ location' a)
+  kinds :: Map' Polykind
+  kinds =
+    Data.Map.fromList
+      [
+        ("Arrow", Polykind (Just "k") [] (arrow_kind (Name_kind_1 "k") (arrow_kind (Name_kind_1 "k") (Name_kind_1 "Star")))),
+        ("EQ", pkind comparison_kind),
+        ("GT", pkind comparison_kind),
+        ("Int", pkind star_kind),
+        ("LT", pkind comparison_kind),
+        ("Nat", pkind star_kind),
+        ("Next", pkind (arrow_kind nat_kind nat_kind)),
+        ("Ordering", pkind star_kind),
+        ("Zero", pkind nat_kind)]
   kindrep :: String -> Kind_1 -> Kind_1 -> Kind_1
   kindrep a b f =
     let
@@ -176,6 +213,8 @@ module Datas_0 (
     case a of
       [] -> b
       c : d -> make_eqs d (make_eq c b)
+  nat_kind :: Kind_1
+  nat_kind = Name_kind_1 "Nat"
   ntype :: String -> Type_1
   ntype a = Name_type_1 a Nothing []
   occ_kind :: String -> Kind_1 -> Bool
@@ -183,8 +222,19 @@ module Datas_0 (
     case b of
       Application_kind_1 c d -> occ_kind a c || occ_kind a d
       Name_kind_1 c -> c == a
+  pconstrs :: Map' PConstructor
+  pconstrs =
+    (
+      (\(Constructor _ a b c d) -> PConstructor ((\(Name_tpat e, _) -> e) <$> a) (prom_type <$> b) (prom_type c) d) <$>
+      constructors)
   pkind :: Kind_1 -> Polykind
   pkind = Polykind Nothing []
+  prom_algs :: Map' Prom_alg
+  prom_algs =
+    Data.Map.fromList
+      [
+        ("Nat", Prom_alg [] (Data.Map.fromList [("Next", [nat_kind]), ("Zero", [])])),
+        ("Ordering", Prom_alg [] (Data.Map.fromList [("EQ", []), ("GT", []), ("LT", [])]))]
   prom_type :: Type_1 -> Kind_1
   prom_type a =
     case a of
@@ -203,6 +253,8 @@ module Datas_0 (
     case a of
       Name_kind_0 (Name _ "Star") -> True
       _ -> False
+  promotables :: Map' Bool
+  promotables = Data.Map.fromList  [("Arrow", False), ("Int", False), ("Nat", True), ("Ordering", True)]
   solve_diff :: Ord t => Map t u -> [t] -> Map t u
   solve_diff a b =
     case b of
