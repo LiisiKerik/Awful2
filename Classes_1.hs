@@ -1,12 +1,21 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Classes_1 (Class_4 (..), Method_4 (..), check_cats, type_classes_1, type_constraints_0) where
+module Classes_1 (
+  Class_4 (..),
+  Method_4 (..),
+  check_cats,
+  classes_0,
+  classes_1,
+  classes_2,
+  type_classes_1,
+  type_constraints_0) where
   import Classes_0
   import Control.Monad
   import Data.Bifunctor
   import Data.Map
   import Data.Set
   import Datas
+  import Datas_0
   import Standard
   import Tokenise
   import Tree
@@ -38,6 +47,33 @@ module Classes_1 (Class_4 (..), Method_4 (..), check_cats, type_classes_1, type_
     case b of
       [] -> Right ()
       c : d -> check_cat f e (a ! c) *> check_cats f e a d
+  classes_0 :: Map' Class_4
+  classes_0 =
+    Data.Map.fromList
+      [
+        (
+          "Ord",
+          Class_4
+            []
+            []
+            ("T", star_kind)
+            Nothing
+            [Method_4 "compare" [] [] (function_type (ntype "T") (function_type (ntype "T") comparison_type))]),
+        (
+          "Ring",
+          Class_4
+            []
+            []
+            ("T", star_kind)
+            Nothing
+            [
+              Method_4 "add" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T"))),
+              Method_4 "convert" [] [] (function_type int_type (ntype "T")),
+              Method_4 "times" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))])]
+  classes_1 :: Map' Class_5
+  classes_1 = (\(Class_4 e f (_, a) b c) -> Class_5 e f a b ((\(Method_4 d _ _ _) -> d) <$> c)) <$> classes_0
+  classes_2 :: Map' ([String], [String], Kind_1)
+  classes_2 = (\(Class_4 b c (_, a) _ _) -> (b, c, a)) <$> classes_0
   type_class_1 ::
     (
       String ->

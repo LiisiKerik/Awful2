@@ -12,6 +12,7 @@ module Defs where
   import Data.Maybe
   import Data.Set
   import Datas
+  import Datas_0
   import Naming
   import Standard
   import Tokenise
@@ -963,7 +964,7 @@ module Defs where
       String ->
       (Map' Kind, Map' Polykind, Map' Class_4, Map' Class_5, Map' Cat_4, Map' Constructor, Map' PConstructor, Map' Prom_alg) ->
       ([Def_3], [Cat_6]) ->
-      (Types, Map' (Map' Inst), Map' Expression_2, Map' ([String], Map' [(String, Nat)])) ->
+      (Map' (Type_2, Status), Map' (Map' Inst), Map' Expression_2, Map' ([String], Map' [(String, Nat)])) ->
       Err (Map' Type_2, Map' (Map' Inst), Map' Expression_2, Map' ([String], Map' [(String, Nat)])))
   type_defs a (u, f', q', u', i', m', f2, f5) (f, p') (r', n, o', s') =
     (
@@ -981,12 +982,12 @@ module Defs where
       Map' Kind ->
       [Def_3] ->
       Map' Polykind ->
-      Types ->
+      Map' (Type_2, Status) ->
       Map' Class_4 ->
       Map' Class_5 ->
       Map' Cat_4 ->
       (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)])) ->
-      Err ([Def_4], Types, (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)]))))
+      Err ([Def_4], Map' (Type_2, Status), (Map' (Map' (Inst, Status)), Map' ([String], Map' [(String, Nat)]))))
   type_defs_1 h x a b c y y0 v u =
     case a of
       [] -> Right ([], c, u)

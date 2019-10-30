@@ -16,6 +16,7 @@ module Typing where
   import Control.Monad.Trans.State.Strict
   import Data.Map
   import Datas
+  import Datas_0
   import Defs
   import Naming
   import Standard
@@ -36,33 +37,6 @@ module Typing where
       (Map' Cat_4)
       (Map' PConstructor)
         deriving Show
-  classes_0 :: Map' Class_4
-  classes_0 =
-    Data.Map.fromList
-      [
-        (
-          "Ord",
-          Class_4
-            []
-            []
-            ("T", star_kind)
-            Nothing
-            [Method_4 "compare" [] [] (function_type (ntype "T") (function_type (ntype "T") comparison_type))]),
-        (
-          "Ring",
-          Class_4
-            []
-            []
-            ("T", star_kind)
-            Nothing
-            [
-              Method_4 "add" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T"))),
-              Method_4 "convert" [] [] (function_type int_type (ntype "T")),
-              Method_4 "times" [] [] (function_type (ntype "T") (function_type (ntype "T") (ntype "T")))])]
-  classes_1 :: Map' Class_5
-  classes_1 = (\(Class_4 e f (_, a) b c) -> Class_5 e f a b ((\(Method_4 d _ _ _) -> d) <$> c)) <$> classes_0
-  classes_2 :: Map' ([String], [String], Kind_1)
-  classes_2 = (\(Class_4 b c (_, a) _ _) -> (b, c, a)) <$> classes_0
   context_union :: (File, Map' Op) -> (File, Map' Op) -> (File, Map' Op)
   context_union (File i j d a x e q t g o z w', t0) (File k l h c y m r u n p p2 a', t2) =
     (
