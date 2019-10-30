@@ -7,6 +7,7 @@ module Classes_0 (Class_3 (..), Class_5 (..), Method_3 (..), type_classes_0) whe
   import Data.Set
   import Datas
   import Datas_0
+  import Datas_1
   import Naming
   import Standard
   import Tokenise

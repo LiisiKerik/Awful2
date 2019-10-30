@@ -16,6 +16,7 @@ module Classes_1 (
   import Data.Set
   import Datas
   import Datas_0
+  import Datas_1
   import Standard
   import Tokenise
   import Tree
