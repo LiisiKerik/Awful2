@@ -17,6 +17,7 @@ module Datas_0 (
   Type_1 (..),
   Type_2 (..),
   arrow_kind,
+  arrow_type,
   check_cat,
   check_cats_2,
   function_type,
@@ -85,6 +86,8 @@ module Datas_0 (
     deriving Show
   arrow_kind :: Kind_1 -> Kind_1 -> Kind_1
   arrow_kind a = Application_kind_1 (Application_kind_1 (Name_kind_1 "Kind arrow") a)
+  arrow_type :: Kind_1 -> Type_1 -> Type_1 -> Type_1
+  arrow_type k a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just k) []) a)
   check_cat :: Location_1 -> Map' Cat_4 -> Kind_1 -> Err ()
   check_cat g a b =
     let
@@ -109,7 +112,7 @@ module Datas_0 (
       [] -> Right ()
       d : e -> check_cat a b d *> check_cats_2 a b e
   function_type :: Type_1 -> Type_1 -> Type_1
-  function_type a = Application_type_1 (Application_type_1 (Name_type_1 "Arrow" (Just (Name_kind_1 "Star")) []) a)
+  function_type = arrow_type star_kind
   gather_all_types :: Ord u => (t -> Map u v -> Map u v) -> [t] -> Map u v -> Map u v
   gather_all_types a b c =
     case b of
