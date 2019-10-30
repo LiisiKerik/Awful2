@@ -10,11 +10,6 @@ module Datas where
   import Naming
   import Standard
   import Tokenise
-  data Nat = Nxt Nat | Zr deriving (Eq, Show)
-  int_type :: Type_1
-  int_type = ntype "Int"
-  nat_type :: Type_1
-  nat_type = ntype "Nat"
   type_alg :: [t] -> String -> Expression_2
   type_alg a b =
     let

@@ -1,9 +1,9 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
+import Classes_0
 import Data.Bifunctor
 import Data.List
 import Data.Map
-import Datas
 import Datas_0
 import Eval
 import Naming

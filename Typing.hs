@@ -16,7 +16,6 @@ module Typing where
   import Classes_1
   import Control.Monad.Trans.State.Strict
   import Data.Map
-  import Datas
   import Datas_0
   import Datas_1
   import Datas_2
@@ -128,6 +127,8 @@ module Typing where
           "mod",
           "times",
           "undefined"])
+  nat_type :: Type_1
+  nat_type = ntype "Nat"
   standard_naming_typing ::
     (
       String ->

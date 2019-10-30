@@ -7,6 +7,7 @@ module Classes_1 (
   classes_0,
   classes_1,
   classes_2,
+  int_type,
   type_classes_1,
   type_constraints_0) where
   import Classes_0
@@ -14,7 +15,6 @@ module Classes_1 (
   import Data.Bifunctor
   import Data.Map
   import Data.Set
-  import Datas
   import Datas_0
   import Datas_1
   import Standard
@@ -75,6 +75,8 @@ module Classes_1 (
   classes_1 = (\(Class_4 e f (_, a) b c) -> Class_5 e f a b ((\(Method_4 d _ _ _) -> d) <$> c)) <$> classes_0
   classes_2 :: Map' ([String], [String], Kind_1)
   classes_2 = (\(Class_4 b c (_, a) _ _) -> (b, c, a)) <$> classes_0
+  int_type :: Type_1
+  int_type = ntype "Int"
   type_class_1 ::
     (
       String ->

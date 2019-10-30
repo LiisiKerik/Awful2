@@ -1,12 +1,11 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Classes_0 (Class_3 (..), Class_5 (..), Method_3 (..), type_classes_0) where
+module Classes_0 (Class_3 (..), Class_5 (..), Method_3 (..), Nat (..), type_classes_0) where
   import Cats_0
   import Data.Bifunctor
   import Data.List
   import Data.Map
   import Data.Set
-  import Datas
   import Datas_0
   import Datas_1
   import Naming
@@ -16,6 +15,7 @@ module Classes_0 (Class_3 (..), Class_5 (..), Method_3 (..), type_classes_0) whe
   data Class_3 = Class_3 String [String] [String] (String, Kind_1) (Maybe (Name, [Kind_1])) [Method_3] deriving Show
   data Class_5 = Class_5 [String] [String] Kind_1 (Maybe (String, [Kind_1])) [String] deriving Show
   data Method_3 = Method_3 String [(String, Kind_1)] [Constraint_0] Type_1 deriving Show
+  data Nat = Nxt Nat | Zr deriving (Eq, Show)
   type_class_0 ::
     (
       (Location_0 -> Location_1) ->

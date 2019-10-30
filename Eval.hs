@@ -1,9 +1,9 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
 module Eval where
+  import Classes_0
   import Control.Monad
   import Data.Map
-  import Datas
   import Datas_0
   import Defs
   import Naming

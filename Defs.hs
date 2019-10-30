@@ -13,7 +13,6 @@ module Defs where
   import Data.Map
   import Data.Maybe
   import Data.Set
-  import Datas
   import Datas_0
   import Datas_1
   import Datas_2
