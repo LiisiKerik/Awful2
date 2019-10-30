@@ -5,7 +5,7 @@ module Eval where
   import Control.Monad
   import Data.Map
   import Datas_0
-  import Defs
+  import Defs_and_instances_0
   import Naming
   import Standard
   import Tokenise

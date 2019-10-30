@@ -20,6 +20,7 @@ module Typing where
   import Datas_1
   import Datas_2
   import Defs
+  import Defs_and_instances_0
   import Naming
   import Standard
   import Tokenise
