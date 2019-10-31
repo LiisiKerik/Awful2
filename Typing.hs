@@ -1,7 +1,6 @@
 {-
 pattern matching in types
 generalise branching types to branch not only over promoted algebraics but over Star and Int
-stringide syntaktiline suhkur
 All Ord C, All c C <- klassimuutuja
 pattern match types with only one type constructor?
 promote constructor operators (two type ops - for pair and either - and also promotable data constructor operators)
@@ -14,7 +13,7 @@ module Typing (File (..), context_union, defs, init_type_context, standard_namin
   import Cats_1
   import Cats_2
   import Classes_0
-  import Classes_1
+  import Classes_2
   import Control.Monad.Trans.State.Strict
   import Data.Map
   import Datas_0
@@ -228,7 +227,13 @@ module Typing (File (..), context_union, defs, init_type_context, standard_namin
                   type_cats_1 (a, fst <$> u, fst <$> e', fst <$> f', fst <$> c', fst <$> i') j' (k', l', g') >>=
                   \((m', n', o'), p') ->
                     (
-                      type_classes_0 (Location_1 a) (fst <$> u) (fst <$> f') d (fst <$> i') (t, old o, old m, Data.Map.empty) >>=
+                      type_classes_0
+                        (Location_1 a)
+                        (fst <$> u)
+                        (fst <$> f')
+                        d
+                        (fst <$> i')
+                        (t, old o, old m, Data.Map.empty) >>=
                       \(r7, (s', t', u', _)) ->
                         (
                           type_classes_1 a r7 (fst <$> u) (fst <$> t') (fst <$> u') (fst <$> i') (n', old l) >>=

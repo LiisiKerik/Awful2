@@ -10,6 +10,7 @@ module Standard (
   Def_1 (..),
   Expression_9 (..),
   Form_6 (..),
+  Kind_4 (..),
   Location' (..),
   Map',
   Method_9 (..),
@@ -36,20 +37,12 @@ module Standard (
   data Cat_1 =
     Cat_1 Location_0 (Name, [Name]) [Name] ((Location_0, Patn), (Location_0, Patn), Data_br_6, Expression_9, Expression_9)
       deriving Show
-  data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_0) (Maybe Constraint_0) [Method_9] deriving Show
+  data Class_7 = Class_7 Name [Name] [Name] (Name, Kind_4) [Method_9] deriving Show
   data Def_1 =
-    Basic_def_1 Name KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_1
-      Location_0
-      [Name]
-      [Name]
-      Name
-      [Kind_0]
-      (Name, Maybe Kind_0, [Kind_0], [Pattern_1])
-      [Constraint_0]
-      [(Name, Expression_9)]
-        deriving Show
-  data Data_6 = Data_6 Name [(Name, Kind_0)] Data_br_6 deriving Show
+    Basic_def_1 Name [Name] [Name] [(Name, Kind_4)] Type_8 Expression_9 |
+    Instance_1 Location_0 [Name] [Name] Name [Kind_4] (Name, Maybe Kind_4, [Kind_4], [Pattern_1]) [(Name, Expression_9)]
+      deriving Show
+  data Data_6 = Data_6 Name [(Name, Kind_4)] Data_br_6 deriving Show
   data Data_br_6 =
     Algebraic_data_6 [Form_6] | Branching_data_6 Location_0 Name [Data_case_6] | Struct_data_6 Name [(Name, Type_8)]
       deriving Show
@@ -63,9 +56,10 @@ module Standard (
     Name_expression_9 Name
       deriving Show
   data Form_6 = Form_6 Name [Type_8] deriving Show
+  data Kind_4 = Application_kind_4 Kind_4 Kind_4 | Intersection_kind_4 [Kind_4] | Name_kind_4 Name deriving Show
   data Location' = Language | Library Location_1 deriving Show
   type Map' t = Map String t
-  data Method_9 = Method_9 Name [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
+  data Method_9 = Method_9 Name [(Name, Kind_4)] Type_8 deriving Show
   data Op' = Op' Location_0 Op deriving Show
   data Pat_2 = Application_pat_2 Name [Pat_2] | Blank_pat_2 | Name_pat_2 Name deriving Show
   data Status = New | Old deriving (Eq, Show)
@@ -171,8 +165,9 @@ module Standard (
   standard_def :: (Location_0 -> Location_1) -> Map' Op -> Def_0 -> Err Def_1
   standard_def i j a =
     case a of
-      Basic_def_0 b c g d e f -> uncurry (Basic_def_1 b c g) <$> standard_arguments i j d e f
-      Instance_def_0 b c d f g h k e -> Instance_1 b c d f g h k <$> traverse (std_inst i j) e
+      Basic_def_0 b c g h d e f -> uncurry (Basic_def_1 b c g (std_typevars h)) <$> standard_arguments i j d e f
+      Instance_def_0 b c d f g (h, k, l, m) e ->
+        Instance_1 b c d f (std_kind <$> g) (h, std_kind <$> k, std_kind <$> l, m) <$> traverse (std_inst i j) e
   standard_defs :: (Location_0 -> Location_1) -> Map' Op -> [Def_0] -> Err [Def_1]
   standard_defs a b = traverse (standard_def a b)
   std_apat :: (Location_0 -> Location_1) -> Map' Op -> Alg_pat -> Err Alg_pat_7
@@ -191,9 +186,9 @@ module Standard (
       check_cat_m a b "compose" h <*>
       check_cat_m a b "id" i)
   std_cls :: (Location_0 -> Location_1) -> Class_0 -> Err Class_7
-  std_cls e (Class_0 a b c f g d) = Class_7 a b c f g <$> traverse (std_mthd e) d
+  std_cls e (Class_0 a b c f d) = Class_7 a b c (std_typevar f) <$> traverse (std_mthd e) d
   std_dat :: (Location_0 -> Location_1) -> Data_0 -> Err Data_6
-  std_dat a (Data_0 b d e) = Data_6 b d <$> std_dat_br a e
+  std_dat a (Data_0 b d e) = Data_6 b (std_typevars d) <$> std_dat_br a e
   std_dat_br :: (Location_0 -> Location_1) -> Data_br_0 -> Err Data_br_6
   std_dat_br a b =
     case b of
@@ -226,8 +221,16 @@ module Standard (
           d
   std_inst :: (Location_0 -> Location_1) -> Map' Op -> (Pat, Expression_0) -> Err (Name, Expression_9)
   std_inst a b (c, d) = (\(e, f) -> \g -> (e, Prelude.foldr Function_expression_9 g f)) <$> std_pat' a b c <*> std_expr a b d
+  std_kind :: Kind_0 -> Kind_4
+  std_kind k =
+    case k of
+      Application_kind_0 l ks -> Prelude.foldl Application_kind_4 (std_kind l) (std_kind <$> ks)
+      Arrow_kind_0 l m ->
+        Application_kind_4 (Application_kind_4 (Name_kind_4 (Name init_location "Kind arrow")) (std_kind l)) (std_kind m)
+      Intersection_kind_0 ks -> Intersection_kind_4 (std_kind <$> ks)
+      Name_kind_0 x -> Name_kind_4 x
   std_mthd :: (Location_0 -> Location_1) -> Method -> Err Method_9
-  std_mthd a (Method b c d e) = Method_9 b c d <$> std_type a e
+  std_mthd a (Method b c e) = Method_9 b (std_typevars c) <$> std_type a e
   std_pat :: (Location_0 -> Location_1) -> Map' Op -> Pat -> Err Pat_2
   std_pat a b c =
     case c of
@@ -274,6 +277,10 @@ module Standard (
     case b of
       Application_type_0 c d -> Prelude.foldl Application_type_5 <$> std_type' e c <*> traverse (std_type' e) d
       Name_type_0 a -> Right (Name_type_5 a)
+  std_typevar :: (Name, Kind_0) -> (Name, Kind_4)
+  std_typevar = second std_kind
+  std_typevars :: [(Name, Kind_0)] -> [(Name, Kind_4)]
+  std_typevars = fmap std_typevar
   und_err :: String -> Map' t -> String -> Location_1 -> (t -> Err u) -> Err u
   und_err a b c d f =
     case Data.Map.lookup a b of

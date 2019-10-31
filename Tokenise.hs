@@ -1,6 +1,16 @@
 --------------------------------------------------------------------------------------------------------------------------------
 {-# OPTIONS_GHC -Wall #-}
-module Tokenise where
+module Tokenise (
+  Err,
+  Location_0 (..),
+  Location_1 (..),
+  Token_0 (..),
+  Tokens (..),
+  current_line_and_char,
+  location,
+  location',
+  nom_token,
+  tokenise) where
   import Data.Bifunctor
   import Data.Char
   data Char' =
@@ -91,6 +101,11 @@ module Tokenise where
             (isDigit, Int_char)]
           Name_char)
             a
+  current_line_and_char :: Tokens -> Location_0
+  current_line_and_char (Tokens tokens line_and_char_1) =
+    case tokens of
+      [] -> line_and_char_1
+      Token_1 line_and_char_0 _ : _ -> line_and_char_0
   end_tokens :: Location_1 -> Err Tokens
   end_tokens (Location_1 _ a) = Right (Tokens [] a)
   file_location :: Location_1 -> String
@@ -121,6 +136,14 @@ module Tokenise where
   next_char (Location_1 a (Location_0 b c)) = Location_1 a (Location_0 b (c + 1))
   next_line :: Location_1 -> Location_1
   next_line (Location_1 a (Location_0 b _)) = Location_1 a (Location_0 (b + 1) 1)
+  nom_token :: (Token_0 -> Maybe t) -> Tokens -> Either Location_0 (t, Tokens)
+  nom_token f (Tokens tokens_0 line_and_char_1) =
+    case tokens_0 of
+      [] -> Left line_and_char_1
+      Token_1 line_and_char_0 token : tokens_1 ->
+        case f token of
+          Nothing -> Left line_and_char_0
+          Just x -> Right (x, Tokens tokens_1 line_and_char_1)
   operator_char :: Char' -> Maybe Char
   operator_char a =
     case a of

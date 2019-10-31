@@ -10,7 +10,6 @@ module Naming (
   Def_3 (..),
   Expression_1 (..),
   Form_1 (..),
-  KT1 (..),
   Method_2 (..),
   Pat' (..),
   Patn' (..),
@@ -33,10 +32,10 @@ module Naming (
   data Cat_3 =
     Cat_3 Location_0 (Name, [String]) [Name] ((Location_0, Patn'), (Location_0, Patn'), Data_br_2, Expression_1, Expression_1)
       deriving Show
-  data Class_1 = Class_1 String [Name] [Name] (Name, Kind_0) (Maybe Constraint_0) [Method_1] deriving Show
-  data Class_2 = Class_2 String [String] [Name] (String, Kind_0) (Maybe Constraint_0) [Method_2] deriving Show
-  data Data_1 = Data_1 String [(Name, Kind_0)] Data_br_1 deriving Show
-  data Data_2 = Data_2 String [(String, Kind_0)] Data_br_2 deriving Show
+  data Class_1 = Class_1 String [Name] [Name] (Name, Kind_4) [Method_1] deriving Show
+  data Class_2 = Class_2 String [String] [Name] (String, Kind_4) [Method_2] deriving Show
+  data Data_1 = Data_1 String [(Name, Kind_4)] Data_br_1 deriving Show
+  data Data_2 = Data_2 String [(String, Kind_4)] Data_br_2 deriving Show
   data Data_br_1 =
     Algebraic_data_1 [Form_1] | Branching_data_1 Location_0 Name [Data_case_1] | Struct_data_1 String [(String, Type_8)]
       deriving Show
@@ -46,29 +45,13 @@ module Naming (
   data Data_case_1 = Data_case_1 Name [Name] Data_br_1 deriving Show
   data Data_case_2 = Data_case_2 Name [String] Data_br_2 deriving Show
   data Def_2 =
-    Basic_def_2 Location_0 String KT0 [Constraint_0] Type_8 Expression_9 |
-    Instance_2
-      Location_0
-      [Name]
-      [Name]
-      Name
-      [Kind_0]
-      (Name, Maybe Kind_0, [Kind_0], [Pattern_1])
-      [Constraint_0]
-      [(Name, Expression_9)]
-        deriving Show
+    Basic_def_2 Location_0 String [Name] [Name] [(Name, Kind_4)] Type_8 Expression_9 |
+    Instance_2 Location_0 [Name] [Name] Name [Kind_4] (Name, Maybe Kind_4, [Kind_4], [Pattern_1]) [(Name, Expression_9)]
+      deriving Show
   data Def_3 =
-    Basic_def_3 Location_0 String KT1 [Constraint_0] Type_8 Expression_1 |
-    Instance_3
-      Location_0
-      [String]
-      [Name]
-      Name
-      [Kind_0]
-      (Name, Maybe Kind_0, [Kind_0], [Pattern_0])
-      [Constraint_0]
-      [(Name, Expression_1)]
-        deriving Show
+    Basic_def_3 Location_0 String [String] [Name] [(String, Kind_4)] Type_8 Expression_1 |
+    Instance_3 Location_0 [String] [Name] Name [Kind_4] (Name, Maybe Kind_4, [Kind_4], [Pattern_0]) [(Name, Expression_1)]
+      deriving Show
   data Expression_1 =
     Application_expression_1 Expression_1 Expression_1 |
     Function_expression_1 Pat' Expression_1 |
@@ -77,9 +60,8 @@ module Naming (
     Name_expression_1 Name
       deriving Show
   data Form_1 = Form_1 String [Type_8] deriving Show
-  data KT1 = KT1 [String] [Name] [(String, Kind_0)] deriving Show
-  data Method_1 = Method_1 String [(Name, Kind_0)] [Constraint_0] Type_8 deriving Show
-  data Method_2 = Method_2 String [(String, Kind_0)] [Constraint_0] Type_8 deriving Show
+  data Method_1 = Method_1 String [(Name, Kind_4)] Type_8 deriving Show
+  data Method_2 = Method_2 String [(String, Kind_4)] Type_8 deriving Show
   data Pat' = Application_pat' Name [Pat'] | Blank_pat' | Name_pat' String deriving Show
   data Patn' = Application_patn' Name [Patn'] | Name_patn' String deriving Show
   data Pattern_0 = Blank_pattern_0 | Name_pattern_0 String deriving Show
@@ -202,12 +184,12 @@ module Naming (
           naming_expression a k n <*>
           naming_expression a l n))
   naming_class_0 :: String -> Class_7 -> StateT (Map' Location') Err Class_1
-  naming_class_0 a (Class_7 b i j c h d) = (\g -> Class_1 g i j c h) <$> naming_name a b <*> naming_list naming_method_0 a d
+  naming_class_0 a (Class_7 b i c h d) = (\g -> Class_1 g i c h) <$> naming_name a b <*> naming_list naming_method_0 a d
   naming_class_1 :: String -> Class_1 -> Map' Location' -> Err Class_2
-  naming_class_1 a (Class_1 b j m (c, d) h e) f =
+  naming_class_1 a (Class_1 b j m (c, d) e) f =
     (
       runStateT (naming_name a c) f >>=
-      \(g, i) -> runStateT (naming_names'' a j) i >>= \(k, l) -> Class_2 b k m (g, d) h <$> naming_methods_1 a e l)
+      \(g, i) -> runStateT (naming_names'' a j) i >>= \(k, l) -> Class_2 b k m (g, d) <$> naming_methods_1 a e l)
   naming_classes_1 :: String -> [Class_1] -> Map' Location' -> Err [Class_2]
   naming_classes_1 a b c =
     case b of
@@ -249,34 +231,39 @@ module Naming (
       c : d -> naming_data_2 f c b >>= \e -> (:) e <$> naming_datas_2 f d b
   naming_def_1 :: String -> Def_1 -> StateT (Map' Location', Map' (Map' Location')) Err Def_2
   naming_def_1 i a =
-    StateT
-      (\(g, k) ->
-        case a of
-          Basic_def_1 c @ (Name h j) b x d e -> (\(_, f) -> (Basic_def_2 h j b x d e, (f, k))) <$> runStateT (naming_name i c) g
-          Instance_1 b x t1 (Name c l) d (Name f m, t, n, o) h e ->
+    case a of
+      Basic_def_1 (Name h j) b l m d e ->
+        StateT (\(g, k) -> (\(y, f) -> (Basic_def_2 h y b l m d e, (f, k))) <$> runStateT (naming_name i (Name h j)) g)
+      Instance_1 b x t1 (Name c l) d (Name f m, t, n, o) e ->
+        StateT
+          (\(g, k) ->
             case Data.Map.lookup l k of
               Nothing ->
                 Right
                   (
-                    Instance_2 b x t1 (Name c l) d (Name f m, t, n, o) h e,
+                    Instance_2 b x t1 (Name c l) d (Name f m, t, n, o) e,
                     (g, insert l (singleton m (Library (Location_1 i b))) k))
               Just p ->
                 case Data.Map.lookup m p of
                   Nothing ->
                     Right
                       (
-                        Instance_2 b x t1 (Name c l) d (Name f m, t, n, o) h e,
+                        Instance_2 b x t1 (Name c l) d (Name f m, t, n, o) e,
                         (g, adjust (insert m (Library (Location_1 i b))) l k))
                   Just q -> Left (location_err ("instances of " ++ l ++ "{" ++ m ++ "}") q (Location_1 i b)))
   naming_def_2 :: String -> Def_2 -> Map' Location' -> Err Def_3
   naming_def_2 j a b =
     case a of
-      Basic_def_2 k c d t f g -> runStateT (naming_kt j d) b >>= \(i, h) -> Basic_def_3 k c i t f <$> naming_expression j g h
-      Instance_2 f x t c n (d, w, l, g) k e ->
+      Basic_def_2 c d e f g h i ->
+        (
+          runStateT (naming_names'' j e) b >>=
+          \(k, l) ->
+            runStateT (naming_arguments naming_name j g) l >>= \(m, n) -> Basic_def_3 c d k f m h <$> naming_expression j i n)
+      Instance_2 f x t c n (d, w, l, g) e ->
         (
           runStateT (naming_names'' j x) b >>=
           \(y, z) ->
-            runStateT (naming_patterns j g) z >>= \(i, h) -> Instance_3 f y t c n (d, w, l, i) k <$> naming_nameexprs j h e)
+            runStateT (naming_patterns j g) z >>= \(i, h) -> Instance_3 f y t c n (d, w, l, i) <$> naming_nameexprs j h e)
   naming_defs_2 :: String -> [Def_2] -> Map' Location' -> Err [Def_3]
   naming_defs_2 = naming_list' naming_def_2
   naming_expression :: String -> Expression_9 -> Map' Location' -> Err Expression_1
@@ -302,8 +289,6 @@ module Naming (
   naming_form d (Form_6 a b) = (\c -> Form_1 c b) <$> naming_name d a
   naming_forms :: String -> [Form_6] -> StateT (Map' Location') Err [Form_1]
   naming_forms = naming_list naming_form
-  naming_kt :: String -> KT0 -> StateT (Map' Location') Err KT1
-  naming_kt a (KT0 b g c) = naming_names'' a b >>= \e -> KT1 e g <$> naming_arguments naming_name a c
   naming_list :: (String -> t -> StateT u Err v) -> String -> [t] -> StateT u Err [v]
   naming_list a h b =
     case b of
@@ -315,9 +300,9 @@ module Naming (
       [] -> Right []
       d : e -> a g d c >>= \f -> (:) f <$> naming_list' a g e c
   naming_method_0 :: String -> Method_9 -> StateT (Map' Location') Err Method_1
-  naming_method_0 a (Method_9 b c g d) = (\f -> Method_1 f c g d) <$> naming_name a b
+  naming_method_0 a (Method_9 b c d) = (\f -> Method_1 f c d) <$> naming_name a b
   naming_method_1 :: String -> Method_1 -> Map' Location' -> Err Method_2
-  naming_method_1 a (Method_1 b c g d) e = (\f -> Method_2 b f g d) <$> naming_args a c e
+  naming_method_1 a (Method_1 b c d) e = (\f -> Method_2 b f d) <$> naming_args a c e
   naming_methods_1 :: String -> [Method_1] -> Map' Location' -> Err [Method_2]
   naming_methods_1 a b c =
     case b of
